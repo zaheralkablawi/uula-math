@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UULA Arabic Math</title>
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#replaceMode{order:98;margin-inline-start:auto}.swbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:999px;background:#f1f3f6;color:#6b7481;cursor:pointer}.swbtn .sw-track{position:relative;width:30px;height:17px;border-radius:999px;background:#c3cad4;transition:background .15s}.swbtn .sw-knob{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .3);transition:right .15s}.swbtn[aria-pressed="true"]{border-color:#e8590c;background:#fff1e6;color:#c2410c}.swbtn[aria-pressed="true"] .sw-track{background:#e8590c}.swbtn[aria-pressed="true"] .sw-knob{right:15px}#insertDoc{order:99}#insertDoc:first-child{margin-inline-start:auto}</style>
+<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#fmtMode{order:97;margin-inline-start:auto}.credit{position:relative}.gearwrap{position:relative;display:inline-block;margin-inline-start:6px;vertical-align:middle}.gearbtn{border:0;background:none;color:#9aa3af;cursor:pointer;padding:2px;display:inline-grid;place-items:center}.gearbtn:hover{color:#5d6878}.gearpop{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9dfe7;border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:8px;z-index:20;white-space:nowrap}.swlabel{font:600 12px -apple-system,'Segoe UI',sans-serif}#insertDoc.replacing{box-shadow:0 0 0 3px #e8590c}.fmtbtn{height:32px;min-width:46px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:8px;background:#f1f3f6;color:#4a5566;font:700 11px -apple-system,'Segoe UI',sans-serif;letter-spacing:.04em;cursor:pointer}.fmtbtn[aria-pressed="true"]{border-color:#7c3aed;background:#f3edff;color:#6d28d9}.swbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:999px;background:#f1f3f6;color:#6b7481;cursor:pointer}.swbtn .sw-track{position:relative;width:30px;height:17px;border-radius:999px;background:#c3cad4;transition:background .15s}.swbtn .sw-knob{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .3);transition:right .15s}.swbtn[aria-pressed="true"]{border-color:#e8590c;background:#fff1e6;color:#c2410c}.swbtn[aria-pressed="true"] .sw-track{background:#e8590c}.swbtn[aria-pressed="true"] .sw-knob{right:15px}#insertDoc{order:99}#insertDoc:first-child{margin-inline-start:auto}</style>
 </head><body>
 
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -308,7 +308,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
-        <button class="swbtn" id="replaceMode" type="button" hidden role="switch" aria-checked="false" aria-pressed="false" aria-label="وضع الاستبدال"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3"/><path d="M16 13H5M8 10l-3 3 3 3"/></svg><span class="sw-track"><span class="sw-knob"></span></span></button>
+        <button class="fmtbtn" id="fmtMode" type="button" hidden aria-pressed="false" aria-label="صيغة الصورة">PNG</button>
         <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
@@ -317,7 +317,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
-  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer">الإصدار ١</span></footer>
+  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer">الإصدار ٢</span><span class="gearwrap" id="gearWrap" hidden><button type="button" class="gearbtn" id="gearBtn" aria-label="إعدادات" aria-expanded="false"><svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg></button><div class="gearpop" id="gearPop" hidden><button class="swbtn" id="replaceMode" type="button" role="switch" aria-checked="false" aria-pressed="false" aria-label="وضع الاستبدال"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3"/><path d="M16 13H5M8 10l-3 3 3 3"/></svg><span class="swlabel">استبدال العنصر المحدد</span><span class="sw-track"><span class="sw-knob"></span></span></button></div></span></footer>
 </div>
 
 <script>
@@ -1697,19 +1697,21 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-const ADDIN_VER='22';
+const ADDIN_VER='23';
 const SLIDE_W=540; // UULA booklet slides are 540 pt wide; «outside on the right» starts just after that
-function officeInsert(data, type, place){
+function officeInsert(data, type, place, fallback){
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size (on a 540 pt wide booklet slide)
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
-  const info = place && place.info, outside = place && place.outside;
+  const info = place && place.info, outside = place && place.outside, keepId = place && place.center ? place.refId : null;
   if (place && !outside && typeof place.left !== 'number') place = null;
   const ppt = window.PowerPoint && typeof hasPPT==='function' && hasPPT();
   // PowerPoint: insert centered, then measure the slide from where it landed, scale to the slide width and move it into place
   Office.context.document.setSelectedDataAsync(data, opts, async r => {
-    if (r.status !== Office.AsyncResultStatus.Succeeded){ flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
+    if (r.status !== Office.AsyncResultStatus.Succeeded){
+      if (fallback){ flash('تعذّر إدراج SVG هنا، فأُدرجت صورة PNG.', false); return fallback(); }
+      flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
     let ok = true;
-    if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place && (outside ? place.refId : place.id) });
+    if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place ? (outside ? place.refId : place.id) : keepId });
     if (place && !outside){ const gone = await deleteOld(place.id);
       flash(gone ? 'وُضعت المعادلة مكان القديمة وحُذفت القديمة.' : 'وُضعت المعادلة مكانها، لكن تعذّر حذف القديمة فنُقلت خارج الشريحة.', gone); }
     else if (outside) flash('أُدرجت المعادلة خارج الشريحة على اليمين.');
@@ -1800,20 +1802,32 @@ if (window.Office) Office.onReady(info => {
   const isPPT = info.host === Office.HostType.PowerPoint;
   let replaceOn = !!load('aeq-replace', false);
   const showMode = () => { const b=$('replaceMode'); b.setAttribute('aria-pressed', String(replaceOn)); b.setAttribute('aria-checked', String(replaceOn));
-    b.dataset.tip = replaceOn ? 'الاستبدال مفعّل: تنزل المعادلة مكان العنصر المحدد وتحذفه' : 'الاستبدال متوقف: تنزل المعادلة خارج الشريحة على اليمين';
-    $('insertDoc').dataset.tip = replaceOn ? 'حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر' : 'إدراج خارج الشريحة على اليمين'; $('insertDoc').removeAttribute('title'); };
-  if (isPPT){ $('replaceMode').hidden=false; showMode();
-    $('replaceMode').addEventListener('click', () => { replaceOn=!replaceOn; save('aeq-replace', replaceOn); showMode(); flash(replaceOn ? 'الاستبدال مفعّل.' : 'الاستبدال متوقف: الإدراج خارج الشريحة على اليمين.'); }); }
+    b.dataset.tip = replaceOn ? 'الاستبدال مفعّل: تنزل المعادلة مكان العنصر المحدد وتحذفه' : 'الاستبدال متوقف: تنزل المعادلة في وسط الشريحة';
+    $('insertDoc').classList.toggle('replacing', replaceOn); $('insertDoc').dataset.tip = replaceOn ? 'حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر' : 'إدراج في وسط الشريحة'; $('insertDoc').removeAttribute('title'); };
+  // picture format: PNG (default) or SVG (vector, stays sharp at any size)
+  let svgOn = !!load('aeq-svg', false);
+  const showFmt = () => { const b=$('fmtMode'); b.textContent = svgOn ? 'SVG' : 'PNG'; b.setAttribute('aria-pressed', String(svgOn));
+    b.dataset.tip = svgOn ? 'الإدراج بصيغة SVG (رسم متجه بدقة عالية) — اضغط للعودة إلى PNG' : 'الإدراج بصيغة PNG — اضغط للتجربة بصيغة SVG'; };
+  $('fmtMode').hidden=false; showFmt();
+  $('fmtMode').addEventListener('click', () => { svgOn=!svgOn; save('aeq-svg', svgOn); showFmt(); });
+  if (isPPT){ $('gearWrap').hidden=false; showMode();
+    $('gearBtn').addEventListener('click', e => { e.stopPropagation(); const p=$('gearPop'); p.hidden=!p.hidden; $('gearBtn').setAttribute('aria-expanded', String(!p.hidden)); });
+    $('gearPop').addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', () => { $('gearPop').hidden=true; $('gearBtn').setAttribute('aria-expanded','false'); });
+    $('replaceMode').addEventListener('click', () => { replaceOn=!replaceOn; save('aeq-replace', replaceOn); showMode();  }); }
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
     const b64 = await new Promise(res => { const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
     let place = null;
     if (isPPT && replaceOn) place = await takeSelectedPlace();
-    else if (isPPT && hasPPT()){ // not replacing: put it just right of the slide, level with whatever is selected (else near the top)
-      const now = await readSelection(); const ref = now.id ? now : (picStillMeant() ? lastPic : null);
-      place = { outside: true, refId: ref && ref.id, top: ref ? ref.top : 40 }; // refId: never move the selected object itself
+    else if (isPPT && hasPPT()){ // not replacing: in the middle of the slide; whatever is selected stays untouched
+      const now = await readSelection();
+      place = { center: true, refId: now.id || null };
       if (now.id){ try { await PowerPoint.run(async ctx => { if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]); await ctx.sync(); }); } catch(e){} } }
-    pushHistory(src.value); officeInsert(b64, Office.CoercionType.Image, place);
+    pushHistory(src.value);
+    const png = () => officeInsert(b64, Office.CoercionType.Image, place);
+    if (svgOn && Office.CoercionType.XmlSvg) officeInsert(makeSVG(src.value), Office.CoercionType.XmlSvg, place, png);
+    else png();
   });
 });
 
