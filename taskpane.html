@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UULA Arabic Math</title>
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}</style>
+<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#insertDoc{order:99;margin-inline-start:auto}</style>
 </head><body>
 
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -56,6 +56,7 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .ib:hover{border-color:var(--accent);background:var(--accent-soft)}
 .ib[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .settings.fmt{padding-bottom:2px}
+.credit{text-align:center;font-size:.72rem;color:var(--muted);padding:10px 0 4px}
 .cwrap{position:relative}
 .colorbtn{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 7px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--muted);cursor:pointer}
 .colorbtn .sw{width:20px;height:16px;border-radius:3px;border:1px solid rgb(0 0 0 / .25)}
@@ -100,7 +101,7 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .toolbar button.ico{padding:2px 5px;min-width:34px;display:inline-grid;place-items:center}
 .sep{width:1px;align-self:stretch;background:var(--line);margin-inline:3px}
 .tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);font-size:.78rem;line-height:1.5;padding:4px 9px;border-radius:6px;display:grid;gap:1px;max-width:280px;box-shadow:0 4px 14px rgb(0 0 0 / .18)}
-.tip .kbd{opacity:.65}.tip .kbd bdi{font-family:ui-monospace,Menlo,monospace}
+.tip{font-size:.72rem;width:max-content;max-width:min(240px,90vw)}.tip b{font-weight:400}.tip .kbd{opacity:.65}.tip .kbd bdi{font-family:ui-monospace,Menlo,monospace}
 .tip span{opacity:.8;direction:rtl;unicode-bidi:plaintext}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
 .seg button{border:0;border-inline-start:1px solid var(--line);background:var(--panel);color:var(--muted);padding:4px 7px;cursor:pointer;display:grid;place-items:center}
@@ -204,7 +205,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
   <div class="grid">
     <section class="panel" aria-label="كتابة المعادلة">
-      <div class="symhead"><label class="label" for="src">المعادلة</label><span class="iconbar"><button class="ib" id="copySrc" type="button" title="نسخ النص" aria-label="نسخ النص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button><button class="ib" id="cutSrc" type="button" title="قص" aria-label="قص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="15" r="2.5"/><path d="M7.3 13.2 15 3M12.7 13.2 5 3"/></svg></button><button class="ib" id="pasteSrc" type="button" title="لصق" aria-label="لصق"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="14" rx="2"/><path d="M7.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/><path d="M7.5 9.5h5M7.5 13h5"/></svg></button><button class="ib" id="clearSrc" type="button" title="مسح الكل (يمكن التراجع بـ ⌘Z)" aria-label="مسح الكل"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 11a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-11"/></svg></button><span class="histwrap"><button class="ib" id="histBtn" type="button" title="السابقة: آخر ٢٠ معادلة نسختها أو أدرجتها" aria-label="السابقة" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.5v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg></button><div class="hist" id="hist" hidden></div></span></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
+      <div class="symhead"><label class="label" for="src">المعادلة</label><span class="iconbar"><button class="ib" id="copySrc" type="button" title="نسخ النص" aria-label="نسخ النص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button><button class="ib" id="cutSrc" type="button" title="قص" aria-label="قص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="15" r="2.5"/><path d="M7.3 13.2 15 3M12.7 13.2 5 3"/></svg></button><button class="ib" id="pasteSrc" type="button" title="لصق" aria-label="لصق"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="14" rx="2"/><path d="M7.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/><path d="M7.5 9.5h5M7.5 13h5"/></svg></button><button class="ib" id="clearSrc" type="button" title="مسح الكل (يمكن التراجع بـ ⌘Z)" aria-label="مسح الكل"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 11a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-11"/></svg></button><span class="histwrap"><button class="ib" id="histBtn" type="button" title="السابقة: آخر ٢٠ معادلة نسختها أو أدرجتها" aria-label="السابقة" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.5v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg></button><div class="hist" id="hist" hidden></div></span><button class="ib" id="undoBtn" type="button" title="تراجع (⌘Z)" aria-label="تراجع"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5l3.5 3.5-3.5 3.5"/><path d="M16.5 8H8a4.5 4.5 0 0 0 0 9h3"/></svg></button><button class="ib" id="redoBtn" type="button" title="إعادة (⌘⇧Z)" aria-label="إعادة"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8H12a4.5 4.5 0 0 1 0 9H9"/></svg></button></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
       <div class="settings fmt">
         <div class="field">
           <div class="swatches cwrap"><button type="button" class="colorbtn" id="colorBtn" data-tip="اللون" aria-label="اللون" aria-haspopup="true" aria-expanded="false"><span class="sw" id="colorSw"></span><svg viewBox="0 0 10 6" width="9" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cpop" id="cpop" hidden></div><input type="color" id="custom" class="vh" tabindex="-1" aria-hidden="true"></div>
@@ -308,7 +309,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
-        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج — إن حدّدت معادلة قديمة في الشريحة تنزل الجديدة مكانها وتُحذف القديمة" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
+        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
         <select id="scale" data-tip="دقة الصورة" aria-label="دقة الصورة"><option value="3">×3</option><option value="4">×4</option><option value="6" selected>×6</option></select>
@@ -316,6 +317,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
+  <footer class="credit">هذا البرنامج من إعداد وتصميم زاهر القبلاوي</footer>
 </div>
 
 <script>
@@ -454,8 +456,13 @@ class P {
       const w=s.slice(this.i,j); this.i=j;
       // a lone letter (a variable or a point name) is drawn with the Mazeri math letter
       const bare=w.replace(/[\u0640\u064B-\u065F\u0670]/g,'');
-      if ([...bare].length===1 && MATHLETTER[bare]) return {t:'txt',s:String.fromCharCode(0xE000+MATHLETTER[bare]),k:'word'};
       if (MATHWORD[bare]) return {t:'txt',s:String.fromCharCode(0xE000+MATHWORD[bare]),k:'word'}; // جا جتا ظا ... نق as one Mazeri sign
+      { // up to three letters (a variable, a point, a segment name: س، أب، أبجـ) are drawn as separate Mazeri math letters
+        const ls=[...bare];
+        if (ls.length===1 && MATHLETTER[bare]) return {t:'txt',s:String.fromCharCode(0xE000+MATHLETTER[bare]),k:'word'};
+        if (ls.length>=2 && ls.length<=3 && !PLAINWORD.has(bare) && ls.every(ch=>MATHLETTER[ch]))
+          return {t:'row', c:ls.map(ch=>({t:'txt',s:String.fromCharCode(0xE000+MATHLETTER[ch]),k:'word'}))};
+      }
       { // a function glued to its variable (جاس، ظتاأ): split into the function sign + Mazeri letters
         const fn=['جتا','ظتا','قتا','جا','ظا','قا'].find(f=>bare.startsWith(f));
         const rest = fn ? [...bare.slice(fn.length)] : [];
@@ -509,6 +516,9 @@ const mc = document.createElement('canvas').getContext('2d');
 let CURW=null; // weight of the part being laid out/drawn (سماكة{…}{…}), else the global weight
 const curW = () => +(CURW||st.weight||400);
 const toLatinDigits = v => String(v).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+// short words that are NOT point/segment names: units and common words stay in the normal font
+const PLAINWORD = new Set(('سم مم كم دسم جم كجم مل لتر ثا دقيقة '+
+  'نعم لا كلا من في عن على إلى الى أو او ثم إذا اذا لأن لان هل كل لكل مع ما لم لن قد هي هو هذا هذه ذلك تلك أي اي بين حيث ليس كان أن ان إن لو بل عدد').split(/\s+/).filter(Boolean));
 const fontStr = (sz) => `${curW()} ${sz}px "UULA Sans", "UULA Maz1", "UULA Maz2", sans-serif`;
 // the Mazeri math fonts have a single weight: thicken their glyphs so symbols, letters and digits follow the text weight
 const PUA_RE=/[\uE000-\uE2FF]/;
@@ -560,6 +570,7 @@ function txtBox(n, sz, ctx){
     g.font=fontStr(sz); g.direction = isWord?'rtl':'ltr'; g.textAlign='left'; g.textBaseline='alphabetic';
     // canvas with rtl direction + left align: anchor is still left edge
     g.fillText(s, x+padL, y);
+    g.direction='ltr'; // leave the canvas in ltr so brackets drawn next are not mirrored
   }};
 }
 // symbols missing from UULA Sans, drawn by hand to match the font
@@ -893,6 +904,7 @@ function parenBox(n, sz){
       g.font=fontStr(sz); g.direction='ltr'; g.textAlign='left';
       g.fillText(n.o==='('?'(':n.o==='['?'[':'{', x, y);
       b.draw(g, x+L.w+pad, y);
+      g.font=fontStr(sz); g.direction='ltr'; g.textAlign='left'; // the content may leave the canvas in rtl, which would mirror the bracket
       g.fillText(n.cl===')'?')':n.cl===']'?']':'}', x+L.w+2*pad+b.w, y);
     }};
   }
@@ -1125,6 +1137,8 @@ function snap(force){
 function applyHist(k){ const h=hist.stack[k]; if(!h) return; hist.i=k; src.value=h.v; src.selectionStart=h.s; src.selectionEnd=h.e; hist.grouping=false; schedule(); }
 function undo(){ if (hist.i>0) applyHist(hist.i-1); }
 function redo(){ if (hist.i<hist.stack.length-1) applyHist(hist.i+1); }
+$('undoBtn').addEventListener('click', () => { undo(); src.focus(); });
+$('redoBtn').addEventListener('click', () => { redo(); src.focus(); });
 src.addEventListener('input', e => { const typing = e.inputType==='insertText' || e.inputType==='deleteContentBackward' || e.inputType==='deleteContentForward'; snap(!typing); });
 src.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey; if (!mod) return;
@@ -1451,6 +1465,19 @@ $('pasteSrc').addEventListener('click', () => {
   const ins = t => { if(!t) return; src.focus(); const a=src.selectionStart, b=src.selectionEnd; src.setRangeText(t, a, b, 'end'); snap(true); schedule(); };
   if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(ins).catch(()=>{ src.focus(); flash('المتصفح منع اللصق من الزر هنا. استخدم ⌘V.', false); });
   else { src.focus(); flash('استخدم ⌘V للصق.', false); }
+});
+// clicking into an EMPTY writing box pastes the code waiting on the clipboard (once per copied code)
+let lastAutoPaste=load('aeq-autopaste','');
+src.addEventListener('focus', () => {
+  if (src.value.trim() || !navigator.clipboard || !navigator.clipboard.readText) return;
+  navigator.clipboard.readText().then(t => {
+    t=(t||'').replace(/\r\n?/g,'\n').trim();
+    if (!t || t.length>3000 || t===lastAutoPaste || src.value.trim()) return;
+    const looksLikeCode = /[{}^_]/.test(t) || CMDS.some(([k])=>t.includes(k)) || /[٠-٩0-9][\s]*[=+−\-×÷<>≤≥]/.test(t);
+    if (!looksLikeCode) return;
+    lastAutoPaste=t; save('aeq-autopaste', t);
+    src.value=t; src.setSelectionRange(t.length,t.length); snap(true); schedule(); flash('لُصق الكود من الحافظة.');
+  }).catch(()=>{});
 });
 $('clearSrc').addEventListener('click', () => {
   if (!src.value.trim()) { src.focus(); return; }
