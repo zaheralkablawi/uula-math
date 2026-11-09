@@ -246,7 +246,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
                     <tr><td>اختصار (شطب)</td><td><code>شطب{١٥}{٣}</code> (الرقم الصغير اختياري، والشطب والعدد باللون الأرجواني)</td></tr><tr><td>اختصار والعدد تحت</td><td><code>شطبتحت{١٥}{٣}</code> </td></tr>
           <tr><td>قسمة مطوّلة</td><td><code>قسمة{٨٣٦}{٤}{٢٠٩}{-٨ ; ٣٦}</code> : المقسوم، المقسوم عليه، الناتج، ثم الخطوات (كل خطوة بعد ; والمسافة في أولها تزيح الخطوة خانة، والسطر الذي يبدأ بـ - يُرسم تحته خط)</td></tr>
           <tr><td>جمع وطرح عمودي</td><td><code>عمودي{^١ ; ١٢٨ ; +٤٥٦ ; ٥٨٤}</code> (السطر الذي يبدأ بـ ^ للحمل، والأخير هو الناتج)</td></tr>
-          <tr><td>تلوين جزء</td><td><code>لون{أحمر}{٣}</code> : أحمر، أزرق، أسود، أخضر، أصفر، بنفسجي، وردي، برتقالي، أبيض، رمادي</td></tr>
+          <tr><td>تلوين جزء</td><td>حدّد الجزء في مربع الكتابة ثم اختر اللون، أو اكتب <code>لون{أحمر}{٣}</code> : أحمر، أزرق، أسود، أخضر، أصفر، بنفسجي، أرجواني، وردي، برتقالي، أبيض، رمادي</td></tr>
           <tr><td>نظام معادلات</td><td><code>نظام{س + ص = ٥ ; س − ص = ١}</code></td></tr>
           <tr><td>دالة متعددة القواعد</td><td><code>قواعد{٢س &amp; س &gt; ٠ ; −س &amp; س ≤ ٠}</code></td></tr>
           <tr><td>مصفوفة ومحدد</td><td><code>مصفوفة{١ &amp; ٢ ; ٣ &amp; ٤}</code> ، <code>محدد{أ &amp; ب ; جـ &amp; د}</code></td></tr>
@@ -304,7 +304,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 // ---------- state ----------
 const $ = id => document.getElementById(id);
 const st = { align:'right', font:'UULA Sans', color:'#2f6fde', pt:14, weight:'400', scale:6, lastPng:null };
-const COLORS = [['أزرق','#2f6fde'],['أسود','#111111'],['أحمر','#e0322b'],['أصفر','#ffe600'],['بنفسجي','#b58cff'],['أبيض','#ffffff']];
+const COLORS = [['أزرق','#2f6fde'],['أسود','#111111'],['أحمر','#e0322b'],['أصفر','#ffe600'],['بنفسجي','#b58cff'],['أرجواني','#fe00fe'],['أبيض','#ffffff']];
 const SYMS = ['+','−','×','÷','±','=','≠','<','>','≤','≥','≅','≈','∈','∉','⊂','⊆','∩','∪','∅','∆','°','π','∞','،','…','⊄','⟸','⟹','∴'];
 const EXAMPLES = [
   ['جذر على كسر','كسر{جذر{٤}}{٥}'],
@@ -459,7 +459,7 @@ function splitRows(nodes){
   }
   return rows.map(r=>r.map(c=>{ while(c.length && c[0].t==='space') c.shift(); while(c.length && c[c.length-1].t==='space') c.pop(); return c; }));
 }
-const COLORNAME={'أحمر':'#e0322b','أزرق':'#2f6fde','أسود':'#111111','أخضر':'#1f9d55','أصفر':'#ffe600','بنفسجي':'#b58cff','وردي':'#fe00fe','برتقالي':'#f08a24','أبيض':'#ffffff','رمادي':'#8a94a3'};
+const COLORNAME={'أرجواني':'#fe00fe','أحمر':'#e0322b','أزرق':'#2f6fde','أسود':'#111111','أخضر':'#1f9d55','أصفر':'#ffe600','بنفسجي':'#b58cff','وردي':'#fe00fe','برتقالي':'#f08a24','أبيض':'#ffffff','رمادي':'#8a94a3'};
 // digits drawn with the Mazeri math digits (and its comma)
 const mathDigits = t => t.replace(/[٠-٩]/g, d=>String.fromCharCode(0xE030+'٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[,،٫]/g, String.fromCharCode(0xE02C));
 const MATHWORD={'جا':0x65,'جتا':0x66,'ظا':0x67,'ظتا':0x68,'قا':0x69,'قتا':0x6A,'نق':0x6B,'المجاور':0xF3,'المقابل':0xF4,'الوتر':0xF9};
@@ -503,11 +503,13 @@ function txtBox(n, sz, ctx){
     const parts=[...s].map(ch=>{ const mm=mc.measureText(ch); const l=mm.actualBoundingBoxLeft||0, r=mm.actualBoundingBoxRight||mm.width;
       const isComma = ch===String.fromCharCode(0xE02C);
       if (TABULAR && !isComma){ const cw=cellW(sz); return {ch, l:l+(cw-(r+l))/2, w:cw, a:mm.actualBoundingBoxAscent||fs*.6, d:mm.actualBoundingBoxDescent||0, gap:0}; } // columns line up in vertical sums
-      return {ch, l, w:Math.max(r+l, fs*.12), a:mm.actualBoundingBoxAscent||fs*.6, d:mm.actualBoundingBoxDescent||0, gap: isComma? fs*.03 : fs*.07}; });
-    const W=parts.reduce((t,p)=>t+p.w+p.gap,0)-(parts.length?parts[parts.length-1].gap:0);
+      return {ch, l, w:Math.max(r+l, fs*.12), a:mm.actualBoundingBoxAscent||fs*.6, d:mm.actualBoundingBoxDescent||0, gap: isComma? (TABULAR? fs*.03 : fs*.16) : fs*.07}; });
+    if (!TABULAR) parts.forEach((p,i)=>{ if (parts[i+1] && parts[i+1].ch===String.fromCharCode(0xE02C)) p.gap=fs*.19; }); // decimal comma set apart like the booklet: ٣ , ٥
+    const C=String.fromCharCode(0xE02C), lead = !TABULAR && s[0]===C ? fs*.19 : 0; // a comma touching an over/underlined part keeps its space
+    const W=lead+parts.reduce((t,p)=>t+p.w+p.gap,0)-(parts.length && !(s[s.length-1]===C && !TABULAR)?parts[parts.length-1].gap:0);
     const A=Math.max(sz*.62,...parts.map(p=>p.a)), D=Math.max(sz*.12,...parts.map(p=>p.d));
     return { w:W, a:A, d:D, draw(g,x,y){ g.font=fontStr(fs); g.direction='ltr'; g.textAlign='left'; g.textBaseline='alphabetic';
-      let cx=x; for (const p of parts){ g.fillText(p.ch, cx+p.l, y); cx+=p.w+p.gap; } } };
+      let cx=x+lead; for (const p of parts){ g.fillText(p.ch, cx+p.l, y); cx+=p.w+p.gap; } } };
   }
   const m = measure(s, sz, sym && !/[−×÷+=±]/.test(s) ? false : false);
   let padL=0, padR=0;
@@ -554,6 +556,15 @@ function rowBox(list, sz){
       if (g.strokeRect) g.strokeRect(x+sz*.05, y-ph, pw, ph+sz*.08); g.restore();
       if (HITS) HITS.push({x, y:y-ph, w:pw+sz*.1, h:ph+sz*.12, o0:list.pos, o1:list.pos, area:0}); } }; }
   const kids=[]; let prevOpLike=true, eqx=null, acc=0;
+  // numbers read left to right: a number split by an over/underline (٣,خط{٥}) keeps its digit order
+  const isNum = n => n && ((n.t==='txt' && n.k==='num') || ((n.t==='bar'||n.t==='under') && n.c && n.c.length>0 && n.c.every(isNum)));
+  if (list.some(n=>n.t==='bar'||n.t==='under')){
+    const L0=list.map((n,i)=> (n.t==='txt' && n.k==='comma' && isNum(list[i-1]) && isNum(list[i+1])) ? {...n,s:'\uE02C',k:'num'} : n);
+    const L=[]; for (const n of L0){ const p=L[L.length-1]; if (p && p.t==='txt' && p.k==='num' && n.t==='txt' && n.k==='num') L[L.length-1]={...p,s:p.s+n.s,o1:n.o1}; else L.push(n); }
+    const out=[]; let i=0;
+    while(i<L.length){ if(isNum(L[i])){ let j=i; while(j<L.length && isNum(L[j])) j++; const run=L.slice(i,j); if (run.some(n=>n.t!=='txt')) run.reverse(); out.push(...run); i=j; } else out.push(L[i++]); }
+    list=Object.assign(out,{pos:list.pos});
+  }
   for (const n of list){
     if (eqx===null && n.t==='txt' && n.s==='=') eqx=acc;
     if (n.t==='space'){ kids.push({w:sz*.18,a:0,d:0,draw(){}}); acc+=sz*.18; continue; }
@@ -1428,8 +1439,25 @@ const csel=$('color'), custom=$('custom');
 for (const [name,c] of COLORS){ const o=document.createElement('option'); o.value=c; o.textContent=name; csel.appendChild(o); }
 const oc=document.createElement('option'); oc.value='custom'; oc.textContent='آخر'; csel.appendChild(oc);
 function setColor(c){ st.color=c; save('aeq-color', c); const known=COLORS.some(x=>x[1]===c); csel.value = known ? c : 'custom'; custom.value = /^#[0-9a-f]{6}$/i.test(c)?c:'#000000'; update(); }
-csel.addEventListener('change',()=>{ if (csel.value==='custom') custom.click(); else setColor(csel.value); });
-custom.addEventListener('input',()=>setColor(custom.value));
+// with part of the text selected, a color applies to that part only: لون{أحمر}{…}
+let colorSel=null;
+const selRange=()=>{ const a=src.selectionStart, b=src.selectionEnd; return a<b && src.value.slice(a,b).trim() ? [a,b] : null; };
+function colorPart(c, r){
+  const name=(COLORS.find(x=>x[1]===c)||[])[0] || c;
+  const [a,b]=r, part=src.value.slice(a,b), txt='لون{'+name+'}{'+part+'}';
+  src.focus(); src.setRangeText(txt, a, b, 'end'); src.setSelectionRange(a, a+txt.length);
+  snap(true); schedule(); flash('تلوّن الجزء المحدد فقط.');
+  const known=COLORS.some(x=>x[1]===st.color); csel.value = known ? st.color : 'custom';
+}
+csel.addEventListener('mousedown',()=>{ colorSel=selRange(); });
+csel.addEventListener('focus',()=>{ if(!colorSel) colorSel=selRange(); });
+csel.addEventListener('change',()=>{ const r=colorSel||selRange(); colorSel=null;
+  if (csel.value==='custom'){ customSel=r; custom.click(); return; }
+  if (r) colorPart(csel.value, r); else setColor(csel.value); });
+csel.addEventListener('blur',()=>{ setTimeout(()=>{ colorSel=null; },0); });
+let customSel=null;
+custom.addEventListener('input',()=>{ if(!customSel) setColor(custom.value); });
+custom.addEventListener('change',()=>{ if(customSel){ const r=customSel; customSel=null; colorPart(custom.value, r); } });
 
 // settings
 $('size').addEventListener('change', e => { const v=+e.target.value; if (v>=10 && v<=60){ st.pt=v; save('aeq-pt',v); schedule(); } });
