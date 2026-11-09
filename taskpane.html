@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UULA Arabic Math</title>
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#insertDoc{order:99;margin-inline-start:auto}</style>
+<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#replaceMode{order:98;margin-inline-start:auto}#insertDoc{order:99}#insertDoc:first-child{margin-inline-start:auto}</style>
 </head><body>
 
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -308,6 +308,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
+        <button class="ib" id="replaceMode" type="button" hidden aria-pressed="false" aria-label="وضع الاستبدال"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3"/><path d="M16 13H5M8 10l-3 3 3 3"/></svg></button>
         <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
@@ -1689,16 +1690,19 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-const ADDIN_VER='20';
+const ADDIN_VER='21';
+const SLIDE_W=540; // UULA booklet slides are 540 pt wide; «outside on the right» starts just after that
 function officeInsert(data, type, place){
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
-  const info = place && place.info; if (place && typeof place.left !== 'number') place = null;
-  const target = place ? { oldId: place.id, left: place.left + place.width - w, top: place.top } : null; // same right edge and same top as the old one
+  const info = place && place.info, outside = place && place.outside;
+  if (place && !outside && typeof place.left !== 'number') place = null;
+  const target = outside ? { oldId: place.refId, left: SLIDE_W + 18, top: place.top } : place ? { oldId: place.id, left: place.left + place.width - w, top: place.top } : null; // replace: same right edge and top as the old one
   if (target){ opts.imageLeft = target.left; opts.imageTop = target.top; }
   Office.context.document.setSelectedDataAsync(data, opts, async r => {
     if (r.status !== Office.AsyncResultStatus.Succeeded){ flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
-    if (target){ await moveNewest(target); const gone = await deleteOld(target.oldId);
+    if (target && outside){ await moveNewest(target); flash('أُدرجت المعادلة خارج الشريحة على اليمين.'); }
+    else if (target){ await moveNewest(target); const gone = await deleteOld(target.oldId);
       flash(gone ? 'وُضعت المعادلة مكان القديمة وحُذفت القديمة.' : 'وُضعت المعادلة مكانها، لكن تعذّر حذف القديمة فنُقلت خارج الشريحة.', gone); }
     else flash(info || ('أُدرجت المعادلة في الوسط (لم يكن هناك عنصر محدد). v'+ADDIN_VER), !info);
     clearAfterInsert();
@@ -1772,10 +1776,21 @@ if (window.Office) Office.onReady(info => {
   $('insertDoc').hidden=false;
   if (info.host === Office.HostType.PowerPoint && Office.context.document.addHandlerAsync)
     Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, () => { onSelChange(); });
+  const isPPT = info.host === Office.HostType.PowerPoint;
+  let replaceOn = !!load('aeq-replace', false);
+  const showMode = () => { const b=$('replaceMode'); b.setAttribute('aria-pressed', String(replaceOn));
+    b.dataset.tip = replaceOn ? 'الاستبدال مفعّل: تنزل المعادلة مكان العنصر المحدد وتحذفه' : 'الاستبدال متوقف: تنزل المعادلة خارج الشريحة على اليمين';
+    $('insertDoc').dataset.tip = replaceOn ? 'حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر' : 'إدراج خارج الشريحة على اليمين'; $('insertDoc').removeAttribute('title'); };
+  if (isPPT){ $('replaceMode').hidden=false; showMode();
+    $('replaceMode').addEventListener('click', () => { replaceOn=!replaceOn; save('aeq-replace', replaceOn); showMode(); flash(replaceOn ? 'الاستبدال مفعّل.' : 'الاستبدال متوقف: الإدراج خارج الشريحة على اليمين.'); }); }
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
     const b64 = await new Promise(res => { const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
-    const place = info.host === Office.HostType.PowerPoint ? await takeSelectedPlace() : null;
+    let place = null;
+    if (isPPT && replaceOn) place = await takeSelectedPlace();
+    else if (isPPT && hasPPT()){ // not replacing: put it just right of the slide, level with whatever is selected (else near the top)
+      const now = await readSelection(); const ref = now.id ? now : (picStillMeant() ? lastPic : null);
+      place = { outside: true, refId: ref && ref.id, top: ref ? ref.top : 40 }; } // refId: never move the selected object itself
     pushHistory(src.value); officeInsert(b64, Office.CoercionType.Image, place);
   });
 });
