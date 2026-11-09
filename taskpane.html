@@ -121,7 +121,7 @@ textarea{width:100%;min-height:150px;resize:vertical;font-family:var(--f-body);f
 .err{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 textarea.bad{border-color:var(--warn)}
 .sheetbox{background:var(--sheet);border-radius:8px;border:1px solid var(--line);min-height:96px;display:grid;place-items:center;padding:8px;overflow:auto;background-image:linear-gradient(45deg,#f1f3f6 25%,transparent 25%),linear-gradient(-45deg,#f1f3f6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#f1f3f6 75%),linear-gradient(-45deg,transparent 75%,#f1f3f6 75%);background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0}
-.sheetbox.dark{background-color:#1d2633;background-image:none}
+.sheetbox.dark{background-color:#000000;background-image:none}.sheetbox.dark2{background-color:#101217;background-image:none}
 #out{max-width:100%;max-height:130px;width:auto;height:auto;object-fit:contain;cursor:text;display:block}
 .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{font:inherit;font-size:.85rem;font-weight:600;border-radius:7px;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
@@ -1103,7 +1103,7 @@ function update(){
     const s = text;
     curBlobPromise = new Promise(res => canvas.toBlob(b => res(b), 'image/png')).then(b => withMeta(b, s));
     curBlobPromise.then(b => { if (pngUrl) URL.revokeObjectURL(pngUrl); pngUrl = URL.createObjectURL(b); out.src = pngUrl; st.lastPng=b; });
-    { const h=st.color.replace('#',''); const r=parseInt(h.slice(0,2),16), g2=parseInt(h.slice(2,4),16), b2=parseInt(h.slice(4,6),16); $('sheet').classList.toggle('dark', st.darkBg || (0.299*r+0.587*g2+0.114*b2) > 200); }
+    { const h=st.color.replace('#',''); const r=parseInt(h.slice(0,2),16), g2=parseInt(h.slice(2,4),16), b2=parseInt(h.slice(4,6),16); const light=(0.299*r+0.587*g2+0.114*b2) > 200; $('sheet').classList.toggle('dark', st.darkBg===1); $('sheet').classList.toggle('dark2', st.darkBg===2 || (!st.darkBg && light)); }
     save('aeq-draft', text);
   } catch(e){
     err.innerHTML=''; err.append(e.message+' ');
@@ -1609,7 +1609,16 @@ $('weight').addEventListener('change', e => { const r=fmtSel.weight||selRange();
   st.weight=e.target.value; save('aeq-weight',st.weight); ensureFont().then(update); });
 function setAlign(v){ st.align=v; save('aeq-align3', v); document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===v))); update(); }
 document.querySelectorAll('#align button').forEach(b=>b.addEventListener('click',()=>setAlign(b.dataset.v)));
-$('darkBg').addEventListener('click', () => { st.darkBg=!st.darkBg; save('aeq-dark', st.darkBg); $('darkBg').setAttribute('aria-pressed', String(st.darkBg)); update(); });
+// dark preview cycles: off → black → #101217 (rgb 16 18 23) → off; the writing turns white while dark, and back after
+let colorBeforeDark=null;
+$('darkBg').addEventListener('click', () => {
+  st.darkBg = ((st.darkBg|0) + 1) % 3;
+  $('darkBg').setAttribute('aria-pressed', String(!!st.darkBg));
+  $('darkBg').dataset.tip = ['معاينة على خلفية داكنة','الخلفية: أسود — اضغط للخلفية الثانية','الخلفية: 16 18 23 — اضغط للإيقاف'][st.darkBg];
+  if (st.darkBg===1){ if (String(st.color).toLowerCase()!=='#ffffff'){ colorBeforeDark=st.color; setColor('#ffffff'); } else update(); flash('خلفية سوداء، والكتابة بيضاء.'); }
+  else if (st.darkBg===2){ update(); flash('الخلفية الثانية (16 18 23).'); }
+  else { if (colorBeforeDark && String(st.color).toLowerCase()==='#ffffff') setColor(colorBeforeDark); else update(); colorBeforeDark=null; flash('رجعت المعاينة العادية.'); }
+});
 $('scale').addEventListener('change', e => { st.scale=+e.target.value; save('aeq-scale',st.scale); update(); });
 function ensureFont(w){
   const fams=["UULA Sans","UULA Maz1","UULA Maz2"];
@@ -1679,7 +1688,7 @@ document.addEventListener('paste', e => {
 // every time the tool opens: black, 12 pt, Regular, normal lines, right-aligned
 st.pt=12; st.weight='400'; st.scale=load('aeq-scale',6);
 st.align='right'; document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===st.align)));
-st.darkBg=load('aeq-dark',false); $('darkBg').setAttribute('aria-pressed', String(st.darkBg));
+st.darkBg=0; $('darkBg').setAttribute('aria-pressed','false'); // opens in the normal preview, like the other defaults
 st.strokeMul=1;
 { const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight; $('scale').value=st.scale;
 src.value = load('aeq-draft', null) ?? EXAMPLES[2][1];
