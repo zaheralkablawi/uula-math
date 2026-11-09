@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UULA Arabic Math</title>
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#fmtMode{order:97;margin-inline-start:auto}.credit{position:relative}.gearwrap{position:relative;display:inline-block;margin-inline-start:6px;vertical-align:middle}.gearbtn{border:0;background:none;color:#9aa3af;cursor:pointer;padding:2px;display:inline-grid;place-items:center}.gearbtn:hover{color:#5d6878}.gearpop{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9dfe7;border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:8px;z-index:20;white-space:nowrap}.swlabel{font:600 12px -apple-system,'Segoe UI',sans-serif}#insertDoc.replacing{box-shadow:0 0 0 3px #e8590c}.fmtbtn{height:32px;min-width:46px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:8px;background:#f1f3f6;color:#4a5566;font:700 11px -apple-system,'Segoe UI',sans-serif;letter-spacing:.04em;cursor:pointer}.fmtbtn[aria-pressed="true"]{border-color:#7c3aed;background:#f3edff;color:#6d28d9}.swbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:999px;background:#f1f3f6;color:#6b7481;cursor:pointer}.swbtn .sw-track{position:relative;width:30px;height:17px;border-radius:999px;background:#c3cad4;transition:background .15s}.swbtn .sw-knob{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .3);transition:right .15s}.swbtn[aria-pressed="true"]{border-color:#e8590c;background:#fff1e6;color:#c2410c}.swbtn[aria-pressed="true"] .sw-track{background:#e8590c}.swbtn[aria-pressed="true"] .sw-knob{right:15px}#insertDoc{order:99}#insertDoc:first-child{margin-inline-start:auto}</style>
+<style>:root{color-scheme:dark}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#insertDoc{margin-inline-start:auto}.repbtn[aria-pressed="true"]{background:#e8590c!important;border-color:#ff7a2f!important;color:#fff!important}.gearbtn{border:0;background:none;color:#9aa3af;cursor:pointer;padding:2px;display:inline-grid;place-items:center}.gearbtn:hover{color:#5d6878}.gearpop{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#191c24;border:1px solid #2e3442;border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:8px;z-index:20;white-space:nowrap}.swlabel{font:600 12px -apple-system,'Segoe UI',sans-serif}#insertDoc.replacing{box-shadow:0 0 0 3px #e8590c}.fmtbtn{height:32px;min-width:46px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:8px;background:#f1f3f6;color:#4a5566;font:700 11px -apple-system,'Segoe UI',sans-serif;letter-spacing:.04em;cursor:pointer}.fmtbtn[aria-pressed="true"]{border-color:#7c3aed;background:#f3edff;color:#6d28d9}.swbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 8px;border:1.5px solid #3a4152;border-radius:999px;background:#20242e;color:#9aa2b1;cursor:pointer}.swbtn .sw-track{position:relative;width:30px;height:17px;border-radius:999px;background:#3a4152;transition:background .15s}.swbtn .sw-knob{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .3);transition:right .15s}.swbtn[aria-pressed="true"]{border-color:#ff7a2f;background:#3a2014;color:#ffb27a}.swbtn[aria-pressed="true"] .sw-track{background:#e8590c}.swbtn[aria-pressed="true"] .sw-knob{right:15px}#insertDoc{order:99}#insertDoc:first-child{margin-inline-start:auto}</style>
 </head><body>
 
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -21,21 +21,15 @@
 <style>
 /* Layout: workbench — editor column + live preview "sheet" (the slide), settings under preview. RTL throughout. */
 :root{
-  --bg:#f3f5f8; --panel:#ffffff; --ink:#18212e; --muted:#5d6878; --line:#d9dfe7;
-  --accent:#2f6fde; --accent-ink:#ffffff; --accent-soft:#e7effc; --sheet:#ffffff; --code:#f6f8fb;
-  --ok:#1f8a4c; --warn:#b4541a;
+  /* UULA app identity: deep navy-black surfaces, blue accent, purple/blue glow */
+  --bg:#111318; --panel:#191c24; --ink:#f4f6fa; --muted:#9aa2b1; --line:#2a2f3b;
+  --accent:#2f6fe4; --accent-ink:#ffffff; --accent-soft:#1c2a47; --sheet:#ffffff; --code:#14171e;
+  --ok:#5cc58a; --warn:#ff8a5c; --glow:linear-gradient(135deg,#1b0f4a 0%,#2a0f6b 45%,#0a1aa8 100%);
   --f-display:"UULA Sans",sans-serif;
   --f-body:"UULA Sans","UULA Maz1","UULA Maz2",sans-serif;
   --f-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#11161e; --panel:#19202b; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3442;
-  --accent:#6b9cf0; --accent-ink:#0d1420; --accent-soft:#1e2b42; --sheet:#ffffff; --code:#141a23;
-  --ok:#5cc58a; --warn:#f0a06b; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#11161e; --panel:#19202b; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3442;
-  --accent:#6b9cf0; --accent-ink:#0d1420; --accent-soft:#1e2b42; --sheet:#ffffff; --code:#141a23;
-  --ok:#5cc58a; --warn:#f0a06b; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;direction:rtl}
 .wrap{max-width:1100px;margin:0 auto;padding-block:10px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:10px}
@@ -56,6 +50,19 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .ib:hover{border-color:var(--accent);background:var(--accent-soft)}
 .ib[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .settings.fmt{padding-bottom:2px}
+header{background:var(--glow);border-radius:16px;padding:14px 16px;box-shadow:0 6px 24px rgb(42 15 107 / .35)}
+h1{display:flex;align-items:baseline;gap:12px;color:#fff}
+h1 .logo{font-weight:800;letter-spacing:.08em;font-size:1.25rem}
+h1 .sub{font-weight:500;font-size:.95rem;color:#c9cdf7}
+.panel{border-radius:16px;background:var(--panel);border-color:var(--line)}
+textarea{background:var(--code);border-color:var(--line);border-radius:12px}
+textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgb(47 111 228 / .35)}
+.ib,.mini,.toolbar button,.chip,.ico,select,.colorbtn,.seg button{background:#20242e;border-color:#2e3442;color:var(--ink)}
+.ib{color:#cfd6e4}.ib:hover,.ico:hover{background:#262c39;border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;border-radius:12px}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:#8fb4ff}
+.tabs button[aria-selected="true"]{color:#fff}
+.credit{color:#6f7787}
 .credit{text-align:center;font-size:.72rem;color:var(--muted);padding:10px 0 4px}
 .cwrap{position:relative}
 .colorbtn{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 7px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--muted);cursor:pointer}
@@ -200,12 +207,12 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
 <div class="wrap">
   <header>
-    <h1 dir="ltr"><span class="root">UULA</span> Arabic Math</h1>
+    <h1 dir="ltr"><span class="logo">U U L Λ</span><span class="sub">Arabic Math</span></h1>
   </header>
 
   <div class="grid">
     <section class="panel" aria-label="كتابة المعادلة">
-      <div class="symhead"><label class="label" for="src">المعادلة</label><span class="iconbar"><button class="ib" id="copySrc" type="button" title="نسخ النص" aria-label="نسخ النص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button><button class="ib" id="cutSrc" type="button" title="قص" aria-label="قص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="15" r="2.5"/><path d="M7.3 13.2 15 3M12.7 13.2 5 3"/></svg></button><button class="ib" id="pasteSrc" type="button" title="لصق" aria-label="لصق"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="14" rx="2"/><path d="M7.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/><path d="M7.5 9.5h5M7.5 13h5"/></svg></button><button class="ib" id="clearSrc" type="button" title="مسح الكل (يمكن التراجع بـ ⌘Z)" aria-label="مسح الكل"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 11a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-11"/></svg></button><span class="histwrap"><button class="ib" id="histBtn" type="button" title="السابقة: آخر ٢٠ معادلة نسختها أو أدرجتها" aria-label="السابقة" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.5v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg></button><div class="hist" id="hist" hidden></div></span><button class="ib" id="undoBtn" type="button" title="تراجع (⌘Z)" aria-label="تراجع"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5l3.5 3.5-3.5 3.5"/><path d="M16.5 8H8a4.5 4.5 0 0 0 0 9h3"/></svg></button><button class="ib" id="redoBtn" type="button" title="إعادة (⌘⇧Z)" aria-label="إعادة"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8H12a4.5 4.5 0 0 1 0 9H9"/></svg></button><button class="ib" id="mathBtn" type="button" title="حدّد كلامًا ثم اضغط: يتحول إلى رموز رياضيات، أو يعود إلى كتابة عادية" aria-label="رموز رياضيات / كتابة عادية"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><text x="10" y="10.5" font-size="10.5" font-weight="700" font-family="UULA Sans" fill="currentColor" text-anchor="middle" direction="rtl">أب</text><path d="M4 14.5h12M13.5 12.5l2.5 2-2.5 2M6.5 12.5L4 14.5l2.5 2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
+      <div class="symhead"><label class="label" for="src">المعادلة</label><span class="iconbar"><button class="ib" id="copySrc" type="button" title="نسخ النص" aria-label="نسخ النص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button><button class="ib" id="cutSrc" type="button" title="قص" aria-label="قص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="15" r="2.5"/><path d="M7.3 13.2 15 3M12.7 13.2 5 3"/></svg></button><button class="ib" id="pasteSrc" type="button" title="لصق" aria-label="لصق"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="14" rx="2"/><path d="M7.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/><path d="M7.5 9.5h5M7.5 13h5"/></svg></button><button class="ib" id="clearSrc" type="button" title="مسح الكل (يمكن التراجع بـ ⌘Z)" aria-label="مسح الكل"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 11a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-11"/></svg></button><span class="histwrap"><button class="ib" id="histBtn" type="button" title="السابقة: آخر ٢٠ معادلة نسختها أو أدرجتها" aria-label="السابقة" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.5v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg></button><div class="hist" id="hist" hidden></div></span><button class="ib" id="undoBtn" type="button" title="تراجع (⌘Z)" aria-label="تراجع"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5l3.5 3.5-3.5 3.5"/><path d="M16.5 8H8a4.5 4.5 0 0 0 0 9h3"/></svg></button><button class="ib" id="redoBtn" type="button" title="إعادة (⌘⇧Z)" aria-label="إعادة"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8H12a4.5 4.5 0 0 1 0 9H9"/></svg></button><button class="ib" id="mathBtn" type="button" title="حدّد كلامًا ثم اضغط: يتحول إلى رموز رياضيات، أو يعود إلى كتابة عادية" aria-label="رموز رياضيات / كتابة عادية"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><text x="10" y="10.5" font-size="10.5" font-weight="700" font-family="UULA Sans" fill="currentColor" text-anchor="middle" direction="rtl">أب</text><path d="M4 14.5h12M13.5 12.5l2.5 2-2.5 2M6.5 12.5L4 14.5l2.5 2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="ib repbtn" id="replaceMode" type="button" hidden aria-pressed="false" aria-label="وضع الاستبدال"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3"/><path d="M16 13H5M8 10l-3 3 3 3"/></svg></button></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
       <div class="settings fmt">
         <div class="field">
           <div class="swatches cwrap"><button type="button" class="colorbtn" id="colorBtn" data-tip="اللون" aria-label="اللون" aria-haspopup="true" aria-expanded="false"><span class="sw" id="colorSw"></span><svg viewBox="0 0 10 6" width="9" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cpop" id="cpop" hidden></div><input type="color" id="custom" class="vh" tabindex="-1" aria-hidden="true"></div>
@@ -253,8 +260,8 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <button type="button" class="ico" data-ins="'" title="شرطة (أ')" aria-label="شرطة (أ')"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><rect x="8" y="5" width="11" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><path d="M3.5 2.5L5.5 7.5M6.8 2.5L8.8 7.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button type="button" class="ico" data-ins="زاوية{|}" title="زاوية" aria-label="زاوية"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><path d="M4 6L11 1.5L18 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="8.5" width="12" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
           <button type="button" class="ico" data-ins="نها{|}" title="نهاية" aria-label="نهاية"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><text x="11" y="9" font-size="9" font-family="UULA Sans" fill="currentColor" text-anchor="middle">نها</text><rect x="5" y="11" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
-          <button type="button" class="ico" data-ins="مجموع{|}{}" title="مجموع بحدود" aria-label="مجموع بحدود"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><path d="M15 3.5H7L12 9L7 14.5H15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="8" y="0.3" width="6" height="2.6" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><rect x="8" y="15.2" width="6" height="2.6" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
-          <button type="button" class="ico" data-ins="تكامل{|}{}" title="تكامل بحدود" aria-label="تكامل بحدود"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><path d="M16 2Q13.5 1 13.5 4V14Q13.5 17 11 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="1" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><rect x="3" y="13" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
+          <button type="button" class="ico" data-ins="مجموع{|}{}" title="مجموع بحدود" aria-label="مجموع بحدود"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><path d="M7 3.5H15L10 9L15 14.5H7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="8" y="0.3" width="6" height="2.6" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><rect x="8" y="15.2" width="6" height="2.6" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
+          <button type="button" class="ico" data-ins="تكامل{|}{}" title="تكامل بحدود" aria-label="تكامل بحدود"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><path d="M12 2Q14.5 1 14.5 4V14Q14.5 17 17 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="1" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><rect x="7" y="13" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
           <button type="button" class="ico" data-ins="توافيق{|}{}" title="توافيق" aria-label="توافيق"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><rect x="17" y="11" width="4" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><text x="11" y="13" font-size="12" font-family="UULA Sans" fill="currentColor" text-anchor="middle">ق</text><rect x="1" y="11" width="4" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
           <button type="button" class="ico" data-ins="تباديل{|}{}" title="تباديل" aria-label="تباديل"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><rect x="17" y="11" width="4" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><text x="11" y="13" font-size="12" font-family="UULA Sans" fill="currentColor" text-anchor="middle">ل</text><rect x="1" y="11" width="4" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
           <button type="button" class="ico" data-ins="مربع{|}" title="مربع حول الناتج" aria-label="مربع حول الناتج"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><rect x="2" y="2" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="6" y="5.5" width="10" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
@@ -308,16 +315,15 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
-        <button class="fmtbtn" id="fmtMode" type="button" hidden aria-pressed="false" aria-label="صيغة الصورة">PNG</button>
         <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
-        <select id="scale" data-tip="دقة الصورة" aria-label="دقة الصورة"><option value="3">×3</option><option value="4">×4</option><option value="6" selected>×6</option></select>
+        
         <span class="status" id="status" role="status"></span>
       </div>
     </section>
   </div>
-  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer">الإصدار ٢</span><span class="gearwrap" id="gearWrap" hidden><button type="button" class="gearbtn" id="gearBtn" aria-label="إعدادات" aria-expanded="false"><svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg></button><div class="gearpop" id="gearPop" hidden><button class="swbtn" id="replaceMode" type="button" role="switch" aria-checked="false" aria-pressed="false" aria-label="وضع الاستبدال"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3"/><path d="M16 13H5M8 10l-3 3 3 3"/></svg><span class="swlabel">استبدال العنصر المحدد</span><span class="sw-track"><span class="sw-knob"></span></span></button></div></span></footer>
+  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer">الإصدار ٣</span></footer>
 </div>
 
 <script>
@@ -1617,7 +1623,6 @@ $('darkBg').addEventListener('click', () => {
   if (st.darkBg){ if (String(st.color).toLowerCase()!=='#ffffff'){ colorBeforeDark=st.color; setColor('#ffffff'); } else update(); }
   else { if (colorBeforeDark && String(st.color).toLowerCase()==='#ffffff') setColor(colorBeforeDark); else update(); colorBeforeDark=null; }
 });
-$('scale').addEventListener('change', e => { st.scale=+e.target.value; save('aeq-scale',st.scale); update(); });
 function ensureFont(w){
   const fams=["UULA Sans","UULA Maz1","UULA Maz2"];
   return Promise.all(fams.map(f=>document.fonts.load(`${w||st.weight} 40px "${f}"`,'٠١٢سص√∈').catch(()=>{}))).then(()=>{});
@@ -1684,11 +1689,11 @@ document.addEventListener('paste', e => {
 
 // init
 // every time the tool opens: black, 12 pt, Regular, normal lines, right-aligned
-st.pt=12; st.weight='400'; st.scale=load('aeq-scale',6);
+st.pt=12; st.weight='400'; st.scale=6;
 st.align='right'; document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===st.align)));
 st.darkBg=0; $('darkBg').setAttribute('aria-pressed','false'); // opens in the normal preview, like the other defaults
 st.strokeMul=1;
-{ const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight; $('scale').value=st.scale;
+{ const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight;
 src.value = load('aeq-draft', null) ?? EXAMPLES[2][1];
 snap(true);
 setColor('#000000');
@@ -1801,19 +1806,15 @@ if (window.Office) Office.onReady(info => {
     Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, () => { onSelChange(); });
   const isPPT = info.host === Office.HostType.PowerPoint;
   let replaceOn = !!load('aeq-replace', false);
-  const showMode = () => { const b=$('replaceMode'); b.setAttribute('aria-pressed', String(replaceOn)); b.setAttribute('aria-checked', String(replaceOn));
+  const showMode = () => { const b=$('replaceMode'); b.setAttribute('aria-pressed', String(replaceOn));
     b.dataset.tip = replaceOn ? 'الاستبدال مفعّل: تنزل المعادلة مكان العنصر المحدد وتحذفه' : 'الاستبدال متوقف: تنزل المعادلة في وسط الشريحة';
     $('insertDoc').classList.toggle('replacing', replaceOn); $('insertDoc').dataset.tip = replaceOn ? 'حدد الكائن المطلوب من الشريحة ثم اضغط هذا الزر' : 'إدراج في وسط الشريحة'; $('insertDoc').removeAttribute('title'); };
-  // picture format: PNG (default) or SVG (vector, stays sharp at any size)
-  let svgOn = !!load('aeq-svg', false);
-  const showFmt = () => { const b=$('fmtMode'); b.textContent = svgOn ? 'SVG' : 'PNG'; b.setAttribute('aria-pressed', String(svgOn));
-    b.dataset.tip = svgOn ? 'الإدراج بصيغة SVG (رسم متجه بدقة عالية) — اضغط للعودة إلى PNG' : 'الإدراج بصيغة PNG — اضغط للتجربة بصيغة SVG'; };
-  $('fmtMode').hidden=false; showFmt();
-  $('fmtMode').addEventListener('click', () => { svgOn=!svgOn; save('aeq-svg', svgOn); showFmt(); });
-  if (isPPT){ $('gearWrap').hidden=false; showMode();
-    $('gearBtn').addEventListener('click', e => { e.stopPropagation(); const p=$('gearPop'); p.hidden=!p.hidden; $('gearBtn').setAttribute('aria-expanded', String(!p.hidden)); });
-    $('gearPop').addEventListener('click', e => e.stopPropagation());
-    document.addEventListener('click', () => { $('gearPop').hidden=true; $('gearBtn').setAttribute('aria-expanded','false'); });
+  // SVG keeps its text live, so it needs the booklet fonts on this device; without them we insert PNG
+  let svgOn = false;
+  const FONTS = ['UULA Sans','Mazeri Arabic Math symbol','Mazeri Arabic Math symbol2'];
+  if (window.FontFace) Promise.all(FONTS.map((f,i) => new FontFace('aeq-probe-'+i, 'local("'+f+'")').load().then(()=>true, ()=>false)))
+    .then(r => { svgOn = r.every(Boolean); }).catch(()=>{});
+  if (isPPT){ $('replaceMode').hidden=false; showMode();
     $('replaceMode').addEventListener('click', () => { replaceOn=!replaceOn; save('aeq-replace', replaceOn); showMode();  }); }
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
