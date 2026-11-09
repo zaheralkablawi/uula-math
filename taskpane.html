@@ -51,6 +51,15 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .tg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:4px 6px}
 .symhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .mini{font:inherit;font-size:.75rem;border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:6px;padding:1px 8px;cursor:pointer}
+.iconbar{display:inline-flex;gap:4px;align-items:center}
+.ib{display:inline-grid;place-items:center;width:30px;height:28px;border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:7px;cursor:pointer;padding:0}
+.ib:hover{border-color:var(--accent);background:var(--accent-soft)}
+.ib[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.settings.fmt{padding-bottom:2px}
+#scale{width:auto}
+.btn.iconbtn{display:inline-grid;place-items:center;min-width:44px;padding-inline:10px}
+.ib[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.favbtn{display:inline-grid;place-items:center;padding:2px 6px}
 .histwrap{position:relative;display:inline-block}
 .hist{position:absolute;inset-inline-start:0;top:calc(100% + 4px);z-index:15;width:min(360px,86vw);max-height:340px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:6px;display:grid;gap:4px}
 .hist .hrow{display:flex;align-items:center;gap:4px}
@@ -179,7 +188,24 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
   <div class="grid">
     <section class="panel" aria-label="كتابة المعادلة">
-      <div class="symhead"><label class="label" for="src">المعادلة</label><button class="mini" id="copySrc" type="button">نسخ النص</button><span class="histwrap"><button class="mini" id="histBtn" type="button" title="آخر ٢٠ معادلة نسختها أو أدرجتها" aria-haspopup="true" aria-expanded="false">السابقة</button><div class="hist" id="hist" hidden></div></span><button class="mini" id="clearSrc" type="button" title="مسح كل ما في مربع الكتابة (يمكن التراجع بـ ⌘Z)">مسح</button><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
+      <div class="symhead"><label class="label" for="src">المعادلة</label><span class="iconbar"><button class="ib" id="copySrc" type="button" title="نسخ النص" aria-label="نسخ النص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button><button class="ib" id="cutSrc" type="button" title="قص" aria-label="قص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="15" r="2.5"/><path d="M7.3 13.2 15 3M12.7 13.2 5 3"/></svg></button><button class="ib" id="pasteSrc" type="button" title="لصق" aria-label="لصق"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="14" rx="2"/><path d="M7.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/><path d="M7.5 9.5h5M7.5 13h5"/></svg></button><button class="ib" id="clearSrc" type="button" title="مسح الكل (يمكن التراجع بـ ⌘Z)" aria-label="مسح الكل"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 11a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-11"/></svg></button><span class="histwrap"><button class="ib" id="histBtn" type="button" title="السابقة: آخر ٢٠ معادلة نسختها أو أدرجتها" aria-label="السابقة" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.5v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg></button><div class="hist" id="hist" hidden></div></span></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
+      <div class="settings fmt">
+        <div class="field">
+          <div class="swatches"><select id="color" data-tip="اللون" aria-label="اللون"></select><input type="color" id="custom" data-tip="لون آخر" aria-label="لون آخر"></div>
+        </div>
+        <div class="field">
+          <select id="size" data-tip="حجم الخط (pt)" aria-label="حجم الخط (pt)"><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14" selected>14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="22">22</option><option value="24">24</option><option value="26">26</option><option value="28">28</option><option value="32">32</option><option value="36">36</option><option value="40">40</option><option value="44">44</option><option value="48">48</option><option value="54">54</option><option value="60">60</option></select>
+        </div>
+        <div class="field">
+          <select id="weight" data-tip="سماكة الخط" aria-label="سماكة الخط"><option value="200">Thin</option><option value="300">Light</option><option value="400">Regular</option><option value="500">Medium</option><option value="700">Bold</option><option value="800">ExtraBold</option><option value="900">Heavy</option><option value="950">Black</option></select>
+        </div>
+        <div class="field">
+          <select id="strokeMul" data-tip="سماكة خطوط الجذر والكسر" aria-label="سماكة خطوط الجذر والكسر"><option value="0.75">رفيعة</option><option value="1" selected>عادية</option><option value="1.35">سميكة</option><option value="1.7">أسمك</option></select>
+        </div>
+        <div class="field">
+          <div class="seg" id="align" data-tip="المحاذاة" aria-label="المحاذاة" role="group" aria-label="المحاذاة"><button type="button" data-v="right" title="يمين" aria-label="يمين"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 7H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 12H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="center" title="وسط" aria-label="وسط"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 7H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.5 12H14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="left" title="يسار" aria-label="يسار"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 7H11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 12H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="eq" title="على علامة =" aria-label="على علامة ="><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M4 4.5H14M4 9.5H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+        </div>
+      </div>
       <textarea id="src" spellcheck="false"></textarea>
       <div class="sugg" id="sugg" hidden></div>
       <p class="err" id="err" role="status"></p>
@@ -269,30 +295,11 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
-        <button class="btn primary" id="insertDoc" type="button" hidden>إدراج</button>
-        <button class="btn" id="copyImg" type="button">نسخ الصورة</button>
-        <button class="mini" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة">◐ داكن</button>
+        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج في الشريحة أو المستند" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
+        <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
+        <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
+        <select id="scale" data-tip="دقة الصورة" aria-label="دقة الصورة"><option value="3">×3</option><option value="4">×4</option><option value="6" selected>×6</option></select>
         <span class="status" id="status" role="status"></span>
-      </div>
-      <div class="settings">
-        <div class="field">
-          <div class="swatches"><select id="color" data-tip="اللون" aria-label="اللون"></select><input type="color" id="custom" data-tip="لون آخر" aria-label="لون آخر"></div>
-        </div>
-        <div class="field">
-          <select id="size" data-tip="حجم الخط (pt)" aria-label="حجم الخط (pt)"><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14" selected>14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="22">22</option><option value="24">24</option><option value="26">26</option><option value="28">28</option><option value="32">32</option><option value="36">36</option><option value="40">40</option><option value="44">44</option><option value="48">48</option><option value="54">54</option><option value="60">60</option></select>
-        </div>
-        <div class="field">
-          <select id="weight" data-tip="سماكة الخط" aria-label="سماكة الخط"><option value="200">Thin</option><option value="300">Light</option><option value="400">Regular</option><option value="500">Medium</option><option value="700">Bold</option><option value="800">ExtraBold</option><option value="900">Heavy</option><option value="950">Black</option></select>
-        </div>
-        <div class="field">
-          <select id="strokeMul" data-tip="سماكة خطوط الجذر والكسر" aria-label="سماكة خطوط الجذر والكسر"><option value="0.75">رفيعة</option><option value="1" selected>عادية</option><option value="1.35">سميكة</option><option value="1.7">أسمك</option></select>
-        </div>
-        <div class="field">
-          <select id="scale" data-tip="دقة الصورة" aria-label="دقة الصورة"><option value="3">×3</option><option value="4">×4</option><option value="6" selected>×6</option></select>
-        </div>
-        <div class="field">
-          <div class="seg" id="align" data-tip="المحاذاة" aria-label="المحاذاة" role="group" aria-label="المحاذاة"><button type="button" data-v="right" title="يمين" aria-label="يمين"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 7H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 12H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="center" title="وسط" aria-label="وسط"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 7H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.5 12H14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="left" title="يسار" aria-label="يسار"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 7H11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 12H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="eq" title="على علامة =" aria-label="على علامة ="><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M4 4.5H14M4 9.5H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-        </div>
       </div>
     </section>
   </div>
@@ -327,7 +334,7 @@ const MAZ = {m1:0xE000, m2:0xE200};
 [[MAZ.m1,[0x76,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x7D,0x7E,0x80,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8A,0x8B,0x8C,0x8D,0x8E,0x8F,0x90,0x91,0x92,0x93,0x94,0x95,0x96,0x97,0x98,0x99,0x9A,0x9B,0x9C,0xB6,0xB9,0xBB,0xBC,0xBD]],
  [MAZ.m2,[0x75,0x76,0x89,0x8A,0x8D,0x8E,0x93,0x94,0x95,0x97,0x98,0x9A,0x9B,0x9C]]].forEach(([b,l])=>l.forEach(c=>REL.add(String.fromCharCode(b+c))));
 const MIRROR = {'<':'>','>':'<','≤':'≥','≥':'≤','∈':'∋','∋':'∈','∉':'∌','⊂':'⊃','⊃':'⊂','⊆':'⊇','⊇':'⊆','⊄':'⊅','⊅':'⊄','(':')',')':'(','[':']',']':'[','«':'»','»':'«'};
-const CMDS = [['تسطير','under'],['مربع','box'],['مصفوفة','mat'],['محدد','det'],['نظام','sys'],['قواعد','cases'],['قسمة','ldiv'],['عمودي','vert'],['شطب','strike'],['شطبتحت','strikeb'],['لون','color'],['زاوية','angle'],['نها','lim'],['مجموع','sum'],['تكامل','int'],['توافيق','comb'],['تباديل','perm'],['مثلث','triu'],['مستقيم','line'],['قوس','arc'],['متجه','vec'],['جذر','root'],['كسر','frac'],['مطلق','abs'],['خط','bar'],['\\sqrt','root'],['\\frac','frac'],['\\overline','bar'],['\\abs','abs']];
+const CMDS = [['تسطير','under'],['مربع','box'],['مصفوفة','mat'],['محدد','det'],['نظام','sys'],['قواعد','cases'],['قسمة','ldiv'],['عمودي','vert'],['شطب','strike'],['شطبتحت','strikeb'],['لون','color'],['حجم','size'],['سماكة','wt'],['زاوية','angle'],['نها','lim'],['مجموع','sum'],['تكامل','int'],['توافيق','comb'],['تباديل','perm'],['مثلث','triu'],['مستقيم','line'],['قوس','arc'],['متجه','vec'],['جذر','root'],['كسر','frac'],['مطلق','abs'],['خط','bar'],['\\sqrt','root'],['\\frac','frac'],['\\overline','bar'],['\\abs','abs']];
 
 function normalize(s){
   return s.replace(/<=/g,'≤').replace(/>=/g,'≥').replace(/!=/g,'≠').replace(/\+-/g,'±')
@@ -405,6 +412,8 @@ class P {
           const opt = () => this.peek()==='{' ? this.group() : null;
           if (t==='strike'||t==='strikeb'){ const c=this.group(); return {t:'strike',below:t==='strikeb',c,r:opt()}; }
           if (t==='color'){ const name=this.raw().trim(); return {t:'color',color:COLORNAME[name]||name,c:this.group()}; }
+          if (t==='size'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'size',pt:v>0?v:null,c:this.group()}; }
+          if (t==='wt'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'wt',w:v>0?v:null,c:this.group()}; }
           if (t==='ldiv'){ const n=this.group(), d=this.group(); const q=opt(); const steps=this.peek()==='{'?this.raw():null; return {t:'ldiv',n,d,q,steps}; }
           if (t==='vert') return {t:'vert',rows:this.raw()};
           if (t==='sys'||t==='cases'||t==='mat'||t==='det') return {t:'grid',kind:t,rows:splitRows(this.group())};
@@ -484,13 +493,29 @@ function parse(src){
 
 // ---------- layout ----------
 const mc = document.createElement('canvas').getContext('2d');
-const fontStr = (sz) => `${st.weight} ${sz}px "UULA Sans", "UULA Maz1", "UULA Maz2", sans-serif`;
+let CURW=null; // weight of the part being laid out/drawn (سماكة{…}{…}), else the global weight
+const curW = () => +(CURW||st.weight||400);
+const toLatinDigits = v => String(v).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const fontStr = (sz) => `${curW()} ${sz}px "UULA Sans", "UULA Maz1", "UULA Maz2", sans-serif`;
+// the Mazeri math fonts have a single weight: thicken their glyphs so symbols, letters and digits follow the text weight
+const PUA_RE=/[\uE000-\uE2FF]/;
+function boldify(g){
+  if (g.__fb || !g.strokeText) return g; g.__fb=true; const fill=g.fillText.bind(g);
+  g.fillText=function(t,x,y){ fill(t,x,y); const w=curW(); if (w<=420 || !PUA_RE.test(t)) return;
+    const m=/([\d.]+)px/.exec(g.font); const fs=m?+m[1]:16;
+    const only=[...t].filter(ch=>PUA_RE.test(ch)).length===[...t].length;
+    g.save(); g.lineWidth=fs*(w-400)/7000; g.lineJoin='round'; g.strokeStyle=g.fillStyle;
+    if (only) g.strokeText(t,x,y); else { // stroke only the Mazeri runs
+      let cx=x; const dir=g.direction; for (const ch of t){ const cw=g.measureText(ch).width; if (PUA_RE.test(ch)) g.strokeText(ch, dir==='rtl'? x : cx, y); cx+=cw; } }
+    g.restore(); };
+  return g;
+}
 function measure(s, sz, sym){
   mc.font = fontStr(sz, sym); mc.direction = 'ltr';
   const m = mc.measureText(s);
   return { w:m.width, a:m.actualBoundingBoxAscent||sz*.7, d:m.actualBoundingBoxDescent||0 };
 }
-const lw = sz => Math.max(.6, sz*(0.034 + 0.000042*(+st.weight||400))*(st.strokeMul||1));
+const lw = sz => Math.max(.6, sz*(0.034 + 0.000042*curW())*(st.strokeMul||1));
 
 function txtBox(n, sz, ctx){
   let s=n.s, sym = n.k==='bin'||n.k==='rel'||n.k==='sym'||n.k==='comma';
@@ -902,6 +927,9 @@ function box0(n, sz){
     case 'tri': return triBox(n, sz);
     case 'strike': return strikeBox(n, sz);
     case 'color': return colorBox(n, sz);
+    case 'size': return rowBox(n.c, n.pt ? sz*n.pt/(st.pt||14) : sz);
+    case 'wt': { const prev=CURW; CURW=n.w||prev; const b=rowBox(n.c, sz); const w=CURW; CURW=prev;
+      return { w:b.w, a:b.a, d:b.d, eqx:b.eqx, draw(g,x,y){ const p=CURW; CURW=w; const f=g.font; b.draw(g,x,y); CURW=p; g.font=f; } }; }
     case 'ldiv': return ldivBox(n, sz);
     case 'vert': return vertBox(n, sz);
     case 'grid': return gridBox(n, sz);
@@ -932,7 +960,7 @@ function render(src, target){
   let g;
   if (target){ g = target; }
   else { const k = st.scale; canvas.width = Math.ceil(W*k); canvas.height = Math.ceil(H*k);
-    g = canvas.getContext('2d'); g.setTransform(k,0,0,k,0,0); g.clearRect(0,0,W,H); }
+    g = boldify(canvas.getContext('2d')); g.setTransform(k,0,0,k,0,0); g.clearRect(0,0,W,H); }
   g.fillStyle = st.color;
   let y = pad;
   for (const b of boxes){ y += b.a;
@@ -1338,8 +1366,8 @@ for (const t of TABS){
   if (t.icon.startsWith('tool:')) b.innerHTML=TOOLEL[t.icon.slice(5)].innerHTML; else b.textContent=t.icon;
   b.addEventListener('click',()=>showTab(t.id)); $('tabs').appendChild(b);
 }
-{ const fe=document.createElement('button'); fe.type='button'; fe.id='favEdit'; fe.className='mini favbtn'; fe.textContent='تعديل'; fe.title='اضغط على أي أداة أو رمز لإضافته إلى المفضلة أو إزالته منها. ويمكنك دائمًا الضغط بالزر الأيمن.'; fe.setAttribute('aria-pressed','false');
-  fe.addEventListener('click', () => { favEdit=!favEdit; fe.setAttribute('aria-pressed', String(favEdit)); fe.textContent = favEdit ? 'تم' : 'تعديل';
+{ const fe=document.createElement('button'); fe.type='button'; fe.id='favEdit'; fe.className='mini favbtn'; fe.innerHTML='<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5l3 3L7 16H4v-3z"/><path d="M11 6l3 3"/></svg>'; fe.setAttribute('aria-label','تعديل المفضلة'); fe.title='اضغط على أي أداة أو رمز لإضافته إلى المفضلة أو إزالته منها. ويمكنك دائمًا الضغط بالزر الأيمن.'; fe.setAttribute('aria-pressed','false');
+  fe.addEventListener('click', () => { favEdit=!favEdit; fe.setAttribute('aria-pressed', String(favEdit)); fe.innerHTML = favEdit ? '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>' : '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5l3 3L7 16H4v-3z"/><path d="M11 6l3 3"/></svg>';
     if (editTools!==favEdit) $('editTools').click(); if (editSyms!==favEdit) $('editSyms').click(); showTab(curTab); });
   fe.classList.add('tabedit'); $('tabs').appendChild(fe); }
 // right-click on a favourite removes it
@@ -1399,6 +1427,18 @@ $('copyImg').addEventListener('click', () => {
       .catch(()=>{ flash('المتصفح منع النسخ هنا. اسحب الصورة إلى البوربوينت أو انسخها بالزر الأيمن.', false); pushHistory(code); });
   } catch(e){ flash('المتصفح منع النسخ هنا. اسحب الصورة إلى البوربوينت أو انسخها بالزر الأيمن.', false); pushHistory(code); }
 });
+$('cutSrc').addEventListener('click', () => {
+  let a=src.selectionStart, b=src.selectionEnd; if (a===b){ a=0; b=src.value.length; }
+  const part=src.value.slice(a,b); if (!part) { src.focus(); return; }
+  if (a===0 && b===src.value.length) pushHistory(src.value);
+  const done=()=>{ src.focus(); src.setRangeText('', a, b, 'end'); snap(true); schedule(); flash('قُصّ النص.'); };
+  navigator.clipboard.writeText(part).then(done).catch(()=>{ src.focus(); src.setSelectionRange(a,b); flash('المتصفح منع القص هنا. استخدم ⌘X.', false); });
+});
+$('pasteSrc').addEventListener('click', () => {
+  const ins = t => { if(!t) return; src.focus(); const a=src.selectionStart, b=src.selectionEnd; src.setRangeText(t, a, b, 'end'); snap(true); schedule(); };
+  if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(ins).catch(()=>{ src.focus(); flash('المتصفح منع اللصق من الزر هنا. استخدم ⌘V.', false); });
+  else { src.focus(); flash('استخدم ⌘V للصق.', false); }
+});
 $('clearSrc').addEventListener('click', () => {
   if (!src.value.trim()) { src.focus(); return; }
   pushHistory(src.value); // keep it in «السابقة» in case it is needed again
@@ -1406,7 +1446,7 @@ $('clearSrc').addEventListener('click', () => {
   snap(true); schedule(); flash('مُسح مربع الكتابة. للتراجع: ⌘Z أو «السابقة».');
 });
 $('copySrc').addEventListener('click', () => {
-  pushHistory(src.value); navigator.clipboard.writeText(src.value).then(()=>flash('نُسخ نص المعادلة.')).catch(()=>{ src.select(); flash('حدّد النص وانسخه يدويًا (⌘C).', false); });
+  pushHistory(src.value); const a0=src.selectionStart, b0=src.selectionEnd; navigator.clipboard.writeText(a0<b0 ? src.value.slice(a0,b0) : src.value).then(()=>flash(a0<b0 ? 'نُسخ الجزء المحدد.' : 'نُسخ نص المعادلة.')).catch(()=>{ src.select(); flash('حدّد النص وانسخه يدويًا (⌘C).', false); });
 });
 out.addEventListener('dragstart', () => pushHistory(src.value));
 out.addEventListener('click', e => {
@@ -1466,17 +1506,32 @@ custom.addEventListener('input',()=>{ if(!customSel) setColor(custom.value); });
 custom.addEventListener('change',()=>{ if(customSel){ const r=customSel; customSel=null; colorPart(custom.value, r); } });
 
 // settings
-$('size').addEventListener('change', e => { const v=+e.target.value; if (v>=10 && v<=60){ st.pt=v; save('aeq-pt',v); schedule(); } });
-$('weight').addEventListener('change', e => { st.weight=e.target.value; save('aeq-weight',st.weight); ensureFont().then(update); });
+function wrapSel(cmd, val, r){
+  const [a,b]=r, part=src.value.slice(a,b), txt=cmd+'{'+val+'}{'+part+'}';
+  src.focus(); src.setRangeText(txt, a, b, 'end'); src.setSelectionRange(a, a+txt.length); snap(true); schedule(); flash('طُبّق على الجزء المحدد فقط.');
+}
+const fmtSel={};
+for (const id of ['size','weight']){ const el=$(id);
+  el.addEventListener('mousedown',()=>{ fmtSel[id]=selRange(); });
+  el.addEventListener('focus',()=>{ if(!fmtSel[id]) fmtSel[id]=selRange(); });
+  el.addEventListener('blur',()=>setTimeout(()=>{ fmtSel[id]=null; },0)); }
+$('size').addEventListener('change', e => { const v=+e.target.value; const r=fmtSel.size||selRange(); fmtSel.size=null;
+  if (r){ wrapSel('حجم', v, r); e.target.value=String(st.pt); return; }
+  if (v>=10 && v<=60){ st.pt=v; save('aeq-pt',v); schedule(); } });
+$('weight').addEventListener('change', e => { const r=fmtSel.weight||selRange(); fmtSel.weight=null;
+  if (r){ const v=e.target.value; e.target.value=String(st.weight); ensureFont(v).then(()=>wrapSel('سماكة', v, r)); return; }
+  st.weight=e.target.value; save('aeq-weight',st.weight); ensureFont().then(update); });
 function setAlign(v){ st.align=v; save('aeq-align3', v); document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===v))); update(); }
 document.querySelectorAll('#align button').forEach(b=>b.addEventListener('click',()=>setAlign(b.dataset.v)));
 $('darkBg').addEventListener('click', () => { st.darkBg=!st.darkBg; save('aeq-dark', st.darkBg); $('darkBg').setAttribute('aria-pressed', String(st.darkBg)); update(); });
 $('strokeMul').addEventListener('change', e => { st.strokeMul=+e.target.value; save('aeq-stroke', st.strokeMul); update(); });
 $('scale').addEventListener('change', e => { st.scale=+e.target.value; save('aeq-scale',st.scale); update(); });
-function ensureFont(){
+function ensureFont(w){
   const fams=["UULA Sans","UULA Maz1","UULA Maz2"];
-  return Promise.all(fams.map(f=>document.fonts.load(`${st.weight} 40px "${f}"`,'٠١٢سص√∈').catch(()=>{}))).then(()=>{});
+  return Promise.all(fams.map(f=>document.fonts.load(`${w||st.weight} 40px "${f}"`,'٠١٢سص√∈').catch(()=>{}))).then(()=>{});
 }
+// other weights load in the background, for parts set with سماكة{…}{…}
+setTimeout(()=>{ Promise.all([200,300,400,500,700,800,900,950].map(w=>document.fonts.load(`${w} 40px "UULA Sans"`,'سص').catch(()=>{}))).then(()=>{ if (/سماكة\{/.test(src.value)) update(); }); }, 300);
 // paste / drop an image made by this tool -> restore its source
 async function restoreFrom(file){
   const code = await readMeta(file);
