@@ -1640,51 +1640,78 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-const ADDIN_VER='16';
+const ADDIN_VER='17';
 function officeInsert(data, type, place){
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
-  const info = place && place.info; if (place && !place.left && place.left!==0) place = null;
+  const info = place && place.info; if (place && typeof place.left !== 'number') place = null;
   const target = place ? { oldId: place.id, left: place.left + place.width - w, top: place.top + (place.height - h)/2 } : null; // right edge and middle of the old one
   if (target){ opts.imageLeft = target.left; opts.imageTop = target.top; }
   Office.context.document.setSelectedDataAsync(data, opts, async r => {
     if (r.status !== Office.AsyncResultStatus.Succeeded){ flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
     if (target){ await moveNewest(target); flash('وُضعت المعادلة مكان القديمة، ونُقلت القديمة خارج الشريحة.'); }
-    else flash(info || 'أُدرجت المعادلة.', !info);
+    else flash(info || ('أُدرجت المعادلة في الوسط (لم تكن هناك صورة محددة). v'+ADDIN_VER), !info);
   });
 }
 // some PowerPoint versions ignore imageLeft/imageTop: move the picture just inserted (it is selected, else the newest shape on the slide)
 async function moveNewest(t){
   try { await PowerPoint.run(async ctx => {
-    let sel = ctx.presentation.getSelectedShapes(); sel.load('items/id'); await ctx.sync();
+    const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id'); await ctx.sync();
     let sh = sel.items.find(x => x.id !== t.oldId);
     if (!sh){ const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
       if (!sl.items.length) return; const shapes = sl.items[0].shapes; shapes.load('items/id'); await ctx.sync(); sh = [...shapes.items].reverse().find(x => x.id !== t.oldId); }
     if (sh){ sh.left = t.left; sh.top = t.top; await ctx.sync(); }
   }); } catch(e){}
 }
-// PowerPoint: if a picture is selected, take its place and move it off the slide (to its left)
+// Remember the picture selected on the slide: clicking into this pane can clear PowerPoint's selection before «إدراج» is pressed
+const hasPPT = () => window.PowerPoint && Office.context.requirements.isSetSupported('PowerPointApi','1.5');
+let lastPic=null, emptyAt=0, paneAt=0;
+async function readSelection(){
+  if (!hasPPT()) return { unsupported:true };
+  return PowerPoint.run(async ctx => {
+    const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id,items/type,items/left,items/top,items/width,items/height');
+    const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id');
+    await ctx.sync();
+    const sh = sel.items[0]; if (!sh) return { none:true, slide: sl.items[0] && sl.items[0].id };
+    return { id: sh.id, type: String(sh.type), left: sh.left, top: sh.top, width: sh.width, height: sh.height, slide: sl.items[0] && sl.items[0].id };
+  }).catch(e => ({ error: String(e && e.message || e) }));
+}
+async function onSelChange(){
+  const r = await readSelection();
+  if (r.id && r.type.toLowerCase()==='image'){ lastPic = { ...r, t: Date.now() }; emptyAt=0; paneAt=0; }
+  else if (r.id){ lastPic = null; }                 // something else was selected
+  else if (r.none && lastPic && !emptyAt){ emptyAt = Date.now(); } // first deselection after picking the picture
+}
+// the first touch of this pane after picking a picture; a deselection at about that moment came from moving focus here
+const touchPane = () => { if (lastPic && !paneAt) paneAt = Date.now(); };
+['mousedown','focusin','keydown'].forEach(ev => document.addEventListener(ev, touchPane, true));
+window.addEventListener('focus', touchPane);
+const picStillMeant = () => lastPic && (!emptyAt || (paneAt && Math.abs(emptyAt - paneAt) < 2500));
 async function takeSelectedPlace(){
-  if (!window.PowerPoint || !Office.context.requirements.isSetSupported('PowerPointApi','1.5'))
-    return { info: 'نسخة بوربوينت عندك لا تسمح للإضافة بمعرفة العنصر المحدد، فأُدرجت المعادلة في الوسط. (v'+ADDIN_VER+')' };
+  if (!hasPPT()) return { info: 'نسخة بوربوينت عندك لا تسمح للإضافة بمعرفة العنصر المحدد، فأُدرجت المعادلة في الوسط. v'+ADDIN_VER };
+  const now = await readSelection();
+  if (now.error) return { info: 'تعذّر الوصول إلى العنصر المحدد: ' + now.error + ' v'+ADDIN_VER };
+  let pic = null;
+  if (now.id){ if (now.type.toLowerCase()!=='image') return { info: 'المحدد ليس صورة (' + now.type + ')، فأُدرجت المعادلة في الوسط ولم يتحرك شيء.' }; pic = now; }
+  else if (picStillMeant() && (!now.slide || lastPic.slide === now.slide)) pic = lastPic; // selection was lost when the pane got focus
+  if (!pic) return null;
   try {
     return await PowerPoint.run(async ctx => {
-      const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id,items/type,items/name,items/left,items/top,items/width,items/height');
-      await ctx.sync();
-      if (!sel.items.length) return null;
-      const sh = sel.items[0];
-      if (String(sh.type).toLowerCase() !== 'image') return { info: 'المحدد ليس صورة (' + sh.type + ')، فأُدرجت المعادلة في الوسط ولم يتحرك شيء.' }; // text and other shapes stay put
+      const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+      const sh = sl.items[0].shapes.getItem(pic.id); sh.load('id,left,top,width,height'); await ctx.sync();
       const place = { id: sh.id, left: sh.left, top: sh.top, width: sh.width, height: sh.height };
       sh.left = -(sh.width + 36); // just outside the slide, still in the file
       if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]);
-      await ctx.sync();
+      await ctx.sync(); lastPic = null;
       return place;
     });
-  } catch(e){ return { info: 'تعذّر الوصول إلى العنصر المحدد: ' + (e && e.message || e) + ' (v'+ADDIN_VER+')' }; }
+  } catch(e){ lastPic = null; return { info: 'لم أجد الصورة المحددة على الشريحة: ' + (e && e.message || e) + ' v'+ADDIN_VER }; }
 }
 if (window.Office) Office.onReady(info => {
   if (!info || !info.host) return;
   $('insertDoc').hidden=false;
+  if (info.host === Office.HostType.PowerPoint && Office.context.document.addHandlerAsync)
+    Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, () => { onSelChange(); });
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
     const b64 = await new Promise(res => { const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
