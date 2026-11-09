@@ -216,9 +216,6 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <select id="weight" data-tip="سماكة الخط" aria-label="سماكة الخط"><option value="200">Thin</option><option value="300">Light</option><option value="400">Regular</option><option value="500">Medium</option><option value="700">Bold</option><option value="800">ExtraBold</option><option value="900">Heavy</option><option value="950">Black</option></select>
         </div>
         <div class="field">
-          <select id="strokeMul" data-tip="سماكة خطوط الجذر والكسر" aria-label="سماكة خطوط الجذر والكسر"><option value="0.75">رفيعة</option><option value="1" selected>عادية</option><option value="1.35">سميكة</option><option value="1.7">أسمك</option></select>
-        </div>
-        <div class="field">
           <div class="seg" id="align" data-tip="المحاذاة" aria-label="المحاذاة" role="group" aria-label="المحاذاة"><button type="button" data-v="right" title="يمين" aria-label="يمين"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 7H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 12H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="center" title="وسط" aria-label="وسط"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 7H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.5 12H14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="left" title="يسار" aria-label="يسار"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 7H11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 12H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="eq" title="على علامة =" aria-label="على علامة ="><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M4 4.5H14M4 9.5H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
         </div>
       </div>
@@ -1563,7 +1560,6 @@ $('weight').addEventListener('change', e => { const r=fmtSel.weight||selRange();
 function setAlign(v){ st.align=v; save('aeq-align3', v); document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===v))); update(); }
 document.querySelectorAll('#align button').forEach(b=>b.addEventListener('click',()=>setAlign(b.dataset.v)));
 $('darkBg').addEventListener('click', () => { st.darkBg=!st.darkBg; save('aeq-dark', st.darkBg); $('darkBg').setAttribute('aria-pressed', String(st.darkBg)); update(); });
-$('strokeMul').addEventListener('change', e => { st.strokeMul=+e.target.value; save('aeq-stroke', st.strokeMul); update(); });
 $('scale').addEventListener('change', e => { st.scale=+e.target.value; save('aeq-scale',st.scale); update(); });
 function ensureFont(w){
   const fams=["UULA Sans","UULA Maz1","UULA Maz2"];
@@ -1634,7 +1630,7 @@ document.addEventListener('paste', e => {
 st.pt=12; st.weight='400'; st.scale=load('aeq-scale',6);
 st.align='right'; document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===st.align)));
 st.darkBg=load('aeq-dark',false); $('darkBg').setAttribute('aria-pressed', String(st.darkBg));
-st.strokeMul=1; $('strokeMul').value=String(st.strokeMul);
+st.strokeMul=1;
 { const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight; $('scale').value=st.scale;
 src.value = load('aeq-draft', null) ?? EXAMPLES[2][1];
 snap(true);
