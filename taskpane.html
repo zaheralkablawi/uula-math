@@ -308,7 +308,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
-        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج في الشريحة أو المستند" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
+        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج — إن حدّدت معادلة قديمة في الشريحة تنزل الجديدة مكانها وتخرج القديمة إلى خارج الشريحة" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
         <select id="scale" data-tip="دقة الصورة" aria-label="دقة الصورة"><option value="3">×3</option><option value="4">×4</option><option value="6" selected>×6</option></select>
@@ -1640,12 +1640,33 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-function officeInsert(data, type){
-  const opts = { coercionType: type, imageWidth: st.lastW*.75, imageHeight: st.lastH*.75 }; // points, so the size matches the font size
+function officeInsert(data, type, place){
+  const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size
+  const opts = { coercionType: type, imageWidth: w, imageHeight: h };
+  const skipped = !!(place && place.skipped); if (skipped) place = null;
+  if (place){ opts.imageLeft = place.left + place.width - w; opts.imageTop = place.top + (place.height - h)/2; } // right edge and middle of the old one
   Office.context.document.setSelectedDataAsync(data, opts, r => {
-    if (r.status === Office.AsyncResultStatus.Succeeded) flash('أُدرجت المعادلة.');
+    if (r.status === Office.AsyncResultStatus.Succeeded) flash(place ? 'وُضعت المعادلة مكان القديمة، ونُقلت القديمة خارج الشريحة.' : skipped ? 'المحدد ليس صورة، فأُدرجت المعادلة في الوسط ولم يتحرك شيء.' : 'أُدرجت المعادلة.');
     else flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false);
   });
+}
+// PowerPoint: if a shape is selected, take its place and move it off the slide (to its left)
+async function takeSelectedPlace(){
+  if (!window.PowerPoint || !Office.context.requirements.isSetSupported('PowerPointApi','1.5')) return null;
+  try {
+    return await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id,items/type,items/left,items/top,items/width,items/height');
+      await ctx.sync();
+      if (!sel.items.length) return null;
+      const sh = sel.items[0];
+      if (String(sh.type).toLowerCase() !== 'image') return { skipped: true }; // only an old equation picture is replaced; text and other shapes stay put
+      const place = { left: sh.left, top: sh.top, width: sh.width, height: sh.height };
+      sh.left = -(sh.width + 36); // just outside the slide, still in the file
+      ctx.presentation.setSelectedShapes([]);
+      await ctx.sync();
+      return place;
+    });
+  } catch(e){ return null; }
 }
 if (window.Office) Office.onReady(info => {
   if (!info || !info.host) return;
@@ -1653,7 +1674,8 @@ if (window.Office) Office.onReady(info => {
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
     const b64 = await new Promise(res => { const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
-    pushHistory(src.value); officeInsert(b64, Office.CoercionType.Image);
+    const place = info.host === Office.HostType.PowerPoint ? await takeSelectedPlace() : null;
+    pushHistory(src.value); officeInsert(b64, Office.CoercionType.Image, place);
   });
 });
 
