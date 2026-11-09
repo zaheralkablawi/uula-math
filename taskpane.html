@@ -310,7 +310,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 'use strict';
 // ---------- state ----------
 const $ = id => document.getElementById(id);
-const st = { align:'right', font:'UULA Sans', color:'#2f6fde', pt:14, weight:'400', scale:6, lastPng:null };
+const st = { align:'right', font:'UULA Sans', color:'#111111', pt:12, weight:'400', scale:6, lastPng:null };
 const COLORS = [['أزرق','#2f6fde'],['أسود','#111111'],['أحمر','#e0322b'],['أصفر','#ffe600'],['بنفسجي','#b58cff'],['أرجواني','#fe00fe'],['أبيض','#ffffff']];
 const SYMS = ['+','−','×','÷','±','=','≠','<','>','≤','≥','≅','≈','∈','∉','⊂','⊆','∩','∪','∅','∆','°','π','∞','،','…','⊄','⟸','⟹','∴'];
 const EXAMPLES = [
@@ -1591,14 +1591,15 @@ document.addEventListener('paste', e => {
 });
 
 // init
-st.pt=load('aeq-pt',14); st.weight=String(load('aeq-weight','400')); st.scale=load('aeq-scale',6);
-st.align=load('aeq-align3','right'); if(!['eq','right','center','left'].includes(st.align)) st.align='right'; document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===st.align)));
+// every time the tool opens: black, 12 pt, Regular, normal lines, right-aligned
+st.pt=12; st.weight='400'; st.scale=load('aeq-scale',6);
+st.align='right'; document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===st.align)));
 st.darkBg=load('aeq-dark',false); $('darkBg').setAttribute('aria-pressed', String(st.darkBg));
-st.strokeMul=load('aeq-stroke',1); $('strokeMul').value=String(st.strokeMul);
+st.strokeMul=1; $('strokeMul').value=String(st.strokeMul);
 { const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight; $('scale').value=st.scale;
 src.value = load('aeq-draft', null) ?? EXAMPLES[2][1];
 snap(true);
-setColor(load('aeq-color','#2f6fde'));
+setColor('#111111');
 ensureFont().then(update);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
