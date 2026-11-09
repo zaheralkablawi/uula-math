@@ -1640,33 +1640,47 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
+const ADDIN_VER='16';
 function officeInsert(data, type, place){
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
-  const skipped = !!(place && place.skipped); if (skipped) place = null;
-  if (place){ opts.imageLeft = place.left + place.width - w; opts.imageTop = place.top + (place.height - h)/2; } // right edge and middle of the old one
-  Office.context.document.setSelectedDataAsync(data, opts, r => {
-    if (r.status === Office.AsyncResultStatus.Succeeded) flash(place ? 'وُضعت المعادلة مكان القديمة، ونُقلت القديمة خارج الشريحة.' : skipped ? 'المحدد ليس صورة، فأُدرجت المعادلة في الوسط ولم يتحرك شيء.' : 'أُدرجت المعادلة.');
-    else flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false);
+  const info = place && place.info; if (place && !place.left && place.left!==0) place = null;
+  const target = place ? { oldId: place.id, left: place.left + place.width - w, top: place.top + (place.height - h)/2 } : null; // right edge and middle of the old one
+  if (target){ opts.imageLeft = target.left; opts.imageTop = target.top; }
+  Office.context.document.setSelectedDataAsync(data, opts, async r => {
+    if (r.status !== Office.AsyncResultStatus.Succeeded){ flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
+    if (target){ await moveNewest(target); flash('وُضعت المعادلة مكان القديمة، ونُقلت القديمة خارج الشريحة.'); }
+    else flash(info || 'أُدرجت المعادلة.', !info);
   });
 }
-// PowerPoint: if a shape is selected, take its place and move it off the slide (to its left)
+// some PowerPoint versions ignore imageLeft/imageTop: move the picture just inserted (it is selected, else the newest shape on the slide)
+async function moveNewest(t){
+  try { await PowerPoint.run(async ctx => {
+    let sel = ctx.presentation.getSelectedShapes(); sel.load('items/id'); await ctx.sync();
+    let sh = sel.items.find(x => x.id !== t.oldId);
+    if (!sh){ const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+      if (!sl.items.length) return; const shapes = sl.items[0].shapes; shapes.load('items/id'); await ctx.sync(); sh = [...shapes.items].reverse().find(x => x.id !== t.oldId); }
+    if (sh){ sh.left = t.left; sh.top = t.top; await ctx.sync(); }
+  }); } catch(e){}
+}
+// PowerPoint: if a picture is selected, take its place and move it off the slide (to its left)
 async function takeSelectedPlace(){
-  if (!window.PowerPoint || !Office.context.requirements.isSetSupported('PowerPointApi','1.5')) return null;
+  if (!window.PowerPoint || !Office.context.requirements.isSetSupported('PowerPointApi','1.5'))
+    return { info: 'نسخة بوربوينت عندك لا تسمح للإضافة بمعرفة العنصر المحدد، فأُدرجت المعادلة في الوسط. (v'+ADDIN_VER+')' };
   try {
     return await PowerPoint.run(async ctx => {
-      const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id,items/type,items/left,items/top,items/width,items/height');
+      const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id,items/type,items/name,items/left,items/top,items/width,items/height');
       await ctx.sync();
       if (!sel.items.length) return null;
       const sh = sel.items[0];
-      if (String(sh.type).toLowerCase() !== 'image') return { skipped: true }; // only an old equation picture is replaced; text and other shapes stay put
-      const place = { left: sh.left, top: sh.top, width: sh.width, height: sh.height };
+      if (String(sh.type).toLowerCase() !== 'image') return { info: 'المحدد ليس صورة (' + sh.type + ')، فأُدرجت المعادلة في الوسط ولم يتحرك شيء.' }; // text and other shapes stay put
+      const place = { id: sh.id, left: sh.left, top: sh.top, width: sh.width, height: sh.height };
       sh.left = -(sh.width + 36); // just outside the slide, still in the file
-      ctx.presentation.setSelectedShapes([]);
+      if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]);
       await ctx.sync();
       return place;
     });
-  } catch(e){ return null; }
+  } catch(e){ return { info: 'تعذّر الوصول إلى العنصر المحدد: ' + (e && e.message || e) + ' (v'+ADDIN_VER+')' }; }
 }
 if (window.Office) Office.onReady(info => {
   if (!info || !info.host) return;
