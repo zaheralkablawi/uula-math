@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UULA Arabic Math</title>
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-<style>:root{color-scheme:dark}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#insertDoc{margin-inline-start:auto}.repbtn[aria-pressed="true"]{background:#e8590c!important;border-color:#ff7a2f!important;color:#fff!important}.gearbtn{border:0;background:none;color:#9aa3af;cursor:pointer;padding:2px;display:inline-grid;place-items:center}.gearbtn:hover{color:#5d6878}.gearpop{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#191c24;border:1px solid #2e3442;border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:8px;z-index:20;white-space:nowrap}.swlabel{font:600 12px -apple-system,'Segoe UI',sans-serif}#insertDoc.replacing{box-shadow:0 0 0 3px #e8590c}.fmtbtn{height:32px;min-width:46px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:8px;background:#f1f3f6;color:#4a5566;font:700 11px -apple-system,'Segoe UI',sans-serif;letter-spacing:.04em;cursor:pointer}.fmtbtn[aria-pressed="true"]{border-color:#7c3aed;background:#f3edff;color:#6d28d9}.swbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 8px;border:1.5px solid #3a4152;border-radius:999px;background:#20242e;color:#9aa2b1;cursor:pointer}.swbtn .sw-track{position:relative;width:30px;height:17px;border-radius:999px;background:#3a4152;transition:background .15s}.swbtn .sw-knob{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .3);transition:right .15s}.swbtn[aria-pressed="true"]{border-color:#ff7a2f;background:#3a2014;color:#ffb27a}.swbtn[aria-pressed="true"] .sw-track{background:#e8590c}.swbtn[aria-pressed="true"] .sw-knob{right:15px}#insertDoc{order:99}#insertDoc:first-child{margin-inline-start:auto}</style>
+<style>:root{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}.grid>section:last-child{order:-1}.sheetbox{min-height:70px}#sheet #out{max-height:96px}#insertDoc{margin-inline-start:auto}.repbtn[aria-pressed="true"]{background:#e8590c!important;border-color:#ff7a2f!important;color:#fff!important}.gearbtn{border:0;background:none;color:#9aa3af;cursor:pointer;padding:2px;display:inline-grid;place-items:center}.gearbtn:hover{color:#5d6878}.gearpop{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#191c24;border:1px solid #2e3442;border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:8px;z-index:20;white-space:nowrap}.swlabel{font:600 12px -apple-system,'Segoe UI',sans-serif}#insertDoc.replacing{box-shadow:0 0 0 3px #e8590c}.fmtbtn{height:32px;min-width:46px;padding:0 8px;border:1.5px solid #c3cad4;border-radius:8px;background:#f1f3f6;color:#4a5566;font:700 11px -apple-system,'Segoe UI',sans-serif;letter-spacing:.04em;cursor:pointer}.fmtbtn[aria-pressed="true"]{border-color:#7c3aed;background:#f3edff;color:#6d28d9}.swbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 8px;border:1.5px solid #3a4152;border-radius:999px;background:#20242e;color:#9aa2b1;cursor:pointer}.swbtn .sw-track{position:relative;width:30px;height:17px;border-radius:999px;background:#3a4152;transition:background .15s}.swbtn .sw-knob{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .3);transition:right .15s}.swbtn[aria-pressed="true"]{border-color:#ff7a2f;background:#3a2014;color:#ffb27a}.swbtn[aria-pressed="true"] .sw-track{background:#e8590c}.swbtn[aria-pressed="true"] .sw-knob{right:15px}#insertDoc{order:99}#insertDoc:first-child{margin-inline-start:auto}</style>
 </head><body>
 
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -21,15 +21,21 @@
 <style>
 /* Layout: workbench — editor column + live preview "sheet" (the slide), settings under preview. RTL throughout. */
 :root{
-  /* UULA app identity: deep navy-black surfaces, blue accent, purple/blue glow */
-  --bg:#111318; --panel:#191c24; --ink:#f4f6fa; --muted:#9aa2b1; --line:#2a2f3b;
-  --accent:#2f6fe4; --accent-ink:#ffffff; --accent-soft:#1c2a47; --sheet:#ffffff; --code:#14171e;
-  --ok:#5cc58a; --warn:#ff8a5c; --glow:linear-gradient(135deg,#1b0f4a 0%,#2a0f6b 45%,#0a1aa8 100%);
+  --bg:#f3f5f8; --panel:#ffffff; --ink:#18212e; --muted:#5d6878; --line:#d9dfe7;
+  --accent:#2f6fde; --accent-ink:#ffffff; --accent-soft:#e7effc; --sheet:#ffffff; --code:#f6f8fb;
+  --ok:#1f8a4c; --warn:#b4541a;
   --f-display:"UULA Sans",sans-serif;
   --f-body:"UULA Sans","UULA Maz1","UULA Maz2",sans-serif;
   --f-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
-  color-scheme:dark;
 }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161e; --panel:#19202b; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3442;
+  --accent:#6b9cf0; --accent-ink:#0d1420; --accent-soft:#1e2b42; --sheet:#ffffff; --code:#141a23;
+  --ok:#5cc58a; --warn:#f0a06b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161e; --panel:#19202b; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3442;
+  --accent:#6b9cf0; --accent-ink:#0d1420; --accent-soft:#1e2b42; --sheet:#ffffff; --code:#141a23;
+  --ok:#5cc58a; --warn:#f0a06b; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;direction:rtl}
 .wrap{max-width:1100px;margin:0 auto;padding-block:10px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:10px}
@@ -50,19 +56,6 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .ib:hover{border-color:var(--accent);background:var(--accent-soft)}
 .ib[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .settings.fmt{padding-bottom:2px}
-header{background:var(--glow);border-radius:16px;padding:14px 16px;box-shadow:0 6px 24px rgb(42 15 107 / .35)}
-h1{display:flex;align-items:baseline;gap:12px;color:#fff}
-h1 .logo{font-weight:800;letter-spacing:.08em;font-size:1.25rem}
-h1 .sub{font-weight:500;font-size:.95rem;color:#c9cdf7}
-.panel{border-radius:16px;background:var(--panel);border-color:var(--line)}
-textarea{background:var(--code);border-color:var(--line);border-radius:12px}
-textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgb(47 111 228 / .35)}
-.ib,.mini,.toolbar button,.chip,.ico,select,.colorbtn,.seg button{background:#20242e;border-color:#2e3442;color:var(--ink)}
-.ib{color:#cfd6e4}.ib:hover,.ico:hover{background:#262c39;border-color:var(--accent)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;border-radius:12px}
-.seg button[aria-pressed="true"]{background:var(--accent-soft);color:#8fb4ff}
-.tabs button[aria-selected="true"]{color:#fff}
-.credit{color:#6f7787}
 .credit{text-align:center;font-size:.72rem;color:var(--muted);padding:10px 0 4px}
 .cwrap{position:relative}
 .colorbtn{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 7px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--muted);cursor:pointer}
@@ -207,7 +200,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
 <div class="wrap">
   <header>
-    <h1 dir="ltr"><span class="logo">U U L Λ</span><span class="sub">Arabic Math</span></h1>
+    <h1 dir="ltr"><span class="root">UULA</span> Arabic Math</h1>
   </header>
 
   <div class="grid">
@@ -323,7 +316,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
-  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer">الإصدار ٣</span></footer>
+  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer">الإصدار ٤</span></footer>
 </div>
 
 <script>
