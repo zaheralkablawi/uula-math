@@ -308,7 +308,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
-        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج — إن حدّدت معادلة قديمة في الشريحة تنزل الجديدة مكانها وتخرج القديمة إلى خارج الشريحة" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
+        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج — إن حدّدت معادلة قديمة (أي نوع) في الشريحة تنزل الجديدة مكانها وتخرج القديمة إلى خارج الشريحة" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
         <select id="scale" data-tip="دقة الصورة" aria-label="دقة الصورة"><option value="3">×3</option><option value="4">×4</option><option value="6" selected>×6</option></select>
@@ -1640,7 +1640,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-const ADDIN_VER='17';
+const ADDIN_VER='18';
 function officeInsert(data, type, place){
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
@@ -1650,7 +1650,7 @@ function officeInsert(data, type, place){
   Office.context.document.setSelectedDataAsync(data, opts, async r => {
     if (r.status !== Office.AsyncResultStatus.Succeeded){ flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
     if (target){ await moveNewest(target); flash('وُضعت المعادلة مكان القديمة، ونُقلت القديمة خارج الشريحة.'); }
-    else flash(info || ('أُدرجت المعادلة في الوسط (لم تكن هناك صورة محددة). v'+ADDIN_VER), !info);
+    else flash(info || ('أُدرجت المعادلة في الوسط (لم يكن هناك عنصر محدد). v'+ADDIN_VER), !info);
   });
 }
 // some PowerPoint versions ignore imageLeft/imageTop: move the picture just inserted (it is selected, else the newest shape on the slide)
@@ -1678,8 +1678,7 @@ async function readSelection(){
 }
 async function onSelChange(){
   const r = await readSelection();
-  if (r.id && r.type.toLowerCase()==='image'){ lastPic = { ...r, t: Date.now() }; emptyAt=0; paneAt=0; }
-  else if (r.id){ lastPic = null; }                 // something else was selected
+  if (r.id){ lastPic = { ...r, t: Date.now() }; emptyAt=0; paneAt=0; } // any kind of object: picture, MathType equation, text box…
   else if (r.none && lastPic && !emptyAt){ emptyAt = Date.now(); } // first deselection after picking the picture
 }
 // the first touch of this pane after picking a picture; a deselection at about that moment came from moving focus here
@@ -1692,7 +1691,7 @@ async function takeSelectedPlace(){
   const now = await readSelection();
   if (now.error) return { info: 'تعذّر الوصول إلى العنصر المحدد: ' + now.error + ' v'+ADDIN_VER };
   let pic = null;
-  if (now.id){ if (now.type.toLowerCase()!=='image') return { info: 'المحدد ليس صورة (' + now.type + ')، فأُدرجت المعادلة في الوسط ولم يتحرك شيء.' }; pic = now; }
+  if (now.id) pic = now;
   else if (picStillMeant() && (!now.slide || lastPic.slide === now.slide)) pic = lastPic; // selection was lost when the pane got focus
   if (!pic) return null;
   try {
@@ -1705,7 +1704,7 @@ async function takeSelectedPlace(){
       await ctx.sync(); lastPic = null;
       return place;
     });
-  } catch(e){ lastPic = null; return { info: 'لم أجد الصورة المحددة على الشريحة: ' + (e && e.message || e) + ' v'+ADDIN_VER }; }
+  } catch(e){ lastPic = null; return { info: 'تعذّر نقل العنصر المحدد: ' + (e && e.message || e) + ' v'+ADDIN_VER }; }
 }
 if (window.Office) Office.onReady(info => {
   if (!info || !info.host) return;
