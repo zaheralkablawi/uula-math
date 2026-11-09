@@ -179,7 +179,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
   <div class="grid">
     <section class="panel" aria-label="كتابة المعادلة">
-      <div class="symhead"><label class="label" for="src">المعادلة</label><button class="mini" id="copySrc" type="button">نسخ النص</button><span class="histwrap"><button class="mini" id="histBtn" type="button" title="آخر ٢٠ معادلة نسختها أو أدرجتها" aria-haspopup="true" aria-expanded="false">السابقة</button><div class="hist" id="hist" hidden></div></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
+      <div class="symhead"><label class="label" for="src">المعادلة</label><button class="mini" id="copySrc" type="button">نسخ النص</button><span class="histwrap"><button class="mini" id="histBtn" type="button" title="آخر ٢٠ معادلة نسختها أو أدرجتها" aria-haspopup="true" aria-expanded="false">السابقة</button><div class="hist" id="hist" hidden></div></span><button class="mini" id="clearSrc" type="button" title="مسح كل ما في مربع الكتابة (يمكن التراجع بـ ⌘Z)">مسح</button><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
       <textarea id="src" spellcheck="false"></textarea>
       <div class="sugg" id="sugg" hidden></div>
       <p class="err" id="err" role="status"></p>
@@ -1398,6 +1398,12 @@ $('copyImg').addEventListener('click', () => {
       .then(()=>{ flash('نُسخت الصورة، الصقها في البوربوينت.'); pushHistory(code); })
       .catch(()=>{ flash('المتصفح منع النسخ هنا. اسحب الصورة إلى البوربوينت أو انسخها بالزر الأيمن.', false); pushHistory(code); });
   } catch(e){ flash('المتصفح منع النسخ هنا. اسحب الصورة إلى البوربوينت أو انسخها بالزر الأيمن.', false); pushHistory(code); }
+});
+$('clearSrc').addEventListener('click', () => {
+  if (!src.value.trim()) { src.focus(); return; }
+  pushHistory(src.value); // keep it in «السابقة» in case it is needed again
+  src.focus(); src.select(); src.setRangeText('', 0, src.value.length, 'end');
+  snap(true); schedule(); flash('مُسح مربع الكتابة. للتراجع: ⌘Z أو «السابقة».');
 });
 $('copySrc').addEventListener('click', () => {
   pushHistory(src.value); navigator.clipboard.writeText(src.value).then(()=>flash('نُسخ نص المعادلة.')).catch(()=>{ src.select(); flash('حدّد النص وانسخه يدويًا (⌘C).', false); });
