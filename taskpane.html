@@ -270,7 +270,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
 
       <details>
-        <summary>طريقة الكتابة</summary>
+        <summary>تعليمات</summary>
         <div class="tablewrap">
         <table class="syn">
           <tr><td>جذر تربيعي</td><td><code>جذر{٤٩}</code></td></tr>
@@ -317,7 +317,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
-  <footer class="credit">هذا البرنامج من إعداد وتصميم زاهر القبلاوي</footer>
+  <footer class="credit">إعداد: زاهر القبلاوي</footer>
 </div>
 
 <script>
@@ -1466,7 +1466,7 @@ $('hist').addEventListener('click',e=>e.stopPropagation());
 document.addEventListener('click',()=>{ if(!$('hist').hidden) closeHistory(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('hist').hidden) closeHistory(); });
 
-function flash(m, ok=true){ status.style.color = ok?'var(--ok)':'var(--warn)'; status.textContent=m; clearTimeout(flash.t); flash.t=setTimeout(()=>status.textContent='',4000); }
+function flash(m, ok=true){ if (ok){ status.textContent=''; return; } status.style.color = 'var(--warn)'; status.textContent=m; clearTimeout(flash.t); flash.t=setTimeout(()=>status.textContent='',4000); }
 
 $('copyImg').addEventListener('click', () => {
   const code=src.value;
@@ -1609,15 +1609,13 @@ $('weight').addEventListener('change', e => { const r=fmtSel.weight||selRange();
   st.weight=e.target.value; save('aeq-weight',st.weight); ensureFont().then(update); });
 function setAlign(v){ st.align=v; save('aeq-align3', v); document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===v))); update(); }
 document.querySelectorAll('#align button').forEach(b=>b.addEventListener('click',()=>setAlign(b.dataset.v)));
-// dark preview cycles: off → black → #101217 (rgb 16 18 23) → off; the writing turns white while dark, and back after
+// dark preview: background rgb(16,18,23); the writing turns white while it is on, and back after
 let colorBeforeDark=null;
 $('darkBg').addEventListener('click', () => {
-  st.darkBg = ((st.darkBg|0) + 1) % 3;
+  st.darkBg = st.darkBg ? 0 : 2;
   $('darkBg').setAttribute('aria-pressed', String(!!st.darkBg));
-  $('darkBg').dataset.tip = ['معاينة على خلفية داكنة','الخلفية: أسود — اضغط للخلفية الثانية','الخلفية: 16 18 23 — اضغط للإيقاف'][st.darkBg];
-  if (st.darkBg===1){ if (String(st.color).toLowerCase()!=='#ffffff'){ colorBeforeDark=st.color; setColor('#ffffff'); } else update(); flash('خلفية سوداء، والكتابة بيضاء.'); }
-  else if (st.darkBg===2){ update(); flash('الخلفية الثانية (16 18 23).'); }
-  else { if (colorBeforeDark && String(st.color).toLowerCase()==='#ffffff') setColor(colorBeforeDark); else update(); colorBeforeDark=null; flash('رجعت المعاينة العادية.'); }
+  if (st.darkBg){ if (String(st.color).toLowerCase()!=='#ffffff'){ colorBeforeDark=st.color; setColor('#ffffff'); } else update(); }
+  else { if (colorBeforeDark && String(st.color).toLowerCase()==='#ffffff') setColor(colorBeforeDark); else update(); colorBeforeDark=null; }
 });
 $('scale').addEventListener('change', e => { st.scale=+e.target.value; save('aeq-scale',st.scale); update(); });
 function ensureFont(w){
@@ -1699,21 +1697,23 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-const ADDIN_VER='21';
+const ADDIN_VER='22';
 const SLIDE_W=540; // UULA booklet slides are 540 pt wide; «outside on the right» starts just after that
 function officeInsert(data, type, place){
-  const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size
+  const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size (on a 540 pt wide booklet slide)
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
   const info = place && place.info, outside = place && place.outside;
   if (place && !outside && typeof place.left !== 'number') place = null;
-  const target = outside ? { oldId: place.refId, left: SLIDE_W + 18, top: place.top } : place ? { oldId: place.id, left: place.left + place.width - w, top: place.top } : null; // replace: same right edge and top as the old one
-  if (target){ opts.imageLeft = target.left; opts.imageTop = target.top; }
+  const ppt = window.PowerPoint && typeof hasPPT==='function' && hasPPT();
+  // PowerPoint: insert centered, then measure the slide from where it landed, scale to the slide width and move it into place
   Office.context.document.setSelectedDataAsync(data, opts, async r => {
     if (r.status !== Office.AsyncResultStatus.Succeeded){ flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
-    if (target && outside){ await moveNewest(target); flash('أُدرجت المعادلة خارج الشريحة على اليمين.'); }
-    else if (target){ await moveNewest(target); const gone = await deleteOld(target.oldId);
+    let ok = true;
+    if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place && (outside ? place.refId : place.id) });
+    if (place && !outside){ const gone = await deleteOld(place.id);
       flash(gone ? 'وُضعت المعادلة مكان القديمة وحُذفت القديمة.' : 'وُضعت المعادلة مكانها، لكن تعذّر حذف القديمة فنُقلت خارج الشريحة.', gone); }
-    else flash(info || ('أُدرجت المعادلة في الوسط (لم يكن هناك عنصر محدد). v'+ADDIN_VER), !info);
+    else if (outside) flash('أُدرجت المعادلة خارج الشريحة على اليمين.');
+    else flash(info || ('أُدرجت المعادلة في الوسط. v'+ADDIN_VER), !info);
     clearAfterInsert();
   });
 }
@@ -1728,15 +1728,27 @@ async function deleteOld(id){
     catch(e){ sh.load('width'); await ctx.sync(); sh.left = -(sh.width + 36); await ctx.sync(); return false; }
   }); } catch(e){ return false; }
 }
-// some PowerPoint versions ignore imageLeft/imageTop: move the picture just inserted (it is selected, else the newest shape on the slide)
-async function moveNewest(t){
-  try { await PowerPoint.run(async ctx => {
-    const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id'); await ctx.sync();
-    let sh = sel.items.find(x => x.id !== t.oldId);
-    if (!sh){ const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
-      if (!sl.items.length) return; const shapes = sl.items[0].shapes; shapes.load('items/id'); await ctx.sync(); sh = [...shapes.items].reverse().find(x => x.id !== t.oldId); }
-    if (sh){ sh.left = t.left; sh.top = t.top; await ctx.sync(); }
-  }); } catch(e){}
+// the picture just inserted (selected, else the newest shape on the slide), never the old/selected object
+async function newestShape(ctx, oldId){
+  const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id'); await ctx.sync();
+  let sh = sel.items.find(x => x.id !== oldId);
+  if (!sh){ const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+    if (!sl.items.length) return null; const shapes = sl.items[0].shapes; shapes.load('items/id'); await ctx.sync(); sh = [...shapes.items].reverse().find(x => x.id !== oldId); }
+  return sh || null;
+}
+async function placeNew(o){
+  try { return await PowerPoint.run(async ctx => {
+    const sh = await newestShape(ctx, o.oldId); if (!sh) return false;
+    sh.load('left,top,width,height'); await ctx.sync();
+    const slideW = 2*sh.left + sh.width, slideH = 2*sh.top + sh.height; // it was dropped in the middle of the slide
+    const f = slideW > 100 ? Math.min(3, Math.max(.5, slideW / SLIDE_W)) : 1; // wide 16:9 slide (960 pt) → about 1.8× bigger
+    const W = o.w*f, H = o.h*f;
+    sh.width = W; sh.height = H;
+    if (o.outside){ sh.left = slideW + 18; sh.top = o.place.top; }
+    else if (o.place){ sh.left = o.place.left + o.place.width - W; sh.top = o.place.top; } // same right edge and top as the old one
+    else { sh.left = (slideW - W)/2; sh.top = (slideH - H)/2; }
+    await ctx.sync(); return true;
+  }); } catch(e){ return false; }
 }
 // Remember the picture selected on the slide: clicking into this pane can clear PowerPoint's selection before «إدراج» is pressed
 const hasPPT = () => window.PowerPoint && Office.context.requirements.isSetSupported('PowerPointApi','1.5');
@@ -1799,7 +1811,8 @@ if (window.Office) Office.onReady(info => {
     if (isPPT && replaceOn) place = await takeSelectedPlace();
     else if (isPPT && hasPPT()){ // not replacing: put it just right of the slide, level with whatever is selected (else near the top)
       const now = await readSelection(); const ref = now.id ? now : (picStillMeant() ? lastPic : null);
-      place = { outside: true, refId: ref && ref.id, top: ref ? ref.top : 40 }; } // refId: never move the selected object itself
+      place = { outside: true, refId: ref && ref.id, top: ref ? ref.top : 40 }; // refId: never move the selected object itself
+      if (now.id){ try { await PowerPoint.run(async ctx => { if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]); await ctx.sync(); }); } catch(e){} } }
     pushHistory(src.value); officeInsert(b64, Office.CoercionType.Image, place);
   });
 });
