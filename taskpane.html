@@ -308,7 +308,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <section class="panel" aria-label="المعاينة والنسخ">
             <div class="sheetbox" id="sheet"><img id="out" alt="المعادلة" draggable="true"></div>
       <div class="actions">
-        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج — إن حدّدت معادلة قديمة (أي نوع) في الشريحة تنزل الجديدة مكانها وتخرج القديمة إلى خارج الشريحة" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
+        <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج — إن حدّدت معادلة قديمة في الشريحة تنزل الجديدة مكانها وتُحذف القديمة" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="معاينة على خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
         <select id="scale" data-tip="دقة الصورة" aria-label="دقة الصورة"><option value="3">×3</option><option value="4">×4</option><option value="6" selected>×6</option></select>
@@ -1640,7 +1640,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-const ADDIN_VER='18';
+const ADDIN_VER='19';
 function officeInsert(data, type, place){
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
@@ -1649,9 +1649,22 @@ function officeInsert(data, type, place){
   if (target){ opts.imageLeft = target.left; opts.imageTop = target.top; }
   Office.context.document.setSelectedDataAsync(data, opts, async r => {
     if (r.status !== Office.AsyncResultStatus.Succeeded){ flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
-    if (target){ await moveNewest(target); flash('وُضعت المعادلة مكان القديمة، ونُقلت القديمة خارج الشريحة.'); }
+    if (target){ await moveNewest(target); const gone = await deleteOld(target.oldId);
+      flash(gone ? 'وُضعت المعادلة مكان القديمة وحُذفت القديمة.' : 'وُضعت المعادلة مكانها، لكن تعذّر حذف القديمة فنُقلت خارج الشريحة.', gone); }
     else flash(info || ('أُدرجت المعادلة في الوسط (لم يكن هناك عنصر محدد). v'+ADDIN_VER), !info);
+    clearAfterInsert();
   });
+}
+// after inserting: empty the writing box (the equation stays in «السابقة»; ⌘Z brings it back)
+function clearAfterInsert(){ if (!src.value) return; src.setRangeText('', 0, src.value.length, 'end'); snap(true); schedule(); }
+// delete the replaced object only once the new equation is in; if PowerPoint refuses, move it off the slide instead
+async function deleteOld(id){
+  try { return await PowerPoint.run(async ctx => {
+    const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+    const sh = sl.items[0].shapes.getItem(id);
+    try { sh.delete(); await ctx.sync(); return true; }
+    catch(e){ sh.load('width'); await ctx.sync(); sh.left = -(sh.width + 36); await ctx.sync(); return false; }
+  }); } catch(e){ return false; }
 }
 // some PowerPoint versions ignore imageLeft/imageTop: move the picture just inserted (it is selected, else the newest shape on the slide)
 async function moveNewest(t){
@@ -1699,8 +1712,7 @@ async function takeSelectedPlace(){
       const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
       const sh = sl.items[0].shapes.getItem(pic.id); sh.load('id,left,top,width,height'); await ctx.sync();
       const place = { id: sh.id, left: sh.left, top: sh.top, width: sh.width, height: sh.height };
-      sh.left = -(sh.width + 36); // just outside the slide, still in the file
-      if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]);
+      if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]); // the old one is deleted after the new one is in
       await ctx.sync(); lastPic = null;
       return place;
     });
