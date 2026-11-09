@@ -51,6 +51,17 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .tg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:4px 6px}
 .symhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .mini{font:inherit;font-size:.75rem;border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:6px;padding:1px 8px;cursor:pointer}
+.histwrap{position:relative;display:inline-block}
+.hist{position:absolute;inset-inline-start:0;top:calc(100% + 4px);z-index:15;width:min(360px,86vw);max-height:340px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:6px;display:grid;gap:4px}
+.hist .hrow{display:flex;align-items:center;gap:4px}
+.hist .hitem{flex:1;min-width:0;display:flex;justify-content:flex-start;align-items:center;border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 6px;cursor:pointer;min-height:40px}
+.hist .hitem:hover{border-color:var(--accent)}
+.hist .hitem img{max-height:44px;max-width:100%;display:block}
+.hist .hdel{border:0;background:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:2px 4px}
+.hist .hdel:hover{color:var(--warn)}
+.hist .hfoot{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;color:var(--muted);padding:2px 2px 0}
+.hist .hfoot button{font:inherit;border:0;background:none;color:var(--accent);cursor:pointer;padding:0}
+.hist .hempty{font-size:.8rem;color:var(--muted);padding:8px;text-align:center}
 .mini[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .toolbar button.ico.editing{border-style:dashed;border-color:var(--accent);cursor:grab}
 #toolsHid{min-height:36px;border:1px dashed var(--line);border-radius:8px;padding:4px}
@@ -168,7 +179,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
   <div class="grid">
     <section class="panel" aria-label="كتابة المعادلة">
-      <div class="symhead"><label class="label" for="src">المعادلة</label><button class="mini" id="copySrc" type="button">نسخ النص</button><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
+      <div class="symhead"><label class="label" for="src">المعادلة</label><button class="mini" id="copySrc" type="button">نسخ النص</button><span class="histwrap"><button class="mini" id="histBtn" type="button" title="آخر ٢٠ معادلة نسختها أو أدرجتها" aria-haspopup="true" aria-expanded="false">السابقة</button><div class="hist" id="hist" hidden></div></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
       <textarea id="src" spellcheck="false"></textarea>
       <div class="sugg" id="sugg" hidden></div>
       <p class="err" id="err" role="status"></p>
@@ -1327,7 +1338,44 @@ $('favPanel').addEventListener('contextmenu', e => { const b=e.target.closest('b
 $('editTools').hidden=true; $('editSyms').hidden=true;
 showTab(load('aeq-tab','fav'));
 
-function pushHistory(){}
+const HIST_KEY='aeq-history', HIST_MAX=20;
+function histThumb(){
+  try{ const h=Math.min(canvas.height, 120), k=h/canvas.height, w=Math.max(1,Math.round(canvas.width*k));
+    const c=document.createElement('canvas'); c.width=Math.min(w,900); c.height=Math.max(1,Math.round(h*(c.width/w)));
+    c.getContext('2d').drawImage(canvas,0,0,c.width,c.height); return c.toDataURL('image/png'); }catch(e){ return ''; }
+}
+function pushHistory(code){
+  code=(code||'').trim(); if(!code) return;
+  let h=load(HIST_KEY,[]); if(!Array.isArray(h)) h=[];
+  h=h.filter(x=>x && x.c!==code);
+  h.unshift({c:code, img:histThumb(), color:st.color});
+  save(HIST_KEY, h.slice(0,HIST_MAX));
+  if (!$('hist').hidden) drawHistory();
+}
+function drawHistory(){
+  const box=$('hist'); const h=load(HIST_KEY,[]); box.innerHTML='';
+  if(!h.length){ box.innerHTML='<div class="hempty">لا توجد معادلات بعد. تُحفظ هنا تلقائيًا عند النسخ أو الإدراج.</div>'; return; }
+  h.forEach((it,i)=>{
+    const row=document.createElement('div'); row.className='hrow';
+    const b=document.createElement('button'); b.type='button'; b.className='hitem'; b.title=it.c;
+    if (it.img){ const im=new Image(); im.src=it.img; im.alt=it.c; b.appendChild(im); } else b.textContent=it.c;
+    b.addEventListener('click',()=>{ src.value=it.c; src.dispatchEvent(new Event('input',{bubbles:true})); closeHistory(); src.focus(); });
+    const d=document.createElement('button'); d.type='button'; d.className='hdel'; d.textContent='×'; d.title='حذف من القائمة';
+    d.addEventListener('click',e=>{ e.stopPropagation(); const a=load(HIST_KEY,[]); a.splice(i,1); save(HIST_KEY,a); drawHistory(); });
+    row.append(b,d); box.appendChild(row);
+  });
+  const f=document.createElement('div'); f.className='hfoot';
+  const n=document.createElement('span'); n.textContent=h.length+' من '+HIST_MAX;
+  const clr=document.createElement('button'); clr.type='button'; clr.textContent='مسح الكل';
+  clr.addEventListener('click',e=>{ e.stopPropagation(); save(HIST_KEY,[]); drawHistory(); });
+  f.append(n,clr); box.appendChild(f);
+}
+function closeHistory(){ $('hist').hidden=true; $('histBtn').setAttribute('aria-expanded','false'); }
+$('histBtn').addEventListener('click',e=>{ e.stopPropagation(); const box=$('hist');
+  if (box.hidden){ drawHistory(); box.hidden=false; $('histBtn').setAttribute('aria-expanded','true'); } else closeHistory(); });
+$('hist').addEventListener('click',e=>e.stopPropagation());
+document.addEventListener('click',()=>{ if(!$('hist').hidden) closeHistory(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('hist').hidden) closeHistory(); });
 
 function flash(m, ok=true){ status.style.color = ok?'var(--ok)':'var(--warn)'; status.textContent=m; clearTimeout(flash.t); flash.t=setTimeout(()=>status.textContent='',4000); }
 
@@ -1341,7 +1389,7 @@ $('copyImg').addEventListener('click', () => {
   } catch(e){ flash('المتصفح منع النسخ هنا. اسحب الصورة إلى البوربوينت أو انسخها بالزر الأيمن.', false); pushHistory(code); }
 });
 $('copySrc').addEventListener('click', () => {
-  navigator.clipboard.writeText(src.value).then(()=>flash('نُسخ نص المعادلة.')).catch(()=>{ src.select(); flash('حدّد النص وانسخه يدويًا (⌘C).', false); });
+  pushHistory(src.value); navigator.clipboard.writeText(src.value).then(()=>flash('نُسخ نص المعادلة.')).catch(()=>{ src.select(); flash('حدّد النص وانسخه يدويًا (⌘C).', false); });
 });
 out.addEventListener('dragstart', () => pushHistory(src.value));
 out.addEventListener('click', e => {
@@ -1480,7 +1528,7 @@ if (window.Office) Office.onReady(info => {
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
     const b64 = await new Promise(res => { const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
-    officeInsert(b64, Office.CoercionType.Image);
+    pushHistory(src.value); officeInsert(b64, Office.CoercionType.Image);
   });
 });
 
