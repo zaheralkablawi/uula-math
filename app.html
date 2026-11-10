@@ -226,9 +226,6 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       <div class="menu" id="appMenu" role="menu" hidden>
         <button type="button" role="menuitem" data-act="new">جديد<span class="mk">مسح مربع الكتابة</span></button>
         <div class="msep"></div>
-        <div class="mlabel">أمثلة</div>
-        <div id="menuEx"></div>
-        <div class="msep"></div>
         <button type="button" role="menuitem" data-act="help">تعليمات الكتابة</button>
         <button type="button" role="menuitem" data-act="keys">اختصارات لوحة المفاتيح</button>
         <button type="button" role="menuitem" id="chkUpd">التحقق من التحديثات</button>
@@ -358,7 +355,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
-  <footer class="credit" dir="ltr">By Zaher Alkablawi <span id="appVer">1.0</span></footer>
+  <footer class="credit" dir="ltr">By Zaher Alkablawi <span id="appVer">1.1</span></footer>
 </div>
 
 <script>
@@ -1810,9 +1807,6 @@ st.strokeMul=1;
   btn.addEventListener('click', e=>{ e.stopPropagation(); menu.hidden=!menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); });
   document.addEventListener('click', e=>{ if (!menu.hidden && !menu.contains(e.target)) close(); });
   document.addEventListener('keydown', e=>{ if (e.key==='Escape'){ close(); $('modal').hidden=true; } });
-  const ex=$('menuEx');
-  for (const [name,code] of EXAMPLES){ const b=document.createElement('button'); b.type='button'; b.setAttribute('role','menuitem'); b.textContent=name;
-    b.addEventListener('click',()=>{ close(); src.focus(); src.setRangeText(code,0,src.value.length,'end'); snap(true); schedule(); }); ex.appendChild(b); }
   const modal=(title, body)=>{ $('modalT').textContent=title; $('modalB').replaceChildren(body); $('modal').hidden=false; $('modalX').focus(); };
   $('modalX').addEventListener('click',()=>{ $('modal').hidden=true; });
   $('modal').addEventListener('click',e=>{ if (e.target.id==='modal') $('modal').hidden=true; });
