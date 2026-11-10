@@ -2071,11 +2071,10 @@ if (window.Office) Office.onReady(info => {
       const now = await readSelection();
       place = (!now.slide || !t.slide || now.slide === t.slide) ? await placeOf(t.id) : null;
       if (!place) place = { info: 'لم أجد المعادلة الأصلية.' }; }
-    else if (isPPT && hasPPT()){ // beside the slide, next to the last shape you selected (nothing is replaced or moved)
+    else if (isPPT && hasPPT()){ // in the middle of the slide; whatever is selected stays untouched
       const now = await readSelection();
-      const refId = now.id || (lastPic && (!now.slide || lastPic.slide === now.slide) ? lastPic.id : null);
-      const ref = refId ? await shapeBox(refId) : null;
-      place = { outside: true, ref, refId, slide: now.slide || (lastPic && lastPic.slide) || null }; }
+      place = { center: true, refId: now.id || null };
+      if (now.id){ try { await PowerPoint.run(async ctx => { if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]); await ctx.sync(); }); } catch(e){} } }
     pushHistory(src.value);
     const meta = eqMeta(src.value);
     const png = () => officeInsert(b64, Office.CoercionType.Image, place, null, meta);
