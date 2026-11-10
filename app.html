@@ -320,7 +320,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
-  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer" dir="ltr">1.7</span></footer>
+  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer" dir="ltr">1.8</span></footer>
 </div>
 
 <script>
@@ -895,10 +895,11 @@ function bigBox(n, sz){
   }};
 }
 function nprBox(n, sz){ // ن ق ر : small n on the right, small r on the left
-  const L=measure(n.L, sz), nb=rowBox(n.n, sz*.55), rb=rowBox(n.r, sz*.55), dn=sz*.22, gap=sz*.03;
+  // ق / ل as Mazeri math letters (like رمز{…})
+  const L=rowBox([{t:'txt', s:MATHLETTER[n.L] ? String.fromCharCode(0xE000+MATHLETTER[n.L]) : n.L, k:'word'}], sz), nb=rowBox(n.n, sz*.55), rb=rowBox(n.r, sz*.55), dn=sz*.22, gap=sz*.03;
   return { w:rb.w+gap+L.w+gap+nb.w, a:Math.max(L.a, sz*.62), d:Math.max(L.d, dn+Math.max(nb.d,rb.d)), draw(g,x,y){
     rb.draw(g, x, y+dn);
-    g.font=fontStr(sz); g.direction='rtl'; g.textAlign='left'; g.fillText(n.L, x+rb.w+gap, y);
+    L.draw(g, x+rb.w+gap, y);
     nb.draw(g, x+rb.w+gap+L.w+gap, y+dn);
   }};
 }
