@@ -183,6 +183,8 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .tabbody{padding:8px;display:grid;gap:7px;min-height:84px}
 #favPanel{display:grid;gap:7px}
 .grprow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.recentrow{flex-basis:100%;flex-wrap:wrap;padding-bottom:6px;margin-bottom:2px;border-bottom:1px dashed var(--line)}
+.recentrow[hidden]{display:none}
 .grprow .grp{display:flex;flex-wrap:wrap;gap:4px;max-width:100%;padding-inline-end:8px;border-inline-end:1px solid var(--line)}
 .grprow .grp:last-child{border-inline-end:0;padding-inline-end:0}
 .toolbar button.fn{width:auto;padding:0 8px;font-size:.95rem}
@@ -261,7 +263,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
         </div>
       </div>
       <div id="toolsHidBox" hidden><div class="catl">أدوات مخفية</div><div class="toolbar" id="toolsHid"></div></div>
-      <div class="symhead" id="symHead"><button type="button" class="mini" id="editSyms" aria-pressed="false">تخصيص</button><button type="button" class="mini" id="resetSyms" hidden>الافتراضي</button><span class="hint" id="editHint" hidden>اضغط على الرمز لنقله بين الظاهرة والمزيد، واسحبه لتغيير ترتيبه.</span></div>
+      <div class="symhead" id="symHead"><button type="button" class="mini" id="editSyms" aria-pressed="false">تخصيص</button><button type="button" class="mini" id="resetSyms" hidden>الافتراضي</button><span class="hint" id="editHint" hidden>اضغط على الرمز لإضافته أو إزالته، واسحبه لتغيير ترتيبه (السحب يعمل دائمًا).</span></div>
       <div class="toolbar" id="allsyms"></div>
       <details id="moreBox" hidden open><summary class="label">المزيد</summary><div id="mazall" class="morecats"></div></details>
           </div>
@@ -316,7 +318,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
-  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer" dir="ltr">1.1</span></footer>
+  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer" dir="ltr">1.2</span></footer>
 </div>
 
 <script>
@@ -1309,10 +1311,10 @@ function symButton(ch, inVisible){
   const b=document.createElement('button'); b.type='button'; b.className='sym'+(editSyms?' editing':''); b.textContent=ch; b.dataset.ch=ch;
   const name=symName[ch]; if (name){ b.title=name; b.setAttribute('aria-label',name); }
   b.addEventListener('click',()=>{
-    if (!editSyms) return insert(ch===','?'، ':ch.length>1?ch+' ':ch);
+    if (!editSyms){ noteUse(ch); return insert(ch===','?'، ':ch.length>1?ch+' ':ch); }
     visOrder = inVisible ? visOrder.filter(c=>c!==ch) : [...visOrder, ch]; saveVis(); renderSyms();
   });
-  if (editSyms){
+  if (editSyms || inVisible){ // favourites can always be dragged into any order
     b.draggable=true;
     b.addEventListener('dragstart',e=>{ dragCh=ch; e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain',ch); }catch(_){} b.classList.add('dragging'); });
     b.addEventListener('dragend',()=>{ dragCh=null; document.querySelectorAll('.drop-r,.drop-l,.dragging').forEach(x=>x.classList.remove('drop-r','drop-l','dragging')); });
@@ -1332,20 +1334,30 @@ const CATORDER=["دوال","حروف", "أرقام", "عمليات وعلاقا�
 function renderSyms(){
   const vis=$('allsyms'), more=$('mazall'); vis.innerHTML=''; more.innerHTML='';
   const shown=new Set(visOrder);
-  // favourites grouped by kind; your own order is kept inside each group
-  const FAVCATS=['عمليات وعلاقات','مجموعات','هندسة','أسهم','حروف','يونانية','دوال','تكامل ومجموع','أرقام','علامات وأخرى'];
-  const byCat={}; for (const ch of visOrder){ const c=FAVCATS.includes(SYMCAT[ch])?SYMCAT[ch]:'علامات وأخرى'; (byCat[c] ||= []).push(ch); }
-  const row=document.createElement('div'); row.className='grprow';
-  for (const c of FAVCATS){ if(!byCat[c]) continue; const d=document.createElement('div'); d.className='grp toolbar'; d.title=''; d.dataset.cat=c;
-    byCat[c].forEach(ch=>d.appendChild(symButton(ch, true))); row.appendChild(d); }
-  vis.appendChild(row);
+  // first row: the symbols used most recently (updates itself); then the favourites in your own order
+  const rr=document.createElement('div'); rr.id='recentRow'; rr.className='toolbar recentrow'; vis.appendChild(rr); renderRecent();
+  visOrder.forEach(ch=>vis.appendChild(symButton(ch, true)));
   const groups={}; for (const {ch} of ALLSYM) if (!shown.has(ch)) (groups[SYMCAT[ch]||'علامات وأخرى'] ||= []).push(ch);
   for (const c of CATORDER){ if(!groups[c]) continue;
     const h=document.createElement('div'); h.className='catl'; h.textContent=c; more.appendChild(h);
     const row=document.createElement('div'); row.className='toolbar'; groups[c].forEach(ch=>row.appendChild(symButton(ch,false))); more.appendChild(row); }
 }
+// ---- recently used symbols: one row on top of the favourites, newest first ----
+let recent = (load('aeq-recent', [])||[]).filter(c=>validSym.has(c)), recentDirty=false;
+function noteUse(ch){ if (!validSym.has(ch)) return; recent=[ch, ...recent.filter(c=>c!==ch)].slice(0,24); save('aeq-recent', recent); recentDirty=true; }
+function renderRecent(){
+  const rr=$('recentRow'); if (!rr) return; recentDirty=false; rr.innerHTML='';
+  rr.hidden = editSyms || !recent.length; if (rr.hidden) return;
+  for (const ch of recent){ const b=document.createElement('button'); b.type='button'; b.className='sym'+(ch.length>1?' fn':''); b.textContent=ch; b.dataset.ch=ch;
+    const name=symName[ch]; b.title = name ? name+' (الأكثر استخدامًا)' : 'الأكثر استخدامًا'; if (name) b.setAttribute('aria-label',name);
+    b.addEventListener('click',()=>{ noteUse(ch); insert(ch===','?'، ':ch.length>1?ch+' ':ch); }); rr.appendChild(b); }
+  requestAnimationFrame(()=>{ const k=[...rr.children]; if(!k.length) return; const y=k[0].offsetTop; k.forEach(b=>{ if (b.offsetTop>y+2) b.remove(); }); });
+}
+// the row is rebuilt when the pointer leaves the palette, so buttons never jump under the mouse
+document.querySelector('.ribbon').addEventListener('mouseleave', ()=>{ if (recentDirty) renderRecent(); });
+window.addEventListener('blur', ()=>{ if (recentDirty) renderRecent(); });
 // drop on empty space: end of the visible row, or back into "more"
-$('allsyms').addEventListener('dragover',e=>{ if(editSyms && dragCh) e.preventDefault(); });
+$('allsyms').addEventListener('dragover',e=>{ if(dragCh && visOrder.includes(dragCh)||editSyms && dragCh) e.preventDefault(); });
 $('allsyms').addEventListener('drop',e=>{ e.preventDefault(); if(dragCh) moveTo(dragCh, null, false); });
 $('mazall').addEventListener('dragover',e=>{ if(editSyms && dragCh && visOrder.includes(dragCh)) e.preventDefault(); });
 $('mazall').addEventListener('drop',e=>{ e.preventDefault(); if(dragCh){ visOrder=visOrder.filter(c=>c!==dragCh); saveVis(); renderSyms(); } });
@@ -1390,7 +1402,7 @@ function itemButton(it){
   const b=document.createElement('button'); b.type='button';
   if (it.t==='tool'){ const src0=TOOLEL[it.ins]; b.className='ico'; b.innerHTML=src0.innerHTML; b.title=src0.dataset.tip||src0.title||''; b.dataset.ins=it.ins; b.addEventListener('click',()=>insert(it.ins)); }
   else if (it.t==='text'){ b.className='fn'; b.textContent=it.s; b.title='الدالة '+it.s; b.addEventListener('click',()=>insert(it.s+' ')); }
-  else { b.className='sym'+(it.ch.length>1?' fn':''); b.textContent=it.ch; if (it.name) b.title=it.name; b.addEventListener('click',()=>insert(it.ch===','?'، ':it.ch.length>1?it.ch+' ':it.ch)); }
+  else { b.className='sym'+(it.ch.length>1?' fn':''); b.textContent=it.ch; if (it.name) b.title=it.name; b.addEventListener('click',()=>{ if(!favEdit) noteUse(it.ch); }); b.addEventListener('click',()=>insert(it.ch===','?'، ':it.ch.length>1?it.ch+' ':it.ch)); }
   b.dataset.fav = isFav(it) ? '1' : '0';
   if (favEdit) b.classList.add('favedit');
   // in "edit favourites" mode a click adds/removes; a right-click always does
