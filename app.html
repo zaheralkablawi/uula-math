@@ -205,7 +205,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
   <div class="grid">
     <section class="panel" aria-label="كتابة المعادلة">
-      <div class="symhead"><label class="label" for="src">المعادلة</label><span class="iconbar"><button class="ib" id="copySrc" type="button" title="نسخ النص" aria-label="نسخ النص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button><button class="ib" id="cutSrc" type="button" title="قص" aria-label="قص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="15" r="2.5"/><path d="M7.3 13.2 15 3M12.7 13.2 5 3"/></svg></button><button class="ib" id="pasteSrc" type="button" title="لصق" aria-label="لصق"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="14" rx="2"/><path d="M7.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/><path d="M7.5 9.5h5M7.5 13h5"/></svg></button><button class="ib" id="clearSrc" type="button" title="مسح الكل (يمكن التراجع بـ ⌘Z)" aria-label="مسح الكل"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 11a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-11"/></svg></button><span class="histwrap"><button class="ib" id="histBtn" type="button" title="السابقة: آخر ٢٠ معادلة نسختها أو أدرجتها" aria-label="السابقة" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.5v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg></button><div class="hist" id="hist" hidden></div></span><button class="ib" id="undoBtn" type="button" title="تراجع (⌘Z)" aria-label="تراجع"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5l3.5 3.5-3.5 3.5"/><path d="M16.5 8H8a4.5 4.5 0 0 0 0 9h3"/></svg></button><button class="ib" id="redoBtn" type="button" title="إعادة (⌘⇧Z)" aria-label="إعادة"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8H12a4.5 4.5 0 0 1 0 9H9"/></svg></button><button class="ib" id="mathBtn" type="button" title="حدّد كلامًا ثم اضغط: يتحول إلى رموز رياضيات، أو يعود إلى كتابة عادية" aria-label="رموز رياضيات / كتابة عادية"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><text x="10" y="10.5" font-size="10.5" font-weight="700" font-family="UULA Sans" fill="currentColor" text-anchor="middle" direction="rtl">أب</text><path d="M4 14.5h12M13.5 12.5l2.5 2-2.5 2M6.5 12.5L4 14.5l2.5 2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="ib repbtn" id="replaceMode" type="button" hidden aria-pressed="false" aria-label="وضع الاستبدال"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3"/><path d="M16 13H5M8 10l-3 3 3 3"/></svg></button></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
+      <div class="symhead"><label class="label" for="src">المعادلة</label><span class="iconbar"><button class="ib" id="copySrc" type="button" title="نسخ النص" aria-label="نسخ النص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button><button class="ib" id="cutSrc" type="button" title="قص" aria-label="قص"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="15" r="2.5"/><path d="M7.3 13.2 15 3M12.7 13.2 5 3"/></svg></button><button class="ib" id="pasteSrc" type="button" title="لصق" aria-label="لصق"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="14" rx="2"/><path d="M7.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/><path d="M7.5 9.5h5M7.5 13h5"/></svg></button><button class="ib" id="clearSrc" type="button" title="مسح الكل (يمكن التراجع بـ ⌘Z)" aria-label="مسح الكل"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 11a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-11"/></svg></button><span class="histwrap"><button class="ib" id="histBtn" type="button" title="السابقة: آخر ٢٠ معادلة نسختها أو أدرجتها" aria-label="السابقة" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.5v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg></button><div class="hist" id="hist" hidden></div></span><button class="ib" id="undoBtn" type="button" title="تراجع (⌘Z)" aria-label="تراجع"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5l3.5 3.5-3.5 3.5"/><path d="M16.5 8H8a4.5 4.5 0 0 0 0 9h3"/></svg></button><button class="ib" id="redoBtn" type="button" title="إعادة (⌘⇧Z)" aria-label="إعادة"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8H12a4.5 4.5 0 0 1 0 9H9"/></svg></button><button class="ib" id="mathBtn" type="button" title="حدّد كلامًا ثم اضغط: يتحول إلى رموز رياضيات، أو يعود إلى كتابة عادية" aria-label="رموز رياضيات / كتابة عادية"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><text x="10" y="10.5" font-size="10.5" font-weight="700" font-family="UULA Sans" fill="currentColor" text-anchor="middle" direction="rtl">أب</text><path d="M4 14.5h12M13.5 12.5l2.5 2-2.5 2M6.5 12.5L4 14.5l2.5 2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="ib repbtn" id="replaceMode" type="button" hidden aria-pressed="false" aria-label="وضع الاستبدال"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3"/><path d="M16 13H5M8 10l-3 3 3 3"/></svg></button><button class="ib" id="editEq" type="button" hidden aria-label="تعديل معادلة من الشريحة" data-tip="حدد معادلة في الشريحة ثم اضغط هنا لتعديلها"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5l3 3L7 16H4v-3z"/><path d="M11.5 5.5l3 3"/></svg></button></span><button class="mini" id="ocrBtn" type="button" hidden title="الصق أو اختر صورة معادلة فيحوّلها Claude إلى نص الأداة">قراءة من صورة</button><input type="file" id="ocrFile" accept="image/*" hidden><span class="hint" id="ocrStatus"></span></div>
       <div class="settings fmt">
         <div class="field">
           <div class="swatches cwrap"><button type="button" class="colorbtn" id="colorBtn" data-tip="اللون" aria-label="اللون" aria-haspopup="true" aria-expanded="false"><span class="sw" id="colorSw"></span><svg viewBox="0 0 10 6" width="9" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cpop" id="cpop" hidden></div><input type="color" id="custom" class="vh" tabindex="-1" aria-hidden="true"></div>
@@ -316,7 +316,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
     </section>
   </div>
-  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer">الإصدار ٤</span></footer>
+  <footer class="credit">إعداد: زاهر القبلاوي · <span id="appVer" dir="ltr">1.1</span></footer>
 </div>
 
 <script>
@@ -1695,9 +1695,11 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
 window.__aeq = { render, parse, st, makeSVG };
 
 // ===== Office add-in: insert the equation into the slide or document =====
-const ADDIN_VER='23';
+const ADDIN_VER='24';
+const TAG='UULA_AEQ'; // hidden tag on each inserted equation: its code and formatting, so it can be edited later
+const eqMeta = code => encodeURIComponent(JSON.stringify({ v:1, c:code, color:st.color, align:st.align, pt:st.pt, weight:st.weight }));
 const SLIDE_W=540; // UULA booklet slides are 540 pt wide; «outside on the right» starts just after that
-function officeInsert(data, type, place, fallback){
+function officeInsert(data, type, place, fallback, meta){
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size (on a 540 pt wide booklet slide)
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
   const info = place && place.info, outside = place && place.outside, keepId = place && place.center ? place.refId : null;
@@ -1709,7 +1711,7 @@ function officeInsert(data, type, place, fallback){
       if (fallback){ flash('تعذّر إدراج SVG هنا، فأُدرجت صورة PNG.', false); return fallback(); }
       flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
     let ok = true;
-    if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place ? (outside ? place.refId : place.id) : keepId });
+    if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place ? (outside ? place.refId : place.id) : keepId, meta });
     if (place && !outside){ const gone = await deleteOld(place.id);
       flash(gone ? 'وُضعت المعادلة مكان القديمة وحُذفت القديمة.' : 'وُضعت المعادلة مكانها، لكن تعذّر حذف القديمة فنُقلت خارج الشريحة.', gone); }
     else if (outside) flash('أُدرجت المعادلة خارج الشريحة على اليمين.');
@@ -1747,7 +1749,9 @@ async function placeNew(o){
     if (o.outside){ sh.left = slideW + 18; sh.top = o.place.top; }
     else if (o.place){ sh.left = o.place.left + o.place.width - W; sh.top = o.place.top; } // same right edge and top as the old one
     else { sh.left = (slideW - W)/2; sh.top = (slideH - H)/2; }
-    await ctx.sync(); return true;
+    await ctx.sync();
+    if (o.meta && sh.tags){ try { sh.tags.add(TAG, o.meta); sh.name = 'UULA Math'; await ctx.sync(); } catch(e){} }
+    return true;
   }); } catch(e){ return false; }
 }
 // Remember the picture selected on the slide: clicking into this pane can clear PowerPoint's selection before «إدراج» is pressed
@@ -1781,10 +1785,13 @@ async function takeSelectedPlace(){
   if (now.id) pic = now;
   else if (picStillMeant() && (!now.slide || lastPic.slide === now.slide)) pic = lastPic; // selection was lost when the pane got focus
   if (!pic) return null;
+  return placeOf(pic.id);
+}
+async function placeOf(id){
   try {
     return await PowerPoint.run(async ctx => {
       const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
-      const sh = sl.items[0].shapes.getItem(pic.id); sh.load('id,left,top,width,height'); await ctx.sync();
+      const sh = sl.items[0].shapes.getItem(id); sh.load('id,left,top,width,height'); await ctx.sync();
       const place = { id: sh.id, left: sh.left, top: sh.top, width: sh.width, height: sh.height };
       if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]); // the old one is deleted after the new one is in
       await ctx.sync(); lastPic = null;
@@ -1809,18 +1816,47 @@ if (window.Office) Office.onReady(info => {
     .then(r => { svgOn = r.every(Boolean); }).catch(()=>{});
   if (isPPT){ $('replaceMode').hidden=false; showMode();
     $('replaceMode').addEventListener('click', () => { replaceOn=!replaceOn; save('aeq-replace', replaceOn); showMode();  }); }
+  // «تعديل»: read the hidden code of the selected equation back into the writing box; the next «إدراج» replaces it
+  let editTarget = null;
+  if (isPPT && hasPPT()){ $('editEq').hidden=false;
+    $('editEq').addEventListener('click', async () => {
+      const now = await readSelection();
+      const pic = now.id ? now : (picStillMeant() && (!now.slide || lastPic.slide === now.slide) ? lastPic : null);
+      if (!pic) return flash('حدد أولًا المعادلة في الشريحة، ثم اضغط زر التعديل.', false);
+      let raw = null;
+      try { raw = await PowerPoint.run(async ctx => {
+        const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+        const t = sl.items[0].shapes.getItem(pic.id).tags.getItemOrNullObject(TAG); t.load('value'); await ctx.sync();
+        return t.isNullObject ? null : t.value; }); } catch(e){}
+      if (!raw) return flash('هذا العنصر لا يحمل كود معادلة محفوظًا (أُدرج قبل الإصدار 1.1 أو ليس من الأداة).', false);
+      let m; try { m = JSON.parse(decodeURIComponent(raw)); } catch(e){ return flash('تعذّرت قراءة الكود المحفوظ.', false); }
+      if (m.color) setColor(m.color);
+      if (m.align) setAlign(m.align);
+      if (m.pt){ st.pt = +m.pt; $('size').value = String(st.pt); }
+      if (m.weight){ st.weight = String(m.weight); $('weight').value = st.weight; }
+      src.focus(); src.setRangeText(String(m.c || ''), 0, src.value.length, 'end'); snap(true);
+      ensureFont().then(update);
+      editTarget = { id: pic.id, slide: pic.slide };
+      $('insertDoc').classList.add('replacing'); $('insertDoc').dataset.tip = 'تعديل: تنزل المعادلة مكان القديمة وتحذفها';
+    });
+  }
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
     const b64 = await new Promise(res => { const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
     let place = null;
-    if (isPPT && replaceOn) place = await takeSelectedPlace();
+    if (isPPT && editTarget){ const t = editTarget; editTarget = null; showMode();
+      const now = await readSelection();
+      place = (!now.slide || !t.slide || now.slide === t.slide) ? await placeOf(t.id) : null;
+      if (!place) place = { info: 'لم أجد المعادلة الأصلية في الشريحة الحالية، فأُدرجت الجديدة في الوسط.' }; }
+    else if (isPPT && replaceOn) place = await takeSelectedPlace();
     else if (isPPT && hasPPT()){ // not replacing: in the middle of the slide; whatever is selected stays untouched
       const now = await readSelection();
       place = { center: true, refId: now.id || null };
       if (now.id){ try { await PowerPoint.run(async ctx => { if (ctx.presentation.setSelectedShapes) ctx.presentation.setSelectedShapes([]); await ctx.sync(); }); } catch(e){} } }
     pushHistory(src.value);
-    const png = () => officeInsert(b64, Office.CoercionType.Image, place);
-    if (svgOn && Office.CoercionType.XmlSvg) officeInsert(makeSVG(src.value), Office.CoercionType.XmlSvg, place, png);
+    const meta = eqMeta(src.value);
+    const png = () => officeInsert(b64, Office.CoercionType.Image, place, null, meta);
+    if (svgOn && Office.CoercionType.XmlSvg) officeInsert(makeSVG(src.value), Office.CoercionType.XmlSvg, place, png, meta);
     else png();
   });
 });
