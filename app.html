@@ -335,7 +335,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مستقيم ، متجه ، قوس</td><td><code>مستقيم{أب}</code> ، <code>متجه{أب}</code> ، <code>قوس{أب}</code></td></tr>
                     <tr><td>اختصار (شطب)</td><td><code>شطب{١٥}{٣}</code> (الرقم الصغير اختياري، واللون أرجواني؛ لتغييره: <code>لون{أحمر}{شطب{١٥}{٣}}</code> أو حدّد الشطب واختر لونًا)</td></tr><tr><td>عدد فوق عدد (بلا شطب)</td><td><code>{٢}↑{١}</code></td></tr><tr><td>اختصار والعدد تحت</td><td><code>شطب.تحت{١٥}{٣}</code> </td></tr>
           <tr><td>قسمة مطوّلة</td><td>سطر لكل جزء: <code>قسمة{</code> ثم الناتج، ثم <code>المقسوم &amp; المقسوم.عليه</code>، ثم <code>-٧</code> للطرح، و<code>=</code> للخط، ثم الباقي، ثم <code>}</code></td></tr>
-          <tr><td>جمع وطرح عمودي</td><td>كل عدد في سطر: <code>عمودي{</code> ثم <code>١٢</code> ثم <code>+٢٥</code> (أو <code>−٢٥</code>) ثم <code>=٣٧</code> ثم <code>}</code> (كل = يرسم خطًا أفقيًا، وحده في سطر أو قبل العدد؛ وللحمل <code>{٢}↑{١}</code>)</td></tr><tr><td>ضرب رأسي</td><td><code>ضرب.رأسي{</code> ثم <code>٢٥</code> ثم <code>×١٣</code> ثم <code>=</code> ثم <code>٧٥</code> ثم <code>+٢٥٠</code> ثم <code>=</code> ثم <code>٣٢٥</code> ثم <code>}</code></td></tr>
+          <tr><td>جمع وطرح عمودي</td><td>كل عدد في سطر: <code>عمودي{</code> ثم <code>١٢</code> ثم <code>+٢٥</code> (أو <code>−٢٥</code>) ثم <code>=٣٧</code> ثم <code>}</code> (كل = يرسم خطًا أفقيًا، وحده في سطر أو قبل العدد؛ وللحمل <code>{٢}↑{١}</code>؛ والأعداد العشرية مثل <code>٦،٢٥٣</code> تصطف فواصلها تحت بعضها)</td></tr><tr><td>ضرب رأسي</td><td><code>ضرب.رأسي{</code> ثم <code>٢٥</code> ثم <code>×١٣</code> ثم <code>=</code> ثم <code>٧٥</code> ثم <code>+٢٥٠</code> ثم <code>=</code> ثم <code>٣٢٥</code> ثم <code>}</code></td></tr>
           <tr><td>تلوين جزء</td><td>حدّد الجزء في مربع الكتابة ثم اختر اللون، أو اكتب <code>لون{أحمر}{٣}</code> : أحمر، أزرق، أسود، أخضر، أصفر، بنفسجي، أرجواني، وردي، برتقالي، أبيض، رمادي (تُقبل بلا همزة: احمر)</td></tr>
           <tr><td>نظام معادلات</td><td><code>نظام{س + ص = ٥ ; س − ص = ١}</code></td></tr>
           <tr><td>دالة متعددة القواعد</td><td><code>قواعد{٢س &amp; س &gt; ٠ ; −س &amp; س ≤ ٠}</code></td></tr>
@@ -498,7 +498,7 @@ class P {
             this.i=i0; }
           if (t==='ldiv'){ const n=this.group(), d=this.group(); const q=opt(); const steps=this.peek()==='{'?this.raw():null; return {t:'ldiv',n,d,q,steps}; }
           if (t==='vert') return {t:'vert',rows:this.raw()};
-          if (t==='vmul') return {t:'vert',rows:this.raw(),opLeft:true};
+          if (t==='vmul') return {t:'vert',rows:this.raw()}; // the sign stays on the right, outside the numbers
           if (t==='sys'||t==='cases'||t==='mat'||t==='det'||t==='arr') return {t:'grid',kind:t,rows:splitRows(this.group())};
           if (t==='tbl'||t==='tbli'||t==='tblh'||t==='tblv') return {t:'table',kind:t,rows:splitRows(this.group())};
           if (t==='axes'||t==='axesx'||t==='axesp'||t==='axespx'){ const num=v=>{ const x=parseInt(toLatinDigits(v.trim()),10); return x>0 ? Math.min(x,15) : 5; }; // axes only, no grid
@@ -869,7 +869,10 @@ function lineFrom(text, sz){ // one typed line -> {box, lead(spaces), minus}
   const hint=VERT_HINT.has(body.trim());
   const nodes = new P(normalize(body)).seq(null);
   TABULAR=!hint; const b=rowBox(nodes, sz); TABULAR=false;
-  return { b, lead, op };
+  // the decimal comma (٦،٢٥٣): width of the part before it, so commas line up in vertical sums
+  let k=-1; for (let i=0, dep=0; i<body.length; i++){ const c=body[i]; if (c==='{') dep++; else if (c==='}') dep--; else if (!dep && /[،,.٫]/.test(c) && /[0-9٠-٩]/.test(body[i+1]||'')){ k=i; break; } }
+  let intW=b.w; if (k>=0){ TABULAR=true; intW=rowBox(new P(normalize(body.slice(0,k))).seq(null), sz).w; TABULAR=false; }
+  return { b, lead, op, intW, comma:k>=0, hint:HINTW.has(body.trim()) };
 }
 function ldivBox(n, sz){
   TABULAR=true; const nb=rowBox(n.n, sz), qb=n.q&&n.q.length?rowBox(n.q, sz):null; TABULAR=false; const db=rowBox(n.d, sz);
@@ -906,7 +909,10 @@ function ldiv2Box(n, sz){
   const cols=ns=>ns.reduce((t,n)=> t + (n.t==='txt'&&n.k==='num' ? [...n.s].filter(c=>c!==String.fromCharCode(0xE02C)).length : n.t==='space' ? 0 : n.c&&(n.t==='strike'||n.t==='color'||n.t==='bar'||n.t==='under') ? cols(n.c) : 1), 0);
   const digits=str=>{ try { return cols(new P(normalize(str)).seq(null)); } catch(e){ return [...str.replace(/\s+/g,'')].length; } };
   const qb=box(qs, LDIV_HINT.has(qs)), nb=box(ns, LDIV_HINT.has(ns)), db=box(ds, LDIV_HINT.has(ds));
-  const nDig=nb.hint?3:Math.max(1,digits(ns)), qDig=qb.hint||!qs?nDig:digits(qs), c0=Math.max(0,nDig-qDig);
+  const nDig=nb.hint?3:Math.max(1,digits(ns)), qDig=qb.hint||!qs?nDig:digits(qs);
+  // a quotient written with its leading zero (٠١) starts above the first digit, as in the booklet: steps line up from the left
+  const lz = qb.hint ? 0 : (toLatinDigits(qs.replace(/\s+/g,'')).match(/^0+(?=\d)/)||[''])[0].length, qLeft = lz>0;
+  const c0 = qLeft ? lz : Math.max(0,nDig-qDig);
   // steps with their column (right edge, counted from the dividend's first digit)
   const steps=[]; let k=-1;
   const body=[]; for (const r of rows.slice(2)){ if (/^=/.test(r) && r.replace(/^=\s*/,'')){ body.push('='); body.push(r.replace(/^=\s*/,'')); } else body.push(r); }
@@ -926,7 +932,7 @@ function ldiv2Box(n, sz){
     const put=(b,xx,yy)=>b.draw(g,xx,yy);
     put(db, x+sz*.12, y); put(nb, nL, y);
     stroke(g,t,()=>{ g.moveTo(nR+sz*.12, barY); g.lineTo(xb, barY); g.lineTo(xb, under); g.lineTo(x, under); });
-    put(qb, nR-qb.w, barY-gap-qb.d);
+    put(qb, qLeft ? nL : nR-qb.w, barY-gap-qb.d);
     let yy=y;
     for (const s of steps){
       if (s.kind==='rule'){ const ly=yy+sz*.3; stroke(g,t,()=>{ g.moveTo(xb-sz*.05, ly); g.lineTo(nR+sz*.12+(hasSub?mW*.8:0), ly); }); yy+=sz*.12; continue; }
@@ -947,7 +953,8 @@ function vertBox(n, sz){
     else rows.push(lineFrom(x.trim(), sz)); }
   if (!rows.length) return {w:sz,a:sz*.6,d:sz*.2,draw(){}};
   if (!lines.some(x=>/^\s*=/.test(x)) && rows.length>1) rules.add(rows.length-2); // no = at all: line above the last row
-  const digitsW=Math.max(...rows.map(r=>r.b.w), carry?carry.length*cw:0);
+  const CM=rows.some(r=>r.comma), NR=rows.filter(r=>!r.hint), maxInt=Math.max(0,...NR.map(r=>r.intW)), maxRest=Math.max(0,...NR.map(r=>r.b.w-r.intW));
+  const digitsW=Math.max(CM ? Math.max(maxInt+maxRest, ...rows.map(r=>r.b.w)) : Math.max(...rows.map(r=>r.b.w)), carry?carry.length*cw:0);
   const opW=sz*.6, w=digitsW+opW+sz*.1, L=n.opLeft;
   const top = carry ? small*1.1 : 0, last=rows.length-1;
   const a = Math.max(sz*.62, rows[0].b.a) + top, d = last*lh + Math.max(sz*.2, rows[last].b.d) + (rules.has(last)?sz*.4:0) + sz*.15;
@@ -956,7 +963,7 @@ function vertBox(n, sz){
     if (carry){ g.save(); g.font=fontStr(small); g.direction='ltr'; g.textAlign='center';
       const chars=[...mathDigits(toAr(carry))]; for (let i=0;i<chars.length;i++){ const col=chars.length-1-i; if(chars[i]!==' ') g.fillText(chars[i], R-(col+.5)*cw, y-sz*.72); } g.restore(); }
     rows.forEach((r,i)=>{
-      const yy=y+i*lh; r.b.draw(g, R-r.b.w, yy);
+      const yy=y+i*lh; r.b.draw(g, CM && !r.hint ? R-maxRest-r.intW : R-r.b.w, yy); // with decimals: the commas under each other
       if (r.op){ g.font=fontStr(sz); g.direction='ltr'; g.textAlign='left'; g.fillText(r.op, L ? x+sz*.02 : R+sz*.18, yy); g.textAlign='start'; }
       if (rules.has(i)) stroke(g,t,()=>{ g.moveTo(x, yy+sz*.32); g.lineTo(x+w, yy+sz*.32); });
     });
@@ -2043,6 +2050,7 @@ const NEWS = { id:'2026-11-11', items:[
   'عدد فوق عدد بلا شطب (للحمل): {٢}↑{١}',
   'أعداد مرتبة في صفوف وأعمدة بلا أقواس: ترتيب{…}',
   'أداة بين رقمين بلا مسافة تبقى داخل العدد بترتيبه: ٣جذر{٢}٤',
+  'العمليات الرأسية: الفواصل العشرية تحت بعضها، والعلامة دائمًا يمين الأعداد',
   'تعليمات الكتابة محدّثة، وTab ينتقل بين الكلمات الرمادية',
   'الدائرة بأمر واحد: دائرة{أ} أو دائرة{١٥ & أزرق} (بدل قائمة الدوائر)',
   'محاور فقط بلا شبكة: محاور، محاور.خالية، محاور.موجبة، محاور.موجبة.خالية',
