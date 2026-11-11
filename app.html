@@ -28,10 +28,7 @@
   --f-body:"UULA Sans","UULA Maz1","UULA Maz2",sans-serif;
   --f-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#11161e; --panel:#19202b; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3442;
-  --accent:#6b9cf0; --accent-ink:#0d1420; --accent-soft:#1e2b42; --sheet:#ffffff; --code:#141a23;
-  --ok:#5cc58a; --warn:#f0a06b; color-scheme:dark}}
+/* always the light style, even when the computer is in dark mode */
 :root[data-theme="dark"]{
   --bg:#11161e; --panel:#19202b; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3442;
   --accent:#6b9cf0; --accent-ink:#0d1420; --accent-soft:#1e2b42; --sheet:#ffffff; --code:#141a23;
