@@ -489,7 +489,7 @@ class P {
             for (const ch of txt.replace(/[\u0640\u064B-\u065F\u0670]/g,'')){ if (ch===' ') c.push({t:'space'}); else if (MATHLETTER[ch]) c.push({t:'txt',s:String.fromCharCode(0xE000+MATHLETTER[ch]),k:'word'}); else c.push({t:'txt',s:ch,k:'word'}); }
             return {t:'row',c}; }
           if (t==='plain'){ const txt=this.raw(); return {t:'txt',s:txt,k:'word',plain:true}; } // نص{…}: written as ordinary text
-          if (t==='color'){ const name=this.raw().trim(); return {t:'color',color:COLORNAME[name]||name,c:this.group()}; }
+          if (t==='color'){ const name=this.raw().trim(); return {t:'color',color:colorOf(name)||name,c:this.group()}; }
           if (t==='size'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'size',pt:v>0?v:null,c:this.group()}; }
           if (t==='wt'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'wt',w:v>0?v:null,c:this.group()}; }
           if (t==='ldiv'){ const i0=this.i, body=this.raw(); // new form: one group, a line each (quotient / dividend & divisor / -product / = line / remainder)
@@ -505,8 +505,9 @@ class P {
           if (t==='plane'||t==='planen'||t==='planep'||t==='planep0'||t==='planex'||t==='planepx'){ const num=v=>{ const x=parseInt(toLatinDigits(v.trim()),10); return x>0 ? Math.min(x,15) : 5; };
             const a=num(this.raw()); const b=this.peek()==='{' ? num(this.raw()) : a; return {t:'plane',nx:a,ny:b,num:t==='planen'||t==='planep',pos:t==='planep'||t==='planep0'||t==='planepx',nolab:t==='planex'||t==='planepx'}; }
           if (t==='circ'||t==='circf'){ const grp=this.group(), k=grp.findIndex(n=>n.t==='txt'&&n.s==='&'); // دائرة{أ & أزرق}: colour after &
-            const c=k<0?grp:grp.slice(0,k), cs=k<0?'':grp.slice(k+1).filter(n=>n.t!=='space').map(n=>n.s||'').join('').trim();
-            const fc = t==='circf' ? CIRCBLUE : COLORNAME[cs] || (/^#[0-9a-fA-F]{3,6}$/.test(cs) ? cs : null);
+            let c=k<0?grp:grp.slice(0,k); while (c.length && c[0].t==='space') c=c.slice(1); while (c.length && c[c.length-1].t==='space') c=c.slice(0,-1); // centred in the circle
+            const cs=k<0?'':grp.slice(k+1).filter(n=>n.t!=='space').map(n=>n.s||'').join('').trim();
+            const fc = t==='circf' ? CIRCBLUE : colorOf(cs) || (/^#[0-9a-fA-F]{3,6}$/.test(cs) ? cs : null);
             return {t:'circ',fill:!!fc,fc,c}; }
           if (t==='nline'||t==='nline0'){ const int=v=>{ const x=parseInt(toLatinDigits(v.trim()).replace(/[−–]/g,'-'),10); return isNaN(x) ? null : Math.max(-30,Math.min(30,x)); };
             const a=int(this.raw()); const b=this.peek()==='{' ? int(this.raw()) : null;
@@ -573,6 +574,10 @@ function splitRows(nodes){
   return rows.map(r=>r.map(c=>{ while(c.length && c[0].t==='space') c.shift(); while(c.length && c[c.length-1].t==='space') c.pop(); return c; }));
 }
 const COLORNAME={'أرجواني':'#fe00fe','أحمر':'#e0322b','أزرق':'#1f71de','أسود':'#000000','أخضر':'#1f9d55','أصفر':'#ffe600','بنفسجي':'#b58cff','وردي':'#fe00fe','برتقالي':'#f08a24','أبيض':'#ffffff','رمادي':'#8a94a3'};
+// colour names forgive spelling: أحمر = احمر, أرجواني = ارجواني …
+const colKey=t=>t.trim().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[\u064B-\u0652\u0640]/g,'');
+const COLORN=Object.fromEntries(Object.entries(COLORNAME).map(([k,v])=>[colKey(k),v]));
+const colorOf=t=>COLORNAME[t.trim()]||COLORN[colKey(t)]||null;
 // digits drawn with the Mazeri math digits (and its comma)
 const mathDigits = t => t.replace(/[٠-٩]/g, d=>String.fromCharCode(0xE030+'٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[,،٫]/g, String.fromCharCode(0xE02C));
 const MATHWORD={'جا':0x65,'جتا':0x66,'ظا':0x67,'ظتا':0x68,'قا':0x69,'قتا':0x6A,'نق':0x6B,'المجاور':0xF3,'المقابل':0xF4,'الوتر':0xF9};
