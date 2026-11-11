@@ -1382,6 +1382,14 @@ function placeCaret(){
   fcaret.hidden=false; fcaret.style.animation='none'; void fcaret.offsetWidth; fcaret.style.animation='';
 }
 const caretSoon=()=>requestAnimationFrame(placeCaret);
+// a click on a grey placeholder word (عدد، بسط، اكتب.هنا…) selects the whole word, ready to type over
+src.addEventListener('mouseup', ()=>setTimeout(()=>{
+  const p=src.selectionStart; if (p!==src.selectionEnd) return;
+  const v=src.value, W=/[ء-ي.]/; let a=p, b=p;
+  while (a>0 && W.test(v[a-1])) a--; while (b<v.length && W.test(v[b])) b++;
+  while (v[a]==='.') a++; while (b>a && v[b-1]==='.') b--;
+  if (b>a && HINTW.has(v.slice(a,b))){ src.setSelectionRange(a,b); placeCaret(); }
+}, 0));
 for (const ev of ['input','keyup','mouseup','focus','blur','scroll']) src.addEventListener(ev, caretSoon);
 document.addEventListener('selectionchange', caretSoon);
 window.addEventListener('resize', caretSoon); window.addEventListener('scroll', caretSoon, true);
@@ -2015,7 +2023,7 @@ const NEWS = { id:'2026-11-11', items:[
   'عدد فوق عدد بلا شطب (للحمل): {٢}↑{١}',
   'أعداد مرتبة في صفوف وأعمدة بلا أقواس: ترتيب{…}',
   'أداة بين رقمين بلا مسافة تبقى داخل العدد بترتيبه: ٣جذر{٢}٤',
-  'كلمات رمادية مكان كل فراغ في الأدوات (عدد، بسط، مقام، اكتب.هنا…)',
+  'كلمات رمادية مكان كل فراغ في الأدوات (عدد، بسط، مقام، اكتب.هنا…)، وتتحدد بنقرة واحدة',
   'الجداول والمصفوفات تُكتب صفًّا في كل سطر',
 ]};
 let showNews = ()=>{};
