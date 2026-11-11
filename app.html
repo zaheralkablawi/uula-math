@@ -487,7 +487,7 @@ class P {
             const txt=this.raw(); const c=[];
             for (const ch of txt.replace(/[\u0640\u064B-\u065F\u0670]/g,'')){ if (ch===' ') c.push({t:'space'}); else if (MATHLETTER[ch]) c.push({t:'txt',s:String.fromCharCode(0xE000+MATHLETTER[ch]),k:'word'}); else c.push({t:'txt',s:ch,k:'word'}); }
             return {t:'row',c}; }
-          if (t==='plain'){ const txt=this.raw(); return {t:'txt',s:txt,k:'word'}; } // نص{…}: written as ordinary text
+          if (t==='plain'){ const txt=this.raw(); return {t:'txt',s:txt,k:'word',plain:true}; } // نص{…}: written as ordinary text
           if (t==='color'){ const name=this.raw().trim(); return {t:'color',color:COLORNAME[name]||name,c:this.group()}; }
           if (t==='size'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'size',pt:v>0?v:null,c:this.group()}; }
           if (t==='wt'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'wt',w:v>0?v:null,c:this.group()}; }
@@ -528,6 +528,7 @@ class P {
       let j=this.i; while(j<s.length && (isDigit(s[j]) || (/[.,،٫]/.test(s[j]) && isDigit(s[j+1]||'')))) j++;
       let num=mathDigits(toAr(s.slice(this.i,j)).replace(/\./g,',')); this.i=j; return {t:'txt',s:num,k:'num'};
     }
+    for (const h of HINTDOT) if (s.startsWith(h, this.i) && !isLetter(s[this.i+h.length]||'')){ this.i+=h.length; return {t:'txt',s:h,k:'word'}; }
     if (isLetter(c)){
       let j=this.i; while(j<s.length && isLetter(s[j])) j++;
       const w=s.slice(this.i,j); this.i=j;
@@ -628,7 +629,10 @@ function measure(s, sz, sym){
 }
 const lw = sz => Math.max(.6, sz*(0.034 + 0.000042*curW())*(st.strokeMul||1));
 
+const HINTW=new Set(['عدد','بسط','مقام','اكتب.هنا','حروف','الناتج','المقسوم','المقسوم.عليه']); // placeholder words: drawn grey until replaced
+const HINTDOT=['اكتب.هنا','المقسوم.عليه'];
 function txtBox(n, sz, ctx){
+  if (n.k==='word' && !n.plain && HINTW.has(n.s)){ const b=txtBox({...n, s:n.s.replace('.',' '), plain:true}, sz, ctx), d0=b.draw; b.draw=(g,x,y)=>{ g.save(); g.globalAlpha=.4; d0(g,x,y); g.restore(); }; return b; }
   let s=n.s, sym = n.k==='bin'||n.k==='rel'||n.k==='sym'||n.k==='comma';
   if (MIRROR[s] && (n.k==='rel'||n.k==='sym')) s=MIRROR[s];
   const isWord = n.k==='word';
@@ -853,7 +857,6 @@ function lineFrom(text, sz){ // one typed line -> {box, lead(spaces), minus}
   const hint=VERT_HINT.has(body.trim());
   const nodes = new P(normalize(body)).seq(null);
   TABULAR=!hint; const b=rowBox(nodes, sz); TABULAR=false;
-  if (hint){ const d0=b.draw; b.draw=(g,x,y)=>{ g.save(); g.globalAlpha=.4; d0(g,x,y); g.restore(); }; }
   return { b, lead, op };
 }
 function ldivBox(n, sz){
@@ -886,7 +889,7 @@ function ldiv2Box(n, sz){
   const rows=n.rows.slice(); while (rows.length && rows[rows.length-1]==='') rows.pop();
   const qs=rows[0]||'', [ns='', ds='']=(rows[1]||'').split('&').map(x=>x.trim());
   const cw=cellW(sz), t=lw(sz), lh=(sz*.62+sz*.2)*1.3, gap=sz*.14;
-  const box=(str, hint)=>{ if (hint) str=str.replace('.',' '); TABULAR=!hint; const b=rowBox(new P(normalize(str)).seq(null), sz); TABULAR=false; b.hint=hint; return b; };
+  const box=(str, hint)=>{ TABULAR=!hint; const b=rowBox(new P(normalize(str)).seq(null), sz); TABULAR=false; b.hint=hint; return b; };
   const digits=str=>[...str.replace(/\s+/g,'')].length;
   const qb=box(qs, LDIV_HINT.has(qs)), nb=box(ns, LDIV_HINT.has(ns)), db=box(ds, LDIV_HINT.has(ds));
   const nDig=nb.hint?3:Math.max(1,digits(ns)), qDig=qb.hint||!qs?nDig:digits(qs), c0=Math.max(0,nDig-qDig);
@@ -906,7 +909,7 @@ function ldiv2Box(n, sz){
   const d=nb.d+sz*.12+nRows*lh+nRules*sz*.12+sz*.1;
   return { w, a, d, draw(g,x,y){
     const xb=x+divW, nL=x+qx0, nR=nL+Math.max(nDig*cw, nb.w), barY=y-nb.a-gap, under=y+Math.max(nb.d,db.d)+sz*.12;
-    const put=(b,xx,yy)=>{ if (b.hint){ g.save(); g.globalAlpha=.4; b.draw(g,xx,yy); g.restore(); } else b.draw(g,xx,yy); };
+    const put=(b,xx,yy)=>b.draw(g,xx,yy);
     put(db, x+sz*.12, y); put(nb, nL, y);
     stroke(g,t,()=>{ g.moveTo(nR+sz*.12, barY); g.lineTo(xb, barY); g.lineTo(xb, under); g.lineTo(x, under); });
     put(qb, nR-qb.w, barY-gap-qb.d);
@@ -954,7 +957,7 @@ const HINTCELL=c=>{ const x=c.filter(n=>n.t!=='space'); return x.length===1 && x
 const greyIf=(b,on)=>{ if (on){ const d0=b.draw; b.draw=(g,x,y)=>{ g.save(); g.globalAlpha=.4; d0(g,x,y); g.restore(); }; } return b; };
 function gridBox(n, sz){
   const k=n.kind, t=lw(sz), cs = k==='sys'||k==='cases' ? sz : sz*.95;
-  const cells=n.rows.map(r=>r.map(c=>greyIf(rowBox(c, cs), HINTCELL(c))));
+  const cells=n.rows.map(r=>r.map(c=>rowBox(c, cs)));
   const ncol=Math.max(...cells.map(r=>r.length));
   const colW=[...Array(ncol)].map((_,j)=>Math.max(0,...cells.map(r=>r[j]?r[j].w:0)));
   const rowA=cells.map(r=>Math.max(sz*.62,...r.map(c=>c.a))), rowD=cells.map(r=>Math.max(sz*.2,...r.map(c=>c.d)));
@@ -982,7 +985,7 @@ function gridBox(n, sz){
 // ---- tables: جدول (all lines), جدول.داخلي (inner lines), جدول.عنوان (shaded first row), جدول.قيم (shaded first column) ----
 function tableBox(n, sz){
   const k=n.kind, t=lw(sz)*.85, cs=sz*.95;
-  const cells=n.rows.map(r=>r.map(c=>greyIf(rowBox(c, cs), HINTCELL(c))));
+  const cells=n.rows.map(r=>r.map(c=>rowBox(c, cs)));
   const ncol=Math.max(1,...cells.map(r=>r.length));
   const px=sz*.32, py=sz*.2, minW=sz*1.1;
   const colW=[...Array(ncol)].map((_,j)=>Math.max(minW,...cells.map(r=>r[j]?r[j].w:0))+2*px);
@@ -1276,7 +1279,7 @@ class SvgCtx {
       if (runs.length && runs[runs.length-1].fam===fam){ runs[runs.length-1].s+=out; runs[runs.length-1].src+=ch; } else runs.push({fam,s:out,src:ch}); }
     let cx=x;
     for (const r of runs){
-      this.out.push(`<text x="${SvgCtx.n(cx)}" y="${SvgCtx.n(y)}" font-family="${r.fam}" font-size="${size}" font-weight="${wt}" fill="${this.fillStyle}" direction="ltr" text-anchor="start" xml:space="preserve">${esc(r.s)}</text>`);
+      this.out.push(`<text x="${SvgCtx.n(cx)}" y="${SvgCtx.n(y)}" font-family="${r.fam}" font-size="${size}" font-weight="${wt}" fill="${this.fillStyle}"${this.globalAlpha<1?` fill-opacity="${this.globalAlpha}"`:''} direction="ltr" text-anchor="start" xml:space="preserve">${esc(r.s)}</text>`);
       cx += measure(r.src, +size).w;
     }
   }
@@ -1390,12 +1393,29 @@ function rowsTemplate(tpl, hasSel){
   if (tpl.startsWith('عمودي{')) return tpl.includes('−') ? 'عمودي{\nعدد\n−عدد\n=الناتج\n}' : 'عمودي{\nعدد\n+عدد\n=الناتج\n}'; // first number, + second number, = result
   if (tpl.startsWith('قسمة{')) return 'قسمة{\nالناتج\nالمقسوم & المقسوم.عليه\n−\n=\n}'; // quotient, dividend & divisor, then the steps
   const m=/^(نظام|قواعد|مصفوفة|ترتيب|محدد|جدول\.داخلي|جدول\.عنوان|جدول\.قيم|جدول)\{(.*)\}$/s.exec(tpl); if (!m) return tpl;
-  const fill=/^(مصفوفة|ترتيب|محدد|جدول)/.test(m[1]); // number tables: every empty cell says «عدد» (grey) until replaced
-  const row=r=>fill ? r.split('&').map(c=>{ c=c.trim(); return c==='' || (c==='|' && !hasSel) ? 'عدد' : c; }).join(' & ') : r.trim();
+  const word=/^(نظام|قواعد)$/.test(m[1]) ? 'اكتب.هنا' : 'عدد'; // every empty cell gets a grey placeholder word
+  const row=r=>r.split('&').map(c=>{ c=c.trim(); return c==='' || (c==='|' && !hasSel) ? word : c; }).join(' & ');
   return m[1]+'{\n'+m[2].split(';').map(row).join('\n')+'\n}';
 }
+const HINT_RE=/اكتب\.هنا|عدد|بسط|مقام|حروف/;
+const HINT_TPL={ // a tool button inserts these: grey words to type over (the first one is selected)
+  'كسر{|}{}':'كسر{بسط}{مقام}', 'جذر{|}':'جذر{عدد}', 'جذر[٣]{|}':'جذر[٣]{عدد}', 'جذر[|]{}':'جذر[عدد]{عدد}',
+  '^{|}':'^{عدد}', '_{|}':'_{عدد}', '|‸|':'|عدد|', '{|}↑{}':'{عدد}↑{عدد}',
+  'شطب{|}{}':'شطب{عدد}{عدد}', 'شطب.تحت{|}{}':'شطب.تحت{عدد}{عدد}', 'مربع{|}':'مربع{اكتب.هنا}', 'تسطير{|}':'تسطير{عدد}',
+  'نها{|}':'نها{س ← عدد}', 'مجموع{|}{}':'مجموع{عدد}{عدد}', 'تكامل{|}{}':'تكامل{عدد}{عدد}',
+  'توافيق{|}{}':'توافيق{عدد}{عدد}', 'تباديل{|}{}':'تباديل{عدد}{عدد}', 'توافيق.أقواس{|}{}':'توافيق.أقواس{عدد}{عدد}',
+  'خط{|}':'خط{حروف}', 'مستقيم{|}':'مستقيم{حروف}', 'متجه{|}':'متجه{حروف}', 'قوس{|}':'قوس{حروف}', 'مثلث{|}':'مثلث{حروف}', 'زاوية{|}':'زاوية{حروف}'
+};
 function insert(tpl){
   const s=src.selectionStart, e=src.selectionEnd, sel=src.value.slice(s,e);
+  if (HINT_TPL[tpl]){
+    let txt=HINT_TPL[tpl];
+    if (sel){ if (tpl==='جذر[|]{}') txt='جذر[عدد]{'+sel+'}'; else { const m=HINT_RE.exec(txt); txt=txt.slice(0,m.index)+sel+txt.slice(m.index+m[0].length); } }
+    src.focus(); src.setRangeText(txt, s, e, 'end');
+    const off=sel && tpl!=='جذر[|]{}' ? txt.indexOf(sel)+sel.length : 0, m=HINT_RE.exec(txt.slice(off));
+    if (m) src.setSelectionRange(s+off+m.index, s+off+m.index+m[0].length); else src.selectionStart=src.selectionEnd=s+txt.length;
+    snap(true); schedule(); return;
+  }
   tpl=rowsTemplate(tpl, !!sel);
   let txt=tpl, caret;
   if (sel && tpl.includes('[|]') && tpl.includes('{}')){ // nth root: the selection goes under the root, the cursor waits in the index
@@ -1408,7 +1428,7 @@ function insert(tpl){
   src.focus();
   src.setRangeText(txt, s, e, 'end');
   src.selectionStart = src.selectionEnd = s+caret;
-  { const h=txt.indexOf('الناتج'); if (txt.startsWith('قسمة{\nالناتج')) src.setSelectionRange(s+h, s+h+6); if (/^(عمودي|ضرب\.رأسي|مصفوفة|ترتيب|محدد|جدول[^{]*)\{\n/.test(txt) && !sel && txt.includes('عدد')){ const k=txt.indexOf('عدد'); src.setSelectionRange(s+k, s+k+3); } } // typing replaces the hint
+  { const h=txt.indexOf('الناتج'); if (txt.startsWith('قسمة{\nالناتج')) src.setSelectionRange(s+h, s+h+6); if (/^(عمودي|ضرب\.رأسي|مصفوفة|ترتيب|محدد|نظام|قواعد|جدول[^{]*)\{\n/.test(txt) && !sel){ const m=HINT_RE.exec(txt); if (m) src.setSelectionRange(s+m.index, s+m.index+m[0].length); } } // typing replaces the hint
   snap(true); schedule();
 }
 // ---- undo / redo (covers typing, buttons and restored equations) ----
@@ -1995,7 +2015,7 @@ const NEWS = { id:'2026-11-11', items:[
   'عدد فوق عدد بلا شطب (للحمل): {٢}↑{١}',
   'أعداد مرتبة في صفوف وأعمدة بلا أقواس: ترتيب{…}',
   'أداة بين رقمين بلا مسافة تبقى داخل العدد بترتيبه: ٣جذر{٢}٤',
-  'الجداول والمصفوفات: «عدد» رمادية مكان كل خانة فارغة',
+  'كلمات رمادية مكان كل فراغ في الأدوات (عدد، بسط، مقام، اكتب.هنا…)',
   'الجداول والمصفوفات تُكتب صفًّا في كل سطر',
 ]};
 let showNews = ()=>{};
