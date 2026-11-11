@@ -950,9 +950,11 @@ function braceR(g, x0, yt, yb, dw, t){ // right-side brace, tip pointing right
   stroke(g,t,()=>{ g.moveTo(xi,yt); g.quadraticCurveTo(xm,yt,xm,yt+(ym-yt)*.25); g.lineTo(xm,ym-(ym-yt)*.25); g.quadraticCurveTo(xm,ym,xo,ym);
     g.quadraticCurveTo(xm,ym,xm,ym+(yb-ym)*.25); g.lineTo(xm,yb-(yb-ym)*.25); g.quadraticCurveTo(xm,yb,xi,yb); });
 }
+const HINTCELL=c=>{ const x=c.filter(n=>n.t!=='space'); return x.length===1 && x[0].t==='txt' && x[0].s==='عدد'; };
+const greyIf=(b,on)=>{ if (on){ const d0=b.draw; b.draw=(g,x,y)=>{ g.save(); g.globalAlpha=.4; d0(g,x,y); g.restore(); }; } return b; };
 function gridBox(n, sz){
   const k=n.kind, t=lw(sz), cs = k==='sys'||k==='cases' ? sz : sz*.95;
-  const cells=n.rows.map(r=>r.map(c=>rowBox(c, cs)));
+  const cells=n.rows.map(r=>r.map(c=>greyIf(rowBox(c, cs), HINTCELL(c))));
   const ncol=Math.max(...cells.map(r=>r.length));
   const colW=[...Array(ncol)].map((_,j)=>Math.max(0,...cells.map(r=>r[j]?r[j].w:0)));
   const rowA=cells.map(r=>Math.max(sz*.62,...r.map(c=>c.a))), rowD=cells.map(r=>Math.max(sz*.2,...r.map(c=>c.d)));
@@ -980,7 +982,7 @@ function gridBox(n, sz){
 // ---- tables: جدول (all lines), جدول.داخلي (inner lines), جدول.عنوان (shaded first row), جدول.قيم (shaded first column) ----
 function tableBox(n, sz){
   const k=n.kind, t=lw(sz)*.85, cs=sz*.95;
-  const cells=n.rows.map(r=>r.map(c=>rowBox(c, cs)));
+  const cells=n.rows.map(r=>r.map(c=>greyIf(rowBox(c, cs), HINTCELL(c))));
   const ncol=Math.max(1,...cells.map(r=>r.length));
   const px=sz*.32, py=sz*.2, minW=sz*1.1;
   const colW=[...Array(ncol)].map((_,j)=>Math.max(minW,...cells.map(r=>r[j]?r[j].w:0))+2*px);
@@ -1383,16 +1385,18 @@ window.addEventListener('resize', caretSoon); window.addEventListener('scroll', 
 src.addEventListener('input', schedule);
 
 // tables, matrices, systems: inserted with one row per line
-function rowsTemplate(tpl){
+function rowsTemplate(tpl, hasSel){
   if (tpl.startsWith('ضرب.رأسي{')) return 'ضرب.رأسي{\nعدد\n×عدد\n=\nعدد\n+عدد\n=\nالناتج\n}';
   if (tpl.startsWith('عمودي{')) return tpl.includes('−') ? 'عمودي{\nعدد\n−عدد\n=الناتج\n}' : 'عمودي{\nعدد\n+عدد\n=الناتج\n}'; // first number, + second number, = result
   if (tpl.startsWith('قسمة{')) return 'قسمة{\nالناتج\nالمقسوم & المقسوم.عليه\n−\n=\n}'; // quotient, dividend & divisor, then the steps
   const m=/^(نظام|قواعد|مصفوفة|ترتيب|محدد|جدول\.داخلي|جدول\.عنوان|جدول\.قيم|جدول)\{(.*)\}$/s.exec(tpl); if (!m) return tpl;
-  return m[1]+'{\n'+m[2].split(';').map(r=>r.trim()).join('\n')+'\n}';
+  const fill=/^(مصفوفة|ترتيب|محدد|جدول)/.test(m[1]); // number tables: every empty cell says «عدد» (grey) until replaced
+  const row=r=>fill ? r.split('&').map(c=>{ c=c.trim(); return c==='' || (c==='|' && !hasSel) ? 'عدد' : c; }).join(' & ') : r.trim();
+  return m[1]+'{\n'+m[2].split(';').map(row).join('\n')+'\n}';
 }
 function insert(tpl){
-  tpl=rowsTemplate(tpl);
   const s=src.selectionStart, e=src.selectionEnd, sel=src.value.slice(s,e);
+  tpl=rowsTemplate(tpl, !!sel);
   let txt=tpl, caret;
   if (sel && tpl.includes('[|]') && tpl.includes('{}')){ // nth root: the selection goes under the root, the cursor waits in the index
     txt = tpl.replace('[|]','[]').replace('{}','{'+sel+'}'); caret = txt.indexOf('[]')+1;
@@ -1404,7 +1408,7 @@ function insert(tpl){
   src.focus();
   src.setRangeText(txt, s, e, 'end');
   src.selectionStart = src.selectionEnd = s+caret;
-  { const h=txt.indexOf('الناتج'); if (txt.startsWith('قسمة{\nالناتج')) src.setSelectionRange(s+h, s+h+6); if (/^(عمودي|ضرب\.رأسي)\{\nعدد/.test(txt)){ const k=txt.indexOf('عدد'); src.setSelectionRange(s+k, s+k+3); } } // typing replaces the hint
+  { const h=txt.indexOf('الناتج'); if (txt.startsWith('قسمة{\nالناتج')) src.setSelectionRange(s+h, s+h+6); if (/^(عمودي|ضرب\.رأسي|مصفوفة|ترتيب|محدد|جدول[^{]*)\{\n/.test(txt) && !sel && txt.includes('عدد')){ const k=txt.indexOf('عدد'); src.setSelectionRange(s+k, s+k+3); } } // typing replaces the hint
   snap(true); schedule();
 }
 // ---- undo / redo (covers typing, buttons and restored equations) ----
@@ -1991,6 +1995,7 @@ const NEWS = { id:'2026-11-11', items:[
   'عدد فوق عدد بلا شطب (للحمل): {٢}↑{١}',
   'أعداد مرتبة في صفوف وأعمدة بلا أقواس: ترتيب{…}',
   'أداة بين رقمين بلا مسافة تبقى داخل العدد بترتيبه: ٣جذر{٢}٤',
+  'الجداول والمصفوفات: «عدد» رمادية مكان كل خانة فارغة',
   'الجداول والمصفوفات تُكتب صفًّا في كل سطر',
 ]};
 let showNews = ()=>{};
