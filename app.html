@@ -833,7 +833,7 @@ const stroke = (g,t,fn) => { g.save(); g.lineWidth=t; g.lineCap='round'; g.lineJ
 const STRIKE_COLOR='#fe00fe';
 function strikeBelowBox(n, sz){
   const b=rowBox(n.c, sz), r=n.r&&n.r.length ? rowBox(n.r, sz*.55) : null, t=lw(sz)*.9, gap=sz*.06;
-  const w=Math.max(b.w, r?r.w:0);
+  const w=TABULAR ? b.w : Math.max(b.w, r?r.w:0);
   return { w, a:b.a, d:b.d+(r?gap+r.a+r.d:0), draw(g,x,y){
     b.draw(g, x+(w-b.w)/2, y);
     const x0=x+(w-b.w)/2, old=g.fillStyle; g.fillStyle=n.sc||STRIKE_COLOR;
@@ -845,7 +845,7 @@ function strikeBelowBox(n, sz){
 function strikeBox(n, sz){
   if (n.below) return strikeBelowBox(n, sz);
   const b=rowBox(n.c, sz), r=n.r&&n.r.length ? rowBox(n.r, sz*.55) : null, t=lw(sz)*.9, gap=sz*.04;
-  const w=Math.max(b.w, r?r.w:0);
+  const w=TABULAR ? b.w : Math.max(b.w, r?r.w:0); // in column work the small number may overhang: the digit keeps its column
   return { w, a:b.a+(r?gap+r.d+r.a:0), d:b.d, draw(g,x,y){
     b.draw(g, x+(w-b.w)/2, y);
     const x0=x+(w-b.w)/2, old=g.fillStyle; g.fillStyle=n.sc||(n.noline?old:STRIKE_COLOR);
@@ -902,7 +902,9 @@ function ldiv2Box(n, sz){
   const qs=rows[0]||'', [ns='', ds='']=(rows[1]||'').split('&').map(x=>x.trim());
   const cw=cellW(sz), t=lw(sz), lh=(sz*.62+sz*.2)*1.3, gap=sz*.14;
   const box=(str, hint)=>{ TABULAR=!hint; const b=rowBox(new P(normalize(str)).seq(null), sz); TABULAR=false; b.hint=hint; return b; };
-  const digits=str=>[...str.replace(/\s+/g,'')].length;
+  // how many digit columns a number takes: a struck digit (شطب{٥}{٤}) or a carry ({٢}↑{١}) is one column, its small number does not count
+  const cols=ns=>ns.reduce((t,n)=> t + (n.t==='txt'&&n.k==='num' ? [...n.s].filter(c=>c!==String.fromCharCode(0xE02C)).length : n.t==='space' ? 0 : n.c&&(n.t==='strike'||n.t==='color'||n.t==='bar'||n.t==='under') ? cols(n.c) : 1), 0);
+  const digits=str=>{ try { return cols(new P(normalize(str)).seq(null)); } catch(e){ return [...str.replace(/\s+/g,'')].length; } };
   const qb=box(qs, LDIV_HINT.has(qs)), nb=box(ns, LDIV_HINT.has(ns)), db=box(ds, LDIV_HINT.has(ds));
   const nDig=nb.hint?3:Math.max(1,digits(ns)), qDig=qb.hint||!qs?nDig:digits(qs), c0=Math.max(0,nDig-qDig);
   // steps with their column (right edge, counted from the dividend's first digit)
