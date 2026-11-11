@@ -697,11 +697,16 @@ function rowBox(list, sz){
   // (the same for a digit that is struck out شطب{١}{٠}٢ or colored لون{أحمر}{١}٢)
   const WRAP={bar:1,under:1,strike:1,color:1};
   const isNum = n => n && ((n.t==='txt' && n.k==='num') || (WRAP[n.t] && n.c && n.c.length>0 && n.c.every(isNum)));
-  if (list.some(n=>WRAP[n.t])){
-    const L0=list.map((n,i)=> (n.t==='txt' && n.k==='comma' && isNum(list[i-1]) && isNum(list[i+1])) ? {...n,s:'\uE02C',k:'num'} : n);
+  // and any tool written between two digits with no space (٣جذر{٢}٤) stays inside the number, in its place
+  const dig = n => n && n.t==='txt' && n.k==='num';
+  const midOf = (A,i) => i>0 && A[i] && A[i].t!=='txt' && A[i].t!=='space' && dig(A[i-1]) && dig(A[i+1]);
+  const hasWrap=list.some(n=>WRAP[n.t]), hasMid=list.some((n,i)=>midOf(list,i));
+  if (hasWrap || hasMid){
+    const L0=hasWrap ? list.map((n,i)=> (n.t==='txt' && n.k==='comma' && isNum(list[i-1]) && isNum(list[i+1])) ? {...n,s:'\uE02C',k:'num'} : n) : list;
     const L=[]; for (const n of L0){ const p=L[L.length-1]; if (p && p.t==='txt' && p.k==='num' && n.t==='txt' && n.k==='num') L[L.length-1]={...p,s:p.s+n.s,o1:n.o1}; else L.push(n); }
+    const inNum = i => isNum(L[i]) || midOf(L,i);
     const out=[]; let i=0;
-    while(i<L.length){ if(isNum(L[i])){ let j=i; while(j<L.length && isNum(L[j])) j++; const run=L.slice(i,j); if (run.some(n=>n.t!=='txt')) run.reverse(); out.push(...run); i=j; } else out.push(L[i++]); }
+    while(i<L.length){ if(inNum(i)){ let j=i; while(j<L.length && inNum(j)) j++; const run=L.slice(i,j); if (run.some(n=>n.t!=='txt')) run.reverse(); out.push(...run); i=j; } else out.push(L[i++]); }
     list=Object.assign(out,{pos:list.pos});
   }
   for (const n of list){
@@ -1985,6 +1990,7 @@ const NEWS = { id:'2026-11-11', items:[
   'الضرب الرأسي: ضرب.رأسي، وكل = سطر وحده يرسم خطًا أفقيًا',
   'عدد فوق عدد بلا شطب (للحمل): {٢}↑{١}',
   'أعداد مرتبة في صفوف وأعمدة بلا أقواس: ترتيب{…}',
+  'أداة بين رقمين بلا مسافة تبقى داخل العدد بترتيبه: ٣جذر{٢}٤',
   'الجداول والمصفوفات تُكتب صفًّا في كل سطر',
 ]};
 let showNews = ()=>{};
