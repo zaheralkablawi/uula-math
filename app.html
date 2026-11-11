@@ -213,6 +213,10 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .toolbar button.favedit::after{content:'☆';position:absolute;top:-7px;inset-inline-start:-6px;font-size:12px;line-height:1;color:var(--muted);background:var(--panel);border-radius:50%;padding:1px}
 .toolbar button.favedit[data-fav="1"]::after{content:'★';color:#e8a400}
 .toolbar .sym.fn{width:auto;padding:0 8px}
+#src.cc{caret-color:transparent}
+.fcaret{position:fixed;width:2px;margin-left:-1px;background:var(--ink);pointer-events:none;z-index:50;animation:fcblink 1.06s steps(1) infinite}
+@keyframes fcblink{50%{opacity:0}}
+.srcmirror{position:fixed;left:-99999px;top:0;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word;word-wrap:break-word;box-sizing:content-box;border:0}
 </style>
 
 <div class="wrap">
@@ -1332,27 +1336,37 @@ function update(){
   }
 }
 const schedule = () => { clearTimeout(timer); timer=setTimeout(update, 80); };
-// keep the caret on the right: a line with no Arabic letter (empty, or only − = + digits) gets an invisible RLM at its end
-const RLM='\u200F', STRONG=/[\u0621-\u064A\u066E-\u06D3\u06FA-\u06FF\u200F]/;
-function rlmLine(at){ // fix the line holding position `at` (default: the caret)
-  const v=src.value, p=src.selectionStart; if (p!==src.selectionEnd) return;
-  const q=at==null?p:at; if (q<0) return;
-  const ls=v.lastIndexOf('\n', q-1)+1; let le=v.indexOf('\n', q); if (le<0) le=v.length;
-  const line=v.slice(ls, le), bare=line.split(RLM).join(''), want=STRONG.test(bare) ? bare : bare+RLM;
-  if (want===line) return;
-  const np = p<ls ? p : p>le ? p+want.length-line.length : ls+Math.min(p-ls-(line.slice(0,p-ls).split(RLM).length-1), bare.length); // caret stays before the RLM
-  src.setRangeText(want, ls, le); src.setSelectionRange(np, np);
+// Our own caret on lines with no Arabic letter (empty, or only − = + digits): the Mac (WebKit) draws the
+// real caret on the LEFT there. A hidden copy of the text finds where the caret really belongs.
+const STRONG=/[ء-يٮ-ۓۺ-ۿ]/;
+const fcaret=document.createElement('div'); fcaret.className='fcaret'; fcaret.hidden=true; document.body.appendChild(fcaret);
+const mirror=document.createElement('div'); mirror.className='srcmirror'; document.body.appendChild(mirror);
+function placeCaret(){
+  const p=src.selectionStart;
+  if (document.activeElement!==src || p!==src.selectionEnd){ fcaret.hidden=true; src.classList.remove('cc'); return; }
+  const v=src.value, ls=v.lastIndexOf('\n', p-1)+1; let le=v.indexOf('\n', p); if (le<0) le=v.length;
+  if (STRONG.test(v.slice(ls, le))){ fcaret.hidden=true; src.classList.remove('cc'); return; }
+  const cs=getComputedStyle(src);
+  for (const k of ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','paddingTop','paddingRight','paddingBottom','paddingLeft','direction','textAlign','tabSize']) mirror.style[k]=cs[k];
+  mirror.style.width=(src.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))+'px';
+  mirror.textContent=v.slice(0, p); const mk=document.createElement('span'); mk.textContent='​'; mirror.appendChild(mk); mirror.appendChild(document.createTextNode(v.slice(p)+'​'));
+  const r=src.getBoundingClientRect(), mr=mirror.getBoundingClientRect(), kr=mk.getBoundingClientRect();
+  const x=r.left+src.clientLeft+(kr.left-mr.left)-src.scrollLeft, y=r.top+src.clientTop+(kr.top-mr.top)-src.scrollTop, h=kr.height||parseFloat(cs.fontSize)*1.2;
+  const top=r.top+src.clientTop, bot=top+src.clientHeight;
+  if (y+h<top+2 || y>bot-2){ fcaret.hidden=true; return; } // scrolled out of view
+  src.classList.add('cc'); fcaret.style.left=Math.round(x)+'px'; fcaret.style.top=Math.round(y)+'px'; fcaret.style.height=Math.round(h)+'px';
+  fcaret.hidden=false; fcaret.style.animation='none'; void fcaret.offsetWidth; fcaret.style.animation='';
 }
-function rlmFix(){ rlmLine(); const v=src.value, ls=v.lastIndexOf('\n', src.selectionStart-1); if (ls>0) rlmLine(ls-1); }
-src.addEventListener('input', e => { if (e.inputType!=='deleteContentForward' && e.inputType!=='historyUndo' && e.inputType!=='historyRedo') rlmFix(); });
-src.addEventListener('mouseup', ()=>rlmLine());
-src.addEventListener('keyup', e => { if (/^Arrow|^Home$|^End$|^Page/.test(e.key)) rlmLine(); });
+const caretSoon=()=>requestAnimationFrame(placeCaret);
+for (const ev of ['input','keyup','mouseup','focus','blur','scroll']) src.addEventListener(ev, caretSoon);
+document.addEventListener('selectionchange', caretSoon);
+window.addEventListener('resize', caretSoon); window.addEventListener('scroll', caretSoon, true);
 src.addEventListener('input', schedule);
 
 // tables, matrices, systems: inserted with one row per line
 function rowsTemplate(tpl){
-  if (tpl.startsWith('عمودي{')) return 'عمودي{\n|\u200F\n+\u200F\n=\u200F\n}'; // first number, + second number, = result
-  if (tpl.startsWith('قسمة{')) return 'قسمة{\nالناتج\nالمقسوم & المقسوم.عليه\n−\u200F\n=\u200F\n}'; // quotient, dividend & divisor, then the steps
+  if (tpl.startsWith('عمودي{')) return 'عمودي{\n|\n+\n=\n}'; // first number, + second number, = result
+  if (tpl.startsWith('قسمة{')) return 'قسمة{\nالناتج\nالمقسوم & المقسوم.عليه\n−\n=\n}'; // quotient, dividend & divisor, then the steps
   const m=/^(نظام|قواعد|مصفوفة|محدد|جدول\.داخلي|جدول\.عنوان|جدول\.قيم|جدول)\{(.*)\}$/s.exec(tpl); if (!m) return tpl;
   return m[1]+'{\n'+m[2].split(';').map(r=>r.trim()).join('\n')+'\n}';
 }
