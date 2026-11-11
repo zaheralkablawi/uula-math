@@ -325,8 +325,8 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>قطعة مستقيمة (خط فوق)</td><td><code>خط{أب}</code></td></tr>
           <tr><td>مثلث</td><td><code>مثلث{أ ب جـ}</code></td></tr>
           <tr><td>مستقيم ، متجه ، قوس</td><td><code>مستقيم{أب}</code> ، <code>متجه{أب}</code> ، <code>قوس{أب}</code></td></tr>
-                    <tr><td>اختصار (شطب)</td><td><code>شطب{١٥}{٣}</code> (الرقم الصغير اختياري، والشطب والعدد باللون الأرجواني)</td></tr><tr><td>اختصار والعدد تحت</td><td><code>شطبتحت{١٥}{٣}</code> </td></tr>
-          <tr><td>قسمة مطوّلة</td><td><code>قسمة{٨٣٦}{٤}{٢٠٩}{-٨ ; ٣٦}</code> : المقسوم، المقسوم عليه، الناتج، ثم الخطوات (كل خطوة بعد ; والمسافة في أولها تزيح الخطوة خانة، والسطر الذي يبدأ بـ - يُرسم تحته خط)</td></tr>
+                    <tr><td>اختصار (شطب)</td><td><code>شطب{١٥}{٣}</code> (الرقم الصغير اختياري، واللون أرجواني؛ لتغييره حدّد الشطب واختر لونًا)</td></tr><tr><td>اختصار والعدد تحت</td><td><code>شطبتحت{١٥}{٣}</code> </td></tr>
+          <tr><td>قسمة مطوّلة</td><td>سطر لكل جزء: <code>قسمة{</code> ثم الناتج، ثم <code>المقسوم &amp; المقسوم عليه</code>، ثم <code>-٧</code> للطرح، و<code>=</code> للخط، ثم الباقي، ثم <code>}</code></td></tr>
           <tr><td>جمع وطرح عمودي</td><td>كل عدد في سطر: <code>عمودي{</code> ثم <code>١٢</code> ثم <code>+٢٥</code> ثم <code>=٣٧</code> ثم <code>}</code> (السطر الذي يبدأ بـ = هو الناتج تحت الخط، والذي يبدأ بـ ^ للحمل)</td></tr>
           <tr><td>تلوين جزء</td><td>حدّد الجزء في مربع الكتابة ثم اختر اللون، أو اكتب <code>لون{أحمر}{٣}</code> : أحمر، أزرق، أسود، أخضر، أصفر، بنفسجي، أرجواني، وردي، برتقالي، أبيض، رمادي</td></tr>
           <tr><td>نظام معادلات</td><td><code>نظام{س + ص = ٥ ; س − ص = ١}</code></td></tr>
@@ -481,6 +481,9 @@ class P {
           if (t==='color'){ const name=this.raw().trim(); return {t:'color',color:COLORNAME[name]||name,c:this.group()}; }
           if (t==='size'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'size',pt:v>0?v:null,c:this.group()}; }
           if (t==='wt'){ const v=parseFloat(toLatinDigits(this.raw().trim())); return {t:'wt',w:v>0?v:null,c:this.group()}; }
+          if (t==='ldiv'){ const i0=this.i, body=this.raw(); // new form: one group, a line each (quotient / dividend & divisor / -product / = line / remainder)
+            if (this.peek()!=='{') return {t:'ldiv2', rows:body.split(/[;؛]/).map(x=>x.trim())};
+            this.i=i0; }
           if (t==='ldiv'){ const n=this.group(), d=this.group(); const q=opt(); const steps=this.peek()==='{'?this.raw():null; return {t:'ldiv',n,d,q,steps}; }
           if (t==='vert') return {t:'vert',rows:this.raw()};
           if (t==='sys'||t==='cases'||t==='mat'||t==='det') return {t:'grid',kind:t,rows:splitRows(this.group())};
@@ -678,8 +681,10 @@ function rowBox(list, sz){
       if (HITS) HITS.push({x, y:y-ph, w:pw+sz*.1, h:ph+sz*.12, o0:list.pos, o1:list.pos, area:0}); } }; }
   const kids=[]; let prevOpLike=true, eqx=null, acc=0;
   // numbers read left to right: a number split by an over/underline (٣,خط{٥}) keeps its digit order
-  const isNum = n => n && ((n.t==='txt' && n.k==='num') || ((n.t==='bar'||n.t==='under') && n.c && n.c.length>0 && n.c.every(isNum)));
-  if (list.some(n=>n.t==='bar'||n.t==='under')){
+  // (the same for a digit that is struck out شطب{١}{٠}٢ or colored لون{أحمر}{١}٢)
+  const WRAP={bar:1,under:1,strike:1,color:1};
+  const isNum = n => n && ((n.t==='txt' && n.k==='num') || (WRAP[n.t] && n.c && n.c.length>0 && n.c.every(isNum)));
+  if (list.some(n=>WRAP[n.t])){
     const L0=list.map((n,i)=> (n.t==='txt' && n.k==='comma' && isNum(list[i-1]) && isNum(list[i+1])) ? {...n,s:'\uE02C',k:'num'} : n);
     const L=[]; for (const n of L0){ const p=L[L.length-1]; if (p && p.t==='txt' && p.k==='num' && n.t==='txt' && n.k==='num') L[L.length-1]={...p,s:p.s+n.s,o1:n.o1}; else L.push(n); }
     const out=[]; let i=0;
@@ -797,7 +802,7 @@ function strikeBelowBox(n, sz){
   const w=Math.max(b.w, r?r.w:0);
   return { w, a:b.a, d:b.d+(r?gap+r.a+r.d:0), draw(g,x,y){
     b.draw(g, x+(w-b.w)/2, y);
-    const x0=x+(w-b.w)/2, old=g.fillStyle; g.fillStyle=STRIKE_COLOR;
+    const x0=x+(w-b.w)/2, old=g.fillStyle; g.fillStyle=n.sc||STRIKE_COLOR;
     stroke(g,t,()=>{ g.moveTo(x0+b.w*.05, y+Math.min(b.d,sz*.1)); g.lineTo(x0+b.w*.95, y-b.a*.95); });
     if (r) r.draw(g, x+(w-r.w)/2, y+b.d+gap+r.a);
     g.fillStyle=old;
@@ -809,13 +814,14 @@ function strikeBox(n, sz){
   const w=Math.max(b.w, r?r.w:0);
   return { w, a:b.a+(r?gap+r.d+r.a:0), d:b.d, draw(g,x,y){
     b.draw(g, x+(w-b.w)/2, y);
-    const x0=x+(w-b.w)/2, old=g.fillStyle; g.fillStyle=STRIKE_COLOR;
+    const x0=x+(w-b.w)/2, old=g.fillStyle; g.fillStyle=n.sc||STRIKE_COLOR;
     stroke(g,t,()=>{ g.moveTo(x0+b.w*.05, y+Math.min(b.d,sz*.1)); g.lineTo(x0+b.w*.95, y-b.a*.95); });
     if (r) r.draw(g, x+(w-r.w)/2, y-b.a-gap-r.d);
     g.fillStyle=old;
   }};
 }
 function colorBox(n, sz){
+  if (n.c && n.c.length===1 && n.c[0].t==='strike') return strikeBox(Object.assign({}, n.c[0], {sc:n.color}), sz); // color a strike = color its line + new digit only
   const b=rowBox(n.c, sz);
   return { w:b.w, a:b.a, d:b.d, eqx:b.eqx, draw(g,x,y){ const old=g.fillStyle; g.fillStyle=n.color; b.draw(g,x,y); g.fillStyle=old; } };
 }
@@ -852,6 +858,44 @@ function ldivBox(n, sz){
     }
   }};
 }
+// long division, booklet style: divisor on the left under its own line, bar over the dividend,
+// each "-" row is a product (minus sign on its left), each "=" draws a line, the next number is what's left.
+const LDIV_HINT=new Set(['الناتج','المقسوم','المقسوم عليه']);
+function ldiv2Box(n, sz){
+  const rows=n.rows.slice(); while (rows.length && rows[rows.length-1]==='') rows.pop();
+  const qs=rows[0]||'', [ns='', ds='']=(rows[1]||'').split('&').map(x=>x.trim());
+  const cw=cellW(sz), t=lw(sz), lh=(sz*.62+sz*.2)*1.3, gap=sz*.14;
+  const box=(str, hint)=>{ TABULAR=!hint; const b=rowBox(new P(normalize(str)).seq(null), sz); TABULAR=false; b.hint=hint; return b; };
+  const digits=str=>[...str.replace(/\s+/g,'')].length;
+  const qb=box(qs, LDIV_HINT.has(qs)), nb=box(ns, LDIV_HINT.has(ns)), db=box(ds, LDIV_HINT.has(ds));
+  const nDig=nb.hint?3:Math.max(1,digits(ns)), qDig=qb.hint||!qs?nDig:digits(qs), c0=Math.max(0,nDig-qDig);
+  // steps with their column (right edge, counted from the dividend's first digit)
+  const steps=[]; let k=-1;
+  const body=[]; for (const r of rows.slice(2)){ if (/^=/.test(r) && r.replace(/^=\s*/,'')){ body.push('='); body.push(r.replace(/^=\s*/,'')); } else body.push(r); }
+  body.forEach((r,i)=>{
+    if (/^[-−]/.test(r)){ k++; steps.push({kind:'sub', b:box(r.replace(/^[-−]\s*/,''),false), col:c0+k}); }
+    else if (/^=/.test(r)){ steps.push({kind:'rule'}); }
+    else if (r){ const more=body.slice(i+1).some(x=>/^[-−]/.test(x)); steps.push({kind:'res', b:box(r,false), col: more ? c0+k+1 : c0+Math.max(k,0)}); }
+  });
+  const divW=db.w+sz*.35, nW=Math.max(nDig*cw, nb.w), qx0=divW+sz*.12;
+  const w=qx0+nW+sz*.15;
+  const a=nb.a+gap+t+gap+qb.d+qb.a;
+  const nRows=steps.filter(s=>s.kind!=='rule').length, nRules=steps.filter(s=>s.kind==='rule').length;
+  const d=nb.d+sz*.12+nRows*lh+nRules*sz*.12+sz*.1;
+  return { w, a, d, draw(g,x,y){
+    const xb=x+divW, nL=x+qx0, nR=nL+Math.max(nDig*cw, nb.w), barY=y-nb.a-gap, under=y+Math.max(nb.d,db.d)+sz*.12;
+    const put=(b,xx,yy)=>{ if (b.hint){ g.save(); g.globalAlpha=.4; b.draw(g,xx,yy); g.restore(); } else b.draw(g,xx,yy); };
+    put(db, x+sz*.12, y); put(nb, nL, y);
+    stroke(g,t,()=>{ g.moveTo(nR+sz*.12, barY); g.lineTo(xb, barY); g.lineTo(xb, under); g.lineTo(x, under); });
+    put(qb, nR-qb.w, barY-gap-qb.d);
+    let yy=y;
+    for (const s of steps){
+      if (s.kind==='rule'){ const ly=yy+sz*.3; stroke(g,t,()=>{ g.moveTo(xb-sz*.05, ly); g.lineTo(nR+sz*.12, ly); }); yy+=sz*.12; continue; }
+      yy+=lh; const R=nL+(s.col+1)*cw; s.b.draw(g, R-s.b.w, yy);
+      if (s.kind==='sub'){ g.font=fontStr(sz); g.direction='ltr'; g.textAlign='right'; g.fillText('−', R-s.b.w-sz*.12, yy); }
+    }
+  }};
+}
 function vertBox(n, sz){
   const lines=n.rows.split(/[;؛]/).map(x=>x.replace(/\s+$/,'')).filter(x=>x.trim());
   if (!lines.length) return {w:sz,a:sz*.6,d:sz*.2,draw(){}};
@@ -863,7 +907,7 @@ function vertBox(n, sz){
   const digitsW=Math.max(...rows.map(r=>r.b.w), carry?carry.length*cw:0);
   const opW=sz*.6, w=digitsW+opW+sz*.1;
   const top = carry ? small*1.1 : 0;
-  const a = sz*.62 + top, d = (rows.length-1)*lh + sz*.2 + sz*.15;
+  const a = Math.max(sz*.62, rows[0].b.a) + top, d = (rows.length-1)*lh + Math.max(sz*.2, rows[rows.length-1].b.d) + sz*.15;
   return { w, a, d, draw(g,x,y){
     const R=x+digitsW+sz*.05; // right edge of the digit columns
     if (carry){ g.save(); g.font=fontStr(small); g.direction='ltr'; g.textAlign='center';
@@ -1128,6 +1172,7 @@ function box0(n, sz){
     case 'wt': { const prev=CURW; CURW=n.w||prev; const b=rowBox(n.c, sz); const w=CURW; CURW=prev;
       return { w:b.w, a:b.a, d:b.d, eqx:b.eqx, draw(g,x,y){ const p=CURW; CURW=w; const f=g.font; b.draw(g,x,y); CURW=p; g.font=f; } }; }
     case 'ldiv': return ldivBox(n, sz);
+    case 'ldiv2': return ldiv2Box(n, sz);
     case 'vert': return vertBox(n, sz);
     case 'grid': return gridBox(n, sz);
     case 'table': return tableBox(n, sz);
@@ -1288,6 +1333,7 @@ src.addEventListener('input', schedule);
 // tables, matrices, systems: inserted with one row per line
 function rowsTemplate(tpl){
   if (tpl.startsWith('عمودي{')) return 'عمودي{\n|\n+\n=\n}'; // first number, + second number, = result
+  if (tpl.startsWith('قسمة{')) return 'قسمة{\nالناتج\nالمقسوم & المقسوم عليه\n−\n=\n}'; // quotient, dividend & divisor, then the steps
   const m=/^(نظام|قواعد|مصفوفة|محدد|جدولداخلي|جدولعنوان|جدولقيم|جدول)\{(.*)\}$/s.exec(tpl); if (!m) return tpl;
   return m[1]+'{\n'+m[2].split(';').map(r=>r.trim()).join('\n')+'\n}';
 }
@@ -1305,6 +1351,7 @@ function insert(tpl){
   src.focus();
   src.setRangeText(txt, s, e, 'end');
   src.selectionStart = src.selectionEnd = s+caret;
+  { const h=txt.indexOf('الناتج'); if (txt.startsWith('قسمة{\nالناتج')) src.setSelectionRange(s+h, s+h+6); } // typing replaces the hint
   snap(true); schedule();
 }
 // ---- undo / redo (covers typing, buttons and restored equations) ----
@@ -1398,7 +1445,7 @@ renderTools();
 // ---- instant hover hints for tools and named symbols ----
 const TIPEX={'جذر تربيعي':'جذر{٤٩}','جذر تكعيبي':'جذر[٣]{١٢٥}','جذر نوني':'جذر[ن]{س}','كسر':'كسر{٣}{٤} أو ٣/٤','أُس':'س^٢','دليل سفلي':'س_١','قيمة مطلقة':'اكتب بين الخطين: |س − ٣|',
  'قطعة مستقيمة':'خط{أ ب}','خط سفلي':'تسطير{٣}','مستقيم':'مستقيم{أ ب}','متجه':'متجه{أ ب}','قوس':'قوس{أ ب}','مثلث':'مثلث{أ ب جـ}','اختصار (شطب)':'شطب{١٥}{٣}','اختصار (العدد تحت)':'شطبتحت{١٥}{٣}',
- 'قسمة مطوّلة':'قسمة{المقسوم}{المقسوم عليه}{الناتج}{الخطوات}','جمع وطرح عمودي':'عمودي{١٢ ; +٢٥ ; =٣٧}','تلوين جزء':'لون{أحمر}{٣}',
+ 'قسمة مطوّلة':'قسمة{١٣٦ ; ٩٥٢ & ٧ ; −٧ ; =٢٥ ; …}','جمع وطرح عمودي':'عمودي{١٢ ; +٢٥ ; =٣٧}','تلوين جزء':'لون{أحمر}{٣}',
  'نظام معادلات':'نظام{س + ص = ٥ ; س − ص = ١}','دالة متعددة القواعد':'قواعد{٢س & س > ٠ ; −س & س ≤ ٠}','مصفوفة':'مصفوفة{١ & ٢ ; ٣ & ٤}','جدول قيم':'جدولقيم{س & −١ & ٠ & ١ & ٢ ; ص & ١ & ٣ & ٥ & ٧}','شبكة إحداثيات':'شبكةمرقمة{٤}','محدد':'محدد{أ & ب ; جـ & د}',
  "شرطة (أ')":"أ'  أو  أ''",'زاوية':'زاوية{أ ب جـ}','نهاية':'نها{س ← ٣}','مجموع بحدود':'مجموع{ر = ١}{ن}','تكامل بحدود':'تكامل{١}{٢}','توافيق':'توافيق{ن}{ر}','تباديل':'تباديل{ن}{ر}','مربع حول الناتج':'مربع{س = ٣}'};
 const tip=document.createElement('div'); tip.className='tip'; tip.hidden=true; document.body.appendChild(tip);
@@ -1767,7 +1814,7 @@ function colorPart(c, r){
   const name=(COLORS.find(x=>x[1]===c)||[])[0] || c;
   const [a,b]=r, part=src.value.slice(a,b), txt='لون{'+name+'}{'+part+'}';
   src.focus(); src.setRangeText(txt, a, b, 'end'); src.setSelectionRange(a+txt.length, a+txt.length); // caret after it, so the next color goes to the whole text
-  snap(true); schedule(); flash('تلوّن الجزء المحدد فقط.');
+  snap(true); schedule(); flash(/^\s*شطب(تحت)?\{/.test(part)?'تغيّر لون الشطب.':'تلوّن الجزء المحدد فقط.');
 }
 cbtn.addEventListener('mousedown',()=>{ colorSel=selRange(); });
 cbtn.addEventListener('click',e=>{ e.stopPropagation(); if (cpop.hidden){ if(!colorSel) colorSel=selRange(); openColors(); } else { colorSel=null; closeColors(); } });
@@ -1882,6 +1929,9 @@ const NEWS = { id:'2026-11-11', items:[
   'شبكة الربع الأول بلا أرقام',
   'شبكة عادية وشبكة الربع الأول بلا حرفي س و ص',
   'الجمع والطرح العمودي: كل عدد في سطر، والناتج بعد =',
+  'القسمة المطوّلة بطريقة المذكرة: سطر لكل خطوة',
+  'إصلاح: شطب رقم داخل عدد يحافظ على ترتيب الأرقام',
+  'لون الشطب: حدّد الشطب واختر لونًا',
   'الجداول والمصفوفات تُكتب صفًّا في كل سطر',
 ]};
 let showNews = ()=>{};
