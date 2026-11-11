@@ -217,6 +217,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .fcaret{position:fixed;width:2px;margin-left:-1px;background:var(--ink);pointer-events:none;z-index:50;animation:fcblink 1.06s steps(1) infinite}
 @keyframes fcblink{50%{opacity:0}}
 .srcmirror{position:fixed;left:-99999px;top:0;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word;word-wrap:break-word;box-sizing:content-box;border:0}
+.about{font-size:.88rem;line-height:1.7}.about .ab-head{display:flex;align-items:center;gap:10px;justify-content:center;margin:2px 0 10px}.about .ab-head img{width:40px;height:40px}.about .ab-head b{display:block;font-size:1.05rem}.about .ab-head span{color:var(--muted);font-size:.8rem}.about p{margin:6px 0}.about ul{margin:6px 0;padding-inline-start:1.2em}.about .ab-foot{text-align:center;color:var(--muted);font-size:.8rem;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
 </style>
 
 <div class="wrap">
@@ -2063,8 +2064,12 @@ let showNews = ()=>{};
       for (const [ins,k] of Object.entries(SHORT_BY_INS)) add(NAME[ins] || TOOLEL[ins]?.title || ins.replace('|',''), k);
       modal('اختصارات لوحة المفاتيح', t); }
     else if (act==='news') showNews();
-    else if (act==='about'){ const d=document.createElement('div'); d.dir='ltr'; d.style.textAlign='center';
-      d.innerHTML='<p style="margin:4px 0;font-weight:700">UULA Arabic Math</p><p style="margin:4px 0">Version '+($('appVer').textContent||'')+'</p><p style="margin:4px 0;color:var(--muted)">By Zaher Alkablawi</p>';
+    else if (act==='about'){ const d=document.createElement('div'); d.className='about';
+      const logo=document.querySelector('h1 .logo'), v=$('appVer').textContent||'';
+      d.innerHTML='<div class="ab-head" dir="ltr">'+(logo?'<img alt="" src="'+logo.src+'">':'')+'<div><b>UULA Arabic Math</b><span>Version '+v+'</span></div></div>'
+        +'<p>محرر معادلات رياضية عربية يُكتب من اليمين لليسار بخط مذكرات علا، ويُدرج المعادلة صورة واضحة في PowerPoint وWord، مع إمكانية تعديلها لاحقًا.</p>'
+        +'<ul><li>كسور وجذور وأسس ورموز رياضية عربية</li><li>جداول ومصفوفات وأنظمة معادلات</li><li>عمليات رأسية وقسمة مطوّلة</li><li>شبكات إحداثية ومحاور وخط الأعداد</li></ul>'
+        +'<p class="ab-foot" dir="ltr">Developed by <b>Zaher Alkablawi</b><br>© 2026 UULA. All rights reserved.</p>';
       modal('حول الأداة', d); }
   });
 })();
