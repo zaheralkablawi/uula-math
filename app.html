@@ -878,7 +878,8 @@ function ldiv2Box(n, sz){
     else if (r){ const more=body.slice(i+1).some(x=>/^[-−]/.test(x)); steps.push({kind:'res', b:box(r,false), col: more ? c0+k+1 : c0+Math.max(k,0)}); }
   });
   const divW=db.w+sz*.35, nW=Math.max(nDig*cw, nb.w), qx0=divW+sz*.12;
-  const w=qx0+nW+sz*.15;
+  mc.font=fontStr(sz); const mW=mc.measureText('−').width, hasSub=steps.some(s=>s.kind==='sub');
+  const w=qx0+nW+sz*.15+(hasSub?mW+sz*.05:0);
   const a=nb.a+gap+t+gap+qb.d+qb.a;
   const nRows=steps.filter(s=>s.kind!=='rule').length, nRules=steps.filter(s=>s.kind==='rule').length;
   const d=nb.d+sz*.12+nRows*lh+nRules*sz*.12+sz*.1;
@@ -890,9 +891,9 @@ function ldiv2Box(n, sz){
     put(qb, nR-qb.w, barY-gap-qb.d);
     let yy=y;
     for (const s of steps){
-      if (s.kind==='rule'){ const ly=yy+sz*.3; stroke(g,t,()=>{ g.moveTo(xb-sz*.05, ly); g.lineTo(nR+sz*.12, ly); }); yy+=sz*.12; continue; }
+      if (s.kind==='rule'){ const ly=yy+sz*.3; stroke(g,t,()=>{ g.moveTo(xb-sz*.05, ly); g.lineTo(nR+sz*.12+(hasSub?mW*.8:0), ly); }); yy+=sz*.12; continue; }
       yy+=lh; const R=nL+(s.col+1)*cw; s.b.draw(g, R-s.b.w, yy);
-      if (s.kind==='sub'){ g.font=fontStr(sz); g.direction='ltr'; g.textAlign='right'; g.fillText('−', R-s.b.w-sz*.12, yy); }
+      if (s.kind==='sub'){ g.font=fontStr(sz); g.direction='ltr'; g.textAlign='left'; g.fillText('−', R+sz*.1, yy); g.textAlign='start'; } // minus on the right, as in the booklet
     }
   }};
 }
