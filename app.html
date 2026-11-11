@@ -288,6 +288,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <button type="button" class="ico" data-ins="شبكة{٥}" title="شبكة إحداثيات" aria-label="شبكة إحداثيات"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5v11M7 4.5v11M15 4.5v11M18 4.5v11M3 5h16M3 8h16M3 13h16M3 16h16" stroke-width=".7" opacity=".55"/><path d="M1.5 10.5h19M11 1.5v16M19 9l1.5 1.5L19 12M9.5 3l1.5-1.5L12.5 3"/></svg></button>
           <button type="button" class="ico" data-ins="شبكةمرقمة{٥}" title="شبكة إحداثيات مرقمة" aria-label="شبكة إحداثيات مرقمة"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 9h19M8 1.5v16M19 7.5l1.5 1.5-1.5 1.5M6.5 3L8 1.5 9.5 3M12 9v1.6M16 9v1.6M8 13h-1.6M8 5h-1.6"/><path d="M11.4 13.6h1.2M15.2 13.6l1.6 0M15.6 12.4h.8" stroke-width="1"/></svg></button>
           <button type="button" class="ico" data-ins="شبكةموجبة{٥}" title="شبكة الربع الأول" aria-label="شبكة الربع الأول"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v11M10.5 4v11M14 4v11M17.5 4v11M4 4.5h15M4 8h15M4 11.5h15" stroke-width=".7" opacity=".55"/><path d="M3.5 15h17M3.5 15V1.5M19 13.5l1.5 1.5-1.5 1.5M2 3l1.5-1.5L5 3"/></svg></button>
+          <button type="button" class="ico" data-ins="شبكةموجبةفارغة{٥}" title="شبكة الربع الأول بلا أرقام" aria-label="شبكة الربع الأول بلا أرقام"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v11M10.5 4v11M14 4v11M17.5 4v11M4 4.5h15M4 8h15M4 11.5h15" stroke-width=".7" opacity=".55"/><path d="M3.5 15h17M3.5 15V1.5M19 13.5l1.5 1.5-1.5 1.5M2 3l1.5-1.5L5 3"/></svg></button>
           <button type="button" class="ico" data-ins="خطأعداد{٥}" title="خط الأعداد" aria-label="خط الأعداد"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 9h19M3 7.5L1.5 9 3 10.5M19 7.5l1.5 1.5-1.5 1.5M5 7.5v3M8 7.5v3M11 7.5v3M14 7.5v3M17 7.5v3"/><path d="M10.4 14.5h1.2M4.3 14.5h1.4M16.3 14.5h1.4" stroke-width="1"/></svg></button>
           <button type="button" class="ico" data-ins="خطأعدادفارغ{٥}" title="خط أعداد بلا أرقام" aria-label="خط أعداد بلا أرقام"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 9h19M3 7.5L1.5 9 3 10.5M19 7.5l1.5 1.5-1.5 1.5M5 7.5v3M8 7.5v3M11 7.5v3M14 7.5v3M17 7.5v3"/></svg></button>
           <button type="button" class="ico" data-ins="'" title="شرطة (أ')" aria-label="شرطة (أ')"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><rect x="8" y="5" width="11" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/><path d="M3.5 2.5L5.5 7.5M6.8 2.5L8.8 7.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -329,9 +330,10 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>نظام معادلات</td><td><code>نظام{س + ص = ٥ ; س − ص = ١}</code></td></tr>
           <tr><td>دالة متعددة القواعد</td><td><code>قواعد{٢س &amp; س &gt; ٠ ; −س &amp; س ≤ ٠}</code></td></tr>
           <tr><td>جداول</td><td><code>جدول{س &amp; ١ &amp; ٢ ; ص &amp; ٣ &amp; ٥}</code> ، و<code>جدولعنوان{…}</code> (صف عناوين مظلل)، و<code>جدولقيم{…}</code> (عمود أول مظلل)، و<code>جدولداخلي{…}</code> (خطوط داخلية فقط)</td></tr>
-          <tr><td>شبكة إحداثيات</td><td><code>شبكة{٥}</code> ، <code>شبكة{٦}{٤}</code> (أفقي ورأسي)، <code>شبكةمرقمة{٥}</code> ، <code>شبكةموجبة{٥}</code> (الربع الأول)</td></tr>
+          <tr><td>شبكة إحداثيات</td><td><code>شبكة{٥}</code> ، <code>شبكة{٦}{٤}</code> (أفقي ورأسي)، <code>شبكةمرقمة{٥}</code> ، <code>شبكةموجبة{٥}</code> (الربع الأول)، <code>شبكةموجبةفارغة{٥}</code> (بلا أرقام)</td></tr>
           <tr><td>في دائرة</td><td><code>دائرة{أ}</code> ، <code>دائرة{١٥}</code> ، <code>دائرةملونة{ب}</code> (زرقاء والكتابة بيضاء)</td></tr>
           <tr><td>خط الأعداد</td><td><code>خطأعداد{٥}</code> ، <code>خطأعداد{−٢}{٨}</code> ، <code>خطأعدادفارغ{٥}</code> (بلا أرقام)</td></tr>
+          <tr><td>الصفوف في أسطر</td><td>في الجداول والمصفوفات والأنظمة: كل صف في سطر مستقل بين القوسين، أو في سطر واحد مع <code>;</code></td></tr>
           <tr><td>مصفوفة ومحدد</td><td><code>مصفوفة{١ &amp; ٢ ; ٣ &amp; ٤}</code> ، <code>محدد{أ &amp; ب ; جـ &amp; د}</code></td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
           <tr><td>زاوية</td><td><code>زاوية{أ ب جـ}</code></td></tr>
@@ -392,7 +394,7 @@ const MAZ = {m1:0xE000, m2:0xE200};
 [[MAZ.m1,[0x76,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x7D,0x7E,0x80,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8A,0x8B,0x8C,0x8D,0x8E,0x8F,0x90,0x91,0x92,0x93,0x94,0x95,0x96,0x97,0x98,0x99,0x9A,0x9B,0x9C,0xB6,0xB9,0xBB,0xBC,0xBD]],
  [MAZ.m2,[0x75,0x76,0x89,0x8A,0x8D,0x8E,0x93,0x94,0x95,0x97,0x98,0x9A,0x9B,0x9C]]].forEach(([b,l])=>l.forEach(c=>REL.add(String.fromCharCode(b+c))));
 const MIRROR = {'<':'>','>':'<','≤':'≥','≥':'≤','∈':'∋','∋':'∈','∉':'∌','⊂':'⊃','⊃':'⊂','⊆':'⊇','⊇':'⊆','⊄':'⊅','⊅':'⊄','(':')',')':'(','[':']',']':'[','«':'»','»':'«'};
-const CMDS = [['تسطير','under'],['مربع','box'],['مصفوفة','mat'],['جدولداخلي','tbli'],['جدولعنوان','tblh'],['جدولقيم','tblv'],['جدول','tbl'],['دائرةملونة','circf'],['دائرة','circ'],['شبكةمرقمة','planen'],['شبكةموجبة','planep'],['خطأعدادفارغ','nline0'],['خطأعداد','nline'],['شبكة','plane'],['محدد','det'],['نظام','sys'],['قواعد','cases'],['قسمة','ldiv'],['عمودي','vert'],['شطب','strike'],['شطبتحت','strikeb'],['لون','color'],['رمز','mathify'],['نص','plain'],['حجم','size'],['سماكة','wt'],['زاوية','angle'],['نها','lim'],['مجموع','sum'],['تكامل','int'],['توافيقأقواس','binom'],['توافيق','comb'],['تباديل','perm'],['مثلث','triu'],['مستقيم','line'],['قوس','arc'],['متجه','vec'],['جذر','root'],['كسر','frac'],['مطلق','abs'],['خط','bar'],['\\sqrt','root'],['\\frac','frac'],['\\overline','bar'],['\\abs','abs']];
+const CMDS = [['تسطير','under'],['مربع','box'],['مصفوفة','mat'],['جدولداخلي','tbli'],['جدولعنوان','tblh'],['جدولقيم','tblv'],['جدول','tbl'],['دائرةملونة','circf'],['دائرة','circ'],['شبكةمرقمة','planen'],['شبكةموجبةفارغة','planep0'],['شبكةموجبة','planep'],['خطأعدادفارغ','nline0'],['خطأعداد','nline'],['شبكة','plane'],['محدد','det'],['نظام','sys'],['قواعد','cases'],['قسمة','ldiv'],['عمودي','vert'],['شطب','strike'],['شطبتحت','strikeb'],['لون','color'],['رمز','mathify'],['نص','plain'],['حجم','size'],['سماكة','wt'],['زاوية','angle'],['نها','lim'],['مجموع','sum'],['تكامل','int'],['توافيقأقواس','binom'],['توافيق','comb'],['تباديل','perm'],['مثلث','triu'],['مستقيم','line'],['قوس','arc'],['متجه','vec'],['جذر','root'],['كسر','frac'],['مطلق','abs'],['خط','bar'],['\\sqrt','root'],['\\frac','frac'],['\\overline','bar'],['\\abs','abs']];
 
 function normalize(s){
   return s.replace(/<=/g,'≤').replace(/>=/g,'≥').replace(/!=/g,'≠').replace(/\+-/g,'±')
@@ -481,8 +483,8 @@ class P {
           if (t==='vert') return {t:'vert',rows:this.raw()};
           if (t==='sys'||t==='cases'||t==='mat'||t==='det') return {t:'grid',kind:t,rows:splitRows(this.group())};
           if (t==='tbl'||t==='tbli'||t==='tblh'||t==='tblv') return {t:'table',kind:t,rows:splitRows(this.group())};
-          if (t==='plane'||t==='planen'||t==='planep'){ const num=v=>{ const x=parseInt(toLatinDigits(v.trim()),10); return x>0 ? Math.min(x,15) : 5; };
-            const a=num(this.raw()); const b=this.peek()==='{' ? num(this.raw()) : a; return {t:'plane',nx:a,ny:b,num:t!=='plane',pos:t==='planep'}; }
+          if (t==='plane'||t==='planen'||t==='planep'||t==='planep0'){ const num=v=>{ const x=parseInt(toLatinDigits(v.trim()),10); return x>0 ? Math.min(x,15) : 5; };
+            const a=num(this.raw()); const b=this.peek()==='{' ? num(this.raw()) : a; return {t:'plane',nx:a,ny:b,num:t==='planen'||t==='planep',pos:t==='planep'||t==='planep0'}; }
           if (t==='circ'||t==='circf') return {t:'circ',fill:t==='circf',c:this.group()};
           if (t==='nline'||t==='nline0'){ const int=v=>{ const x=parseInt(toLatinDigits(v.trim()).replace(/[−–]/g,'-'),10); return isNaN(x) ? null : Math.max(-30,Math.min(30,x)); };
             const a=int(this.raw()); const b=this.peek()==='{' ? int(this.raw()) : null;
@@ -563,8 +565,19 @@ function normalizeMap(line){
   map.push(line.length);
   return {s:out, map};
 }
+// a line break inside { } starts a new row (like ;), so tables and matrices can be written one row per line.
+// Same length in, same length out, so positions in the writing box still match.
+function joinRows(src){
+  let d=0, out='';
+  for (let i=0;i<src.length;i++){ const c=src[i];
+    if (c==='{') d++; else if (c==='}') d=Math.max(0,d-1);
+    if (c==='\n' && d>0){ const prev=out.replace(/[ \t]+$/,'').slice(-1), next=(src.slice(i+1).match(/^[ \t]*(.)/)||[])[1];
+      out += (prev==='{' || prev===';' || prev==='' || next==='}' || next===';' || next===undefined || next==='\n') ? ' ' : ';'; }
+    else out+=c; }
+  return out;
+}
 function parse(src){
-  let off=0;
+  let off=0; src=joinRows(src);
   return src.split('\n').map(line => { const {s:ns, map}=normalizeMap(line); const p=new P(ns); p.map=map; p.off=off; off+=line.length+1; return p.seq(null); });
 }
 
@@ -1267,7 +1280,13 @@ function update(){
 const schedule = () => { clearTimeout(timer); timer=setTimeout(update, 80); };
 src.addEventListener('input', schedule);
 
+// tables, matrices, systems: inserted with one row per line
+function rowsTemplate(tpl){
+  const m=/^(نظام|قواعد|مصفوفة|محدد|جدولداخلي|جدولعنوان|جدولقيم|جدول)\{(.*)\}$/s.exec(tpl); if (!m) return tpl;
+  return m[1]+'{\n'+m[2].split(';').map(r=>r.trim()).join('\n')+'\n}';
+}
 function insert(tpl){
+  tpl=rowsTemplate(tpl);
   const s=src.selectionStart, e=src.selectionEnd, sel=src.value.slice(s,e);
   let txt=tpl, caret;
   if (sel && tpl.includes('[|]') && tpl.includes('{}')){ // nth root: the selection goes under the root, the cursor waits in the index
@@ -1328,7 +1347,7 @@ document.addEventListener('keydown', e => {
 // ---- tools: reorder / hide ----
 const TOOLEL = Object.fromEntries([...document.querySelectorAll('#toolsVis button.ico')].map(b=>[b.dataset.ins,b]));
 const TOOLDEF = Object.keys(TOOLEL);
-const NEWTOOLS = ['جدول{| & & ; & & }','جدولعنوان{| & & ; & & ; & & }','جدولقيم{س & | & & ; ص & & & }','جدولداخلي{| & & ; & & }','شبكة{٥}','شبكةمرقمة{٥}','شبكةموجبة{٥}','خطأعداد{٥}','خطأعدادفارغ{٥}','توافيقأقواس{|}{}'];
+const NEWTOOLS = ['جدول{| & & ; & & }','جدولعنوان{| & & ; & & ; & & }','جدولقيم{س & | & & ; ص & & & }','جدولداخلي{| & & ; & & }','شبكة{٥}','شبكةمرقمة{٥}','شبكةموجبة{٥}','خطأعداد{٥}','خطأعدادفارغ{٥}','توافيقأقواس{|}{}','شبكةموجبةفارغة{٥}'];
 let toolCfg = load('aeq-tools', null) || {vis:TOOLDEF.filter(k=>!NEWTOOLS.includes(k)), hid:[...NEWTOOLS]};
 for (const k of TOOLDEF) if (!toolCfg.vis.includes(k) && !toolCfg.hid.includes(k)) toolCfg.hid.push(k); // tools added in a later version
 toolCfg.vis = toolCfg.vis.map(k=>k==='مطلق{|}'?'|‸|':k); toolCfg.hid = toolCfg.hid.map(k=>k==='مطلق{|}'?'|‸|':k);
@@ -1541,7 +1560,7 @@ const TABS = [
   {id:'arr', icon:'←', name:'أسهم', groups:[catSyms('أسهم')]},
   {id:'let', icon:'αب', name:'حروف', groups:[catSyms('حروف'), MLETS, catSyms('يونانية')]},
   {id:'circ', icon:'html:<span class="circ tabcirc">&#xE041;</span>', name:'حروف وأعداد في دائرة', groups:[CIRC(CIRCLET,false), CIRC(CIRCLET,true), CIRC(CIRCNUM,false), CIRC(CIRCNUM,true)]},
-  {id:'mat', icon:'tool:مصفوفة{| & ; & }', name:'مصفوفات وجداول', groups:[T('نظام{| ; }','قواعد{| & ; & }','مصفوفة{| & ; & }','محدد{| & ; & }'),T('جدول{| & & ; & & }','جدولعنوان{| & & ; & & ; & & }','جدولقيم{س & | & & ; ص & & & }','جدولداخلي{| & & ; & & }'),T('شبكة{٥}','شبكةمرقمة{٥}','شبكةموجبة{٥}','خطأعداد{٥}','خطأعدادفارغ{٥}')]},
+  {id:'mat', icon:'tool:مصفوفة{| & ; & }', name:'مصفوفات وجداول', groups:[T('نظام{| ; }','قواعد{| & ; & }','مصفوفة{| & ; & }','محدد{| & ; & }'),T('جدول{| & & ; & & }','جدولعنوان{| & & ; & & ; & & }','جدولقيم{س & | & & ; ص & & & }','جدولداخلي{| & & ; & & }'),T('شبكة{٥}','شبكةمرقمة{٥}','شبكةموجبة{٥}','شبكةموجبةفارغة{٥}','خطأعداد{٥}','خطأعدادفارغ{٥}')]},
   {id:'calc', icon:'\uE2BF', name:'تفاضل وتكامل ودوال', groups:[T('نها{|}','مجموع{|}{}','تكامل{|}{}','توافيق{|}{}','تباديل{|}{}','توافيقأقواس{|}{}'), FUNCS, catSyms('تكامل ومجموع')]},
   {id:'oth', icon:'١٢٣', name:'أرقام وعلامات', groups:[catSyms('أرقام'), catSyms('علامات وأخرى')]},
 ];
@@ -1854,6 +1873,8 @@ const NEWS = { id:'2026-11-11', items:[
   'حروف (أ–ط) وأعداد (٠–٣٠) داخل دائرة مفرغة أو زرقاء، في تبويب مستقل',
   'التوافيق والتباديل بطريقة المنهج: ن مرفوعة يمينًا',
   'توافيق بالأقواس: ن فوق ر',
+  'شبكة الربع الأول بلا أرقام',
+  'الجداول والمصفوفات تُكتب صفًّا في كل سطر',
 ]};
 let showNews = ()=>{};
 // ---- app menu (☰): new, help, keyboard shortcuts, what's new, about ----
