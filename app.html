@@ -86,6 +86,7 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .cpop .mine button.c{width:24px;height:22px;border-radius:4px}
 .cpop button.c:hover{outline:2px solid var(--accent);outline-offset:1px;position:relative;z-index:1}
 .cpop button.c.on{outline:2px solid var(--ink);outline-offset:1px}
+.cpop.up{top:auto;bottom:calc(100% + 4px);left:0;right:auto}.cpop .none{display:flex;align-items:center;gap:8px;font:inherit;font-size:.78rem;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer;direction:rtl;color:var(--ink)}.cpop .none i{width:22px;height:18px;border:1px solid rgb(0 0 0 / .18);border-radius:3px;background-color:#fff;background-image:linear-gradient(45deg,#d9dde3 25%,transparent 25%),linear-gradient(-45deg,#d9dde3 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9dde3 75%),linear-gradient(-45deg,transparent 75%,#d9dde3 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0}.cpop .none.on{outline:2px solid var(--ink);outline-offset:1px}
 .cpop .clab{font-size:.7rem;color:var(--muted);direction:rtl}
 .cpop .more{font:inherit;font-size:.78rem;border:0;background:none;color:var(--accent);cursor:pointer;padding:2px 0;direction:rtl;text-align:right}
 .vh{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;inset-inline-start:0;top:100%}
@@ -380,6 +381,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
         <button class="btn primary iconbtn" id="insertDoc" type="button" hidden title="إدراج" aria-label="إدراج"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5v9"/><path d="M6.5 8l3.5 3.5L13.5 8"/><rect x="3" y="12.5" width="14" height="5" rx="1.5"/></svg></button>
         <button class="btn iconbtn" id="copyImg" type="button" title="نسخ الصورة (⌘⇧C)" aria-label="نسخ الصورة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10.5" height="10.5" rx="2"/><path d="M7 15l2.6-2.8 2 2 1.6-1.6 2.3 2.4"/><circle cx="14" cy="10" r=".9" fill="currentColor"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg></button>
         <button class="ib" id="darkBg" type="button" aria-pressed="false" title="خلفية داكنة" aria-label="خلفية داكنة"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
+        <span class="cwrap"><button class="ib" id="bgBtn" type="button" title="لون الخلفية" aria-label="لون الخلفية" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="2.5"/><rect x="6" y="6" width="8" height="8" rx="1" id="bgSw" style="fill:none;stroke-width:1.2"/></svg></button><div class="cpop" id="bgPop" hidden></div><input type="color" id="bgCustom" class="vh" tabindex="-1" aria-hidden="true"></span>
         
         <span class="status" id="status" role="status"></span>
       </div>
@@ -1599,6 +1601,7 @@ function render(src, target){
   if (target){ g = target; }
   else { const k = st.scale; canvas.width = Math.ceil(W*k); canvas.height = Math.ceil(H*k);
     g = boldify(canvas.getContext('2d')); g.setTransform(k,0,0,k,0,0); g.clearRect(0,0,W,H); }
+  if (st.bg){ g.save(); g.fillStyle=st.bg; g.fillRect(0,0,W,H); g.restore(); } // background colour (none = transparent)
   g.fillStyle = st.color;
   let y = pad;
   for (const b of boxes){ y += b.a;
@@ -2292,6 +2295,26 @@ cpop.addEventListener('click',e=>e.stopPropagation());
 document.addEventListener('click',()=>{ if(!cpop.hidden){ colorSel=null; closeColors(); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !cpop.hidden){ colorSel=null; closeColors(); } });
 custom.addEventListener('input',()=>{ if(!customSel) setColor(custom.value); });
+// background colour of the image: none (transparent) or a colour from the same grid
+{ const bb=$('bgBtn'), bp=$('bgPop'), bc=$('bgCustom'), sw=$('bgSw');
+  st.bg=load('aeq-bg', null);
+  const show=()=>{ if (st.bg){ sw.style.fill=st.bg; sw.style.stroke='rgb(0 0 0 / .35)'; } else { sw.style.fill='none'; sw.style.stroke=''; } };
+  const setBg=c=>{ st.bg=c; save('aeq-bg', c); show(); update(); };
+  const close=()=>{ bp.hidden=true; bb.setAttribute('aria-expanded','false'); };
+  const sw2=c=>{ const b=document.createElement('button'); b.type='button'; b.className='c'+(String(st.bg).toLowerCase()===c.toLowerCase()?' on':''); b.style.background=c; b.title=c; b.addEventListener('click',()=>{ close(); setBg(c); }); return b; };
+  const build=()=>{ bp.innerHTML='';
+    const no=document.createElement('button'); no.type='button'; no.className='none'+(st.bg?'':' on'); no.innerHTML='<i></i>بلا لون (خلفية شفافة)'; no.addEventListener('click',()=>{ close(); setBg(null); }); bp.appendChild(no);
+    const l1=document.createElement('div'); l1.className='clab'; l1.textContent='ألوان المذكرة'; bp.appendChild(l1);
+    const mine=document.createElement('div'); mine.className='mine'; for (const [n,c] of COLORS){ const b=sw2(c); b.title=n; mine.appendChild(b); } bp.appendChild(mine);
+    const l2=document.createElement('div'); l2.className='clab'; l2.textContent='ألوان أخرى'; bp.appendChild(l2);
+    const top=document.createElement('div'); top.className='crow'; THEME.forEach(c=>top.appendChild(sw2(c))); bp.appendChild(top);
+    const grid=document.createElement('div'); grid.className='ccol'; const sh=THEME.map(shades); for (let k=0;k<5;k++) THEME.forEach((_,i)=>grid.appendChild(sw2(sh[i][k]))); bp.appendChild(grid);
+    const std=document.createElement('div'); std.className='crow'; STANDARD.forEach(c=>std.appendChild(sw2(c))); bp.appendChild(std);
+    const more=document.createElement('button'); more.type='button'; more.className='more'; more.textContent='لون آخر…'; more.addEventListener('click',()=>{ close(); bc.value=st.bg||'#ffffff'; bc.click(); }); bp.appendChild(more); };
+  bb.addEventListener('click',e=>{ e.stopPropagation(); if (bp.hidden){ build(); bp.hidden=false; bb.setAttribute('aria-expanded','true'); } else close(); });
+  bp.addEventListener('click',e=>e.stopPropagation()); document.addEventListener('click',()=>{ if(!bp.hidden) close(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !bp.hidden) close(); });
+  bc.addEventListener('input',()=>setBg(bc.value)); show(); }
 custom.addEventListener('change',()=>{ if(customSel){ const r=customSel; customSel=null; colorPart(custom.value, r); } });
 
 // settings
