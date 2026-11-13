@@ -2100,7 +2100,7 @@ const S = (str) => [...str].map(ch=>({t:'sym',ch}));
 const FUNCS = FUNCWORDS.map(w=>({t:'sym',ch:w,name:'الدالة '+w}));
 const MLETS = MLET.map(([cp,n])=>({t:'sym',ch:String.fromCodePoint(cp),name:n}));
 const TABS = [
-  {id:'fav', icon:'★', name:'المفضلة'},
+  {id:'fav', icon:'html:<svg viewBox="0 0 20 20" width="19" height="19" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="5.5" height="5.5" rx="1.3"/><rect x="11.5" y="3" width="5.5" height="5.5" rx="1.3"/><rect x="3" y="11.5" width="5.5" height="5.5" rx="1.3"/><rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.3"/></svg>', name:'كل الأدوات والرموز'},
   {id:'tpl', icon:'tool:كسر{|}{}', name:'كسور وجذور وقوالب', groups:[T('كسر{|}{}','جذر{|}','جذر[٣]{|}','جذر[|]{}'), T('^{|}','_{|}',"'"), T('|‸|','مربع{|}','تسطير{|}','شطب{|}{}','شطب.تحت{|}{}','{|}↑{}'), T('قسمة{|}{}{}{}','تحليل.رأسي{|}','تحليل.شجرة{|}','شجرة.احتمالات{|}','عمودي{| ; ; }','عمودي{| ; − ; }','ضرب.رأسي{| ; ; }')]},
   {id:'ops', icon:'±', name:'عمليات وعلاقات', groups:[catSyms('عمليات وعلاقات')]},
   {id:'sets', icon:'∈', name:'مجموعات ومنطق', groups:[T('فن{|}','فن.ثلاثي{|}'), catSyms('مجموعات'), S('∴')]},
@@ -2137,7 +2137,6 @@ function itemButton(it){
   if (favEdit) b.classList.add('favedit');
   // in "edit favourites" mode a click adds/removes; a right-click always does
   b.addEventListener('click', e => { if (favEdit){ e.stopImmediatePropagation(); toggleFav(it); } }, true);
-  b.addEventListener('contextmenu', e => { e.preventDefault(); toggleFav(it); });
   return b;
 }
 function showTab(id){
@@ -2157,15 +2156,11 @@ for (const t of TABS){
   if (t.icon.startsWith('tool:')) b.innerHTML=TOOLEL[t.icon.slice(5)].innerHTML; else if (t.icon.startsWith('html:')) b.innerHTML=t.icon.slice(5); else b.textContent=t.icon;
   b.addEventListener('click',()=>showTab(t.id)); $('tabs').appendChild(b);
 }
-{ const fe=document.createElement('button'); fe.type='button'; fe.id='favEdit'; fe.className='mini favbtn'; fe.innerHTML='<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5l3 3L7 16H4v-3z"/><path d="M11 6l3 3"/></svg>'; fe.setAttribute('aria-label','تخصيص'); fe.title='تخصيص'; fe.setAttribute('aria-pressed','false');
-  fe.addEventListener('click', () => { favEdit=!favEdit; fe.setAttribute('aria-pressed', String(favEdit)); fe.innerHTML = favEdit ? '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>' : '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5l3 3L7 16H4v-3z"/><path d="M11 6l3 3"/></svg>';
-    if (editTools!==favEdit) $('editTools').click(); if (editSyms!==favEdit) $('editSyms').click(); showTab(curTab); });
-  fe.classList.add('tabedit'); $('tabs').appendChild(fe); }
-// right-click on a favourite removes it
-$('favPanel').addEventListener('contextmenu', e => { const b=e.target.closest('button'); if(!b) return;
-  if (b.dataset.ins && TOOLEL[b.dataset.ins]===b){ e.preventDefault(); toggleFav({t:'tool',ins:b.dataset.ins}); }
-  else if (b.classList.contains('sym') && b.dataset.ch){ e.preventDefault(); toggleFav({t:'sym',ch:b.dataset.ch}); } });
+// the first tab holds every tool and every symbol (no customising); the other tabs sort them by subject
 $('editTools').hidden=true; $('editSyms').hidden=true;
+toolCfg={vis:[...TOOLDEF], hid:[]}; renderTools();
+{ const all=[...DEFAULT_VISIBLE]; const have=new Set(all); for (const t of TABS) for (const g of t.groups||[]) for (const it of g) if (it.t==='sym' && !have.has(it.ch) && it.ch.length===1 || (it.t==='sym' && it.ch.length>1 && !have.has(it.ch) && validSym.has(it.ch))){ have.add(it.ch); all.push(it.ch); }
+  visOrder=all; renderSyms(); }
 showTab(load('aeq-tab','fav'));
 
 const HIST_KEY='aeq-history', HIST_MAX=20;
