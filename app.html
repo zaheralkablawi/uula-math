@@ -353,7 +353,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>حل على خط الأعداد</td><td>أضف سطرًا في <code>خط.أعداد{…}</code>: <code>الحل −٢ &lt; س ≤ ٣</code> أو <code>الحل س &gt; ١</code> أو <code>الحل س = ٢</code>، ولأكثر من جزء: <code>الحل س &lt; −١ أو س ≥ ٢</code>. (&lt; نقطة مفتوحة، ≤ مغلقة)</td></tr>
           <tr><td>نقاط وخطوط تقارب</td><td>في <code>تمثيل.بياني{…}</code> أو <code>شبكة{…}</code> أضف سطر <code>نقطة أ(٢، ٣) ب(−١، ٠)</code>، وسطر <code>تقارب س = ٢</code> أو <code>تقارب ص = ١</code> (خط متقطع)</td></tr>
           <tr><td>شجرة الاحتمالات</td><td><code>شجرة.احتمالات{</code> ثم كل فرع في سطر: <code>ح : ١/٢ (ح : ١/٢ * ت : ١/٢)</code>، ثم <code>}</code>. الحدث ثم : ثم الاحتمال، والفرع الأول في الأعلى</td></tr>
-          <tr><td>شكل فِن</td><td><code>فن{</code> ثم سطر لكل منطقة بهذا الترتيب: <code>ش : ٧</code> (خارج المجموعات، ويرسم المستطيل)، ثم <code>أ ∩ ب : ٣</code> ، ثم <code>أ : ١، ٢</code> ، <code>ب : ٥</code>، ثم <code>}</code>. لثلاث مجموعات: ش، ثم أ ∩ ب ∩ جـ، ثم تقاطعات المجموعتين، ثم أ وب وجـ</td></tr>
+          <tr><td>شكل فِن</td><td><code>فن{</code> ثم المجموعة الشاملة <code>ش : ١، ٢، ٣، ٤، ٥، ٦</code>، ثم عناصر كل مجموعة كاملة: <code>أ : ٢، ٤، ٥</code> ، <code>ب : ١، ٣، ٥</code> (ولثلاث مجموعات <code>جـ : …</code>)، ثم <code>}</code>. التقاطعات وما خارج المجموعات تُحسب تلقائيًا، وسطر ش يرسم المستطيل. لكتابة المناطق يدويًا اكتب سطر التقاطع <code>أ ∩ ب : …</code> فتصير «أ» تعني «أ فقط»</td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
           <tr><td>زاوية</td><td><code>زاوية{أ ب جـ}</code></td></tr>
           <tr><td>نهاية، مجموع، تكامل</td><td><code>نها{س ← ٣}</code> ، <code>مجموع{ر = ١}{ن}</code> ، <code>تكامل{١}{٢}</code></td></tr>
@@ -519,13 +519,22 @@ class P {
     const s=this.s; const c=this.peek(); if(c===undefined) return null;
     if (s.startsWith('فن{', this.i) || s.startsWith('فن.ثلاثي{', this.i)){ this.i+=s.startsWith('فن{', this.i)?2:8; const body=this.raw(); // Venn: one line per region  أ : ١، ٢ / أ ∩ ب : ٣ / ش : ٧
       const lab=t=>{ t=t.trim(); try { return new P(normalizeMap(t).s).seq(null); } catch(e){ return [{t:'txt',s:t,k:'word'}]; } };
-      const sets=[], reg={}; let U=null, out=[];
+      const sets=[], reg={}, raw={}, inter=[]; let U=null, uRaw=[];
+      const key=t=>HINTW.has(t) ? Symbol() : toLatinDigits(t).replace(/\s+/g,'').replace(/[−–]/g,'-');
       for (const ln of body.split(/[;؛]/).map(x=>x.trim()).filter(Boolean)){ const ci=ln.search(/[:：]/); const nm=(ci<0?ln:ln.slice(0,ci)).trim(), el=ci<0?'':ln.slice(ci+1);
-        const els=el.split(/[،,]/).map(x=>x.trim()).filter(Boolean).map(lab);
-        if (/^(ش|الشاملة|خارج|U)$/.test(nm.replace(/\s+/g,''))){ U=nm.replace(/\s+/g,'')==='خارج'?'':nm.trim(); out=els; continue; }
+        const els=el.split(/[،,]/).map(x=>x.trim()).filter(Boolean);
+        if (/^(ش|الشاملة|خارج|U)$/.test(nm.replace(/\s+/g,''))){ U=nm.replace(/\s+/g,'')==='خارج'?'':nm.trim(); uRaw=els; continue; }
         const parts=nm.split(/[∩]/).map(x=>x.replace(/\s+/g,'')).filter(Boolean); if (!parts.length) continue;
         for (const q of parts) if (!sets.includes(q) && sets.length<3) sets.push(q);
-        const key=parts.map(q=>sets.indexOf(q)).filter(i=>i>=0).sort().join(''); if (key) reg[key]=(reg[key]||[]).concat(els); }
+        const k=parts.map(q=>sets.indexOf(q)).filter(i=>i>=0).sort().join(''); if (!k) continue;
+        raw[k]=(raw[k]||[]).concat(els); if (k.length>1 && els.some(e=>!HINTW.has(e))) inter.push(k); }
+      let out;
+      if (inter.length){ for (const k in raw) reg[k]=raw[k].map(lab); out=uRaw.map(lab); } // regions written by hand: أ means «أ only»
+      else { // only the sets are written: every element goes to its region by itself, and ش keeps what is outside them all
+        const seen=new Map(), order=[];
+        sets.forEach((q,i)=>{ for (const e of raw[String(i)]||[]){ const kk=key(e); if (!seen.has(kk)){ seen.set(kk,{e,m:new Set()}); order.push(kk); } seen.get(kk).m.add(i); } });
+        for (const kk of order){ const o=seen.get(kk), r=[...o.m].sort().join(''); (reg[r]=reg[r]||[]).push(lab(o.e)); }
+        out=uRaw.filter(e=>!seen.has(key(e))).map(lab); }
       if (sets.length<2) this.err('اكتب مجموعتين على الأقل: أ : …');
       return {t:'venn', sets:sets.map(lab), n:sets.length, reg, U:U===null?null:(U?lab(U):[]), out}; }
     if (s.startsWith('شجرة.احتمالات{', this.i)){ this.i+=13; const body=this.raw(); let k=0; // probability tree: each branch  الحدث : الاحتمال (فرع * فرع); first branch on top
@@ -1725,7 +1734,7 @@ const HINT_TPL=new Proxy({ // a tool button inserts these: grey words to type ov
   'شطب{|}{}':'شطب{عدد}{عدد}', 'شطب.تحت{|}{}':'شطب.تحت{عدد}{عدد}', 'مربع{|}':'مربع{اكتب.هنا}', 'تسطير{|}':'تسطير{عدد}',
   'نها{|}':'نها{س ← عدد}', 'مجموع{|}{}':'مجموع{عدد}{عدد}', 'تكامل{|}{}':'تكامل{عدد}{عدد}',
   'توافيق{|}{}':'توافيق{عدد}{عدد}', 'تباديل{|}{}':'تباديل{عدد}{عدد}', 'توافيق.أقواس{|}{}':'توافيق.أقواس{عدد}{عدد}',
-  'دائرة{|}':'دائرة{عدد.أو.حرف & لون}', 'تحليل.شجرة{|}':'تحليل.شجرة{\nعدد\nعدد (عدد * عدد)\nعدد (عدد * عدد)\n}', 'خط.أعداد{|}':'خط.أعداد{\nعدد < س < عدد\nأرقام\nعلامات\n}', 'خط.أعداد.حل{|}':'خط.أعداد{\nعدد < س < عدد\nأرقام\nعلامات\nالحل عدد ≤ س < عدد\n}', 'شجرة.احتمالات{|}':'شجرة.احتمالات{\nالحدث : الاحتمال (الحدث : الاحتمال * الحدث : الاحتمال)\nالحدث : الاحتمال (الحدث : الاحتمال * الحدث : الاحتمال)\n}', 'فن{|}':'فن{\nش : العناصر\nأ ∩ ب : العناصر\nأ : العناصر\nب : العناصر\n}', 'فن.ثلاثي{|}':'فن{\nش : العناصر\nأ ∩ ب ∩ جـ : العناصر\nأ ∩ ب : العناصر\nأ ∩ جـ : العناصر\nب ∩ جـ : العناصر\nأ : العناصر\nب : العناصر\nجـ : العناصر\n}', 'سهم{|}':'سهم{اكتب.هنا}', 'سهم.يمين{|}':'سهم.يمين{اكتب.هنا}', 'شبكة{|}':'شبكة{\nشبكة\nعدد ≤ س ≤ عدد\nعدد ≤ ص ≤ عدد\nأرقام\n}', 'شبكة.ربع.أول{|}':'شبكة.ربع.أول{\nشبكة\n٠ ≤ س ≤ عدد\n٠ ≤ ص ≤ عدد\nأرقام\n}', 'تمثيل.بياني{|}':'تمثيل.بياني{\nالدالة\nشبكة\nعدد ≤ س ≤ عدد\nعدد ≤ ص ≤ عدد\nأرقام\n}', 'تمثيل.بياني.ربع.أول{|}':'تمثيل.بياني.ربع.أول{\nالدالة\nشبكة\n٠ ≤ س ≤ عدد\n٠ ≤ ص ≤ عدد\nأرقام\n}', 'رسم{|}':'رسم{ص = اكتب.هنا}', 'رسم.فارغ{|}':'رسم.فارغ{ص = اكتب.هنا}', 'رسم.محاور{|}':'رسم.محاور{ص = اكتب.هنا}', 'رسم.محاور.فارغ{|}':'رسم.محاور.فارغ{ص = اكتب.هنا}', 'رسم.محاور.خالية{|}':'رسم.محاور.خالية{ص = اكتب.هنا}', 'رسم.محاور.خالية.فارغة{|}':'رسم.محاور.خالية.فارغة{ص = اكتب.هنا}', 'خط{|}':'خط{حروف}', 'مستقيم{|}':'مستقيم{حروف}', 'متجه{|}':'متجه{حروف}', 'قوس{|}':'قوس{حروف}', 'مثلث{|}':'مثلث{حروف}', 'زاوية{|}':'زاوية{حروف}'
+  'دائرة{|}':'دائرة{عدد.أو.حرف & لون}', 'تحليل.شجرة{|}':'تحليل.شجرة{\nعدد\nعدد (عدد * عدد)\nعدد (عدد * عدد)\n}', 'خط.أعداد{|}':'خط.أعداد{\nعدد < س < عدد\nأرقام\nعلامات\n}', 'خط.أعداد.حل{|}':'خط.أعداد{\nعدد < س < عدد\nأرقام\nعلامات\nالحل عدد ≤ س < عدد\n}', 'شجرة.احتمالات{|}':'شجرة.احتمالات{\nالحدث : الاحتمال (الحدث : الاحتمال * الحدث : الاحتمال)\nالحدث : الاحتمال (الحدث : الاحتمال * الحدث : الاحتمال)\n}', 'فن{|}':'فن{\nش : العناصر\nأ : العناصر\nب : العناصر\n}', 'فن.ثلاثي{|}':'فن{\nش : العناصر\nأ : العناصر\nب : العناصر\nجـ : العناصر\n}', 'سهم{|}':'سهم{اكتب.هنا}', 'سهم.يمين{|}':'سهم.يمين{اكتب.هنا}', 'شبكة{|}':'شبكة{\nشبكة\nعدد ≤ س ≤ عدد\nعدد ≤ ص ≤ عدد\nأرقام\n}', 'شبكة.ربع.أول{|}':'شبكة.ربع.أول{\nشبكة\n٠ ≤ س ≤ عدد\n٠ ≤ ص ≤ عدد\nأرقام\n}', 'تمثيل.بياني{|}':'تمثيل.بياني{\nالدالة\nشبكة\nعدد ≤ س ≤ عدد\nعدد ≤ ص ≤ عدد\nأرقام\n}', 'تمثيل.بياني.ربع.أول{|}':'تمثيل.بياني.ربع.أول{\nالدالة\nشبكة\n٠ ≤ س ≤ عدد\n٠ ≤ ص ≤ عدد\nأرقام\n}', 'رسم{|}':'رسم{ص = اكتب.هنا}', 'رسم.فارغ{|}':'رسم.فارغ{ص = اكتب.هنا}', 'رسم.محاور{|}':'رسم.محاور{ص = اكتب.هنا}', 'رسم.محاور.فارغ{|}':'رسم.محاور.فارغ{ص = اكتب.هنا}', 'رسم.محاور.خالية{|}':'رسم.محاور.خالية{ص = اكتب.هنا}', 'رسم.محاور.خالية.فارغة{|}':'رسم.محاور.خالية.فارغة{ص = اكتب.هنا}', 'خط{|}':'خط{حروف}', 'مستقيم{|}':'مستقيم{حروف}', 'متجه{|}':'متجه{حروف}', 'قوس{|}':'قوس{حروف}', 'مثلث{|}':'مثلث{حروف}', 'زاوية{|}':'زاوية{حروف}'
 }, { get:(o,k)=> o[k] || (typeof k==='string' && /^رسم[.\u0621-\u064A]*\{\|\}$/.test(k) ? k.replace('{|}','{ص = اكتب.هنا}') : undefined) });
 function insert(tpl){
   const s=src.selectionStart, e=src.selectionEnd, sel=src.value.slice(s,e);
@@ -2287,7 +2296,7 @@ Syntax (write in logical reading order, first token = rightmost on the page):
 - number-line solution: add a line inside خط.أعداد{…}: الحل −٢ < س ≤ ٣ (or الحل س > ١, الحل س = ٢, parts joined with أو); < open dot, ≤ closed
 - points / asymptotes inside تمثيل.بياني{…} or شبكة{…}: a line نقطة أ(٢، ٣) ب(−١، ٠) and a line تقارب س = ٢ (dashed)
 - probability tree: شجرة.احتمالات{⏎ح : ١/٢ (ح : ١/٢ * ت : ١/٢)⏎ت : ١/٢ (…)⏎} (event : probability, first branch on top)
-- Venn diagram: فن{⏎ش : ٧⏎أ ∩ ب : ٣⏎أ : ١، ٢⏎ب : ٥⏎} (ش = outside elements and draws the rectangle; add جـ lines for three sets)
+- Venn diagram: فن{⏎ش : ١، ٢، ٣، ٥، ٧⏎أ : ١، ٢، ٣⏎ب : ٣، ٥⏎} — list each set's full elements and the universal set ش; the intersection and outside are placed automatically (add جـ for three sets)
 - arrow with writing above it (stretches with the text): سهم{...} (←) or سهم.يمين{...} (→)
 - limit: نها{س ← ٣}; sum with limits: مجموع{lower}{upper}; integral: تكامل{lower}{upper}; combinations ن ق ر: توافيق{ن}{ر} (or in parentheses, ن over ر: توافيق.أقواس{ن}{ر}); permutations: تباديل{ن}{ر}
 - several lines in the image: put each on its own line.
@@ -2337,7 +2346,8 @@ st.darkBg=0; $('darkBg').setAttribute('aria-pressed','false'); // opens in the n
 st.strokeMul=1;
 { const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight;
 // ---- what's new: shown once after each update (change NEWS.id and the list with every release) ----
-const NEWS = { id:'2026-11-12g', items:[
+const NEWS = { id:'2026-11-13a', items:[
+  'شكل فِن: اكتب عناصر كل مجموعة كاملة والمجموعة الشاملة، والتقاطع والخارج يُحسبان تلقائيًا',
   'خط الأعداد مع الحل: سطر «الحل −٢ < س ≤ ٣» يظلّل الحل بنقاط مفتوحة ومغلقة',
   'نقاط وخطوط تقارب في التمثيل البياني والشبكة: نقطة أ(٢، ٣) ، تقارب س = ٢',
   'شجرة الاحتمالات: شجرة.احتمالات{…}',
