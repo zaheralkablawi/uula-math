@@ -534,9 +534,11 @@ class P {
         const seen=new Map(), order=[];
         sets.forEach((q,i)=>{ for (const e of raw[String(i)]||[]){ const kk=key(e); if (!seen.has(kk)){ seen.set(kk,{e,m:new Set()}); order.push(kk); } seen.get(kk).m.add(i); } });
         for (const kk of order){ const o=seen.get(kk), r=[...o.m].sort().join(''); (reg[r]=reg[r]||[]).push(lab(o.e)); }
-        out=uRaw.filter(e=>!seen.has(key(e))).map(lab); }
+        out=uRaw.filter(e=>!seen.has(key(e))).map(lab);
+        if (sets.length===2){ const rc={}; for (const kk of order){ const o=seen.get(kk); if (!HINTW.has(o.e)){ const r=[...o.m].sort().join(''); rc[r]=(rc[r]||0)+1; } }
+          const a=rc['0']>0, b=rc['1']>0, ab=rc['01']>0; var lay = a && b && !ab ? 'apart' : (ab && !a && b ? 'sub0' : (ab && a && !b ? 'sub1' : '')); } }
       if (sets.length<2) this.err('اكتب مجموعتين على الأقل: أ : …');
-      return {t:'venn', sets:sets.map(lab), n:sets.length, reg, U:U===null?null:(U?lab(U):[]), out}; }
+      return {t:'venn', sets:sets.map(lab), n:sets.length, reg, U:U===null?null:(U?lab(U):[]), out, lay:typeof lay==='string'?lay:''}; }
     if (s.startsWith('شجرة.احتمالات{', this.i)){ this.i+=13; const body=this.raw(); let k=0; // probability tree: each branch  الحدث : الاحتمال (فرع * فرع); first branch on top
       const SEP=/[*×∗·;؛]/, lab=t=>{ t=t.trim(); if (!t) return null; try { return new P(normalizeMap(t).s).seq(null); } catch(e){ return [{t:'txt',s:t,k:'word'}]; } };
       const ws=()=>{ while (k<body.length && /\s/.test(body[k])) k++; };
@@ -1222,10 +1224,12 @@ function vennBox(n, sz){ // two or three overlapping circles; the elements are s
   const outB=(n.out||[]).map(e=>rowBox(e, es)); for (const b of outB) maxE=Math.max(maxE,b.w,b.a+b.d);
   const room=k=>{ const c=EB[k].length; return c ? Math.sqrt(c)*maxE*1.9 : 0; }; // a region needs about this much width
   const R = three ? Math.max(sz*2.3, ...keys.map(k=>room(k)*(k.length===1?1.15:1.6))) : Math.max(sz*2.1, room('0')*1.05, room('1')*1.05, room('01')/.75);
-  const names=n.sets.map(l=>rowBox(l, sz)), d=three?R:R*1.1, r0=d/Math.sqrt(3);
-  const dir=three?[[.866,-.5],[-.866,-.5],[0,1]]:[[1,0],[-1,0]], C=dir.map(v=>three?[v[0]*r0,v[1]*r0]:[v[0]*d/2,0]);
-  let L=Infinity, Rt=-Infinity, T=Infinity, B=-Infinity; for (const c of C){ L=Math.min(L,c[0]-R); Rt=Math.max(Rt,c[0]+R); T=Math.min(T,c[1]-R); B=Math.max(B,c[1]+R); }
-  const lpos=C.map((c,i)=>{ const nb=names[i]; if (three && i===2) return [c[0]-nb.w/2, c[1]+R+sz*.15+nb.a]; const sx=dir[i][0]>=0?1:-1; return [c[0]+sx*R*.72+(sx>0?sz*.05:-nb.w-sz*.05), c[1]-R*.72-sz*.08]; });
+  const names=n.sets.map(l=>rowBox(l, sz)), lay=three?'':n.lay, d=three?R:(lay==='apart'?2*R+sz*.9:R*1.1), r0=d/Math.sqrt(3);
+  const dir=three?[[.866,-.5],[-.866,-.5],[0,1]]:[[1,0],[-1,0]]; let C=dir.map(v=>three?[v[0]*r0,v[1]*r0]:[v[0]*d/2,0]), RS=C.map(()=>R);
+  if (lay==='sub0' || lay==='sub1'){ const inn=lay==='sub0'?0:1, outr=1-inn, ri=Math.max(sz*1.4, room('01')*.95+sz*.3), ro=Math.max(ri*1.8, ri+room(String(outr))*.95+sz*.7);
+    RS=[0,0]; RS[inn]=ri; RS[outr]=ro; C=[[0,0],[0,0]]; C[inn]=[ro-ri-sz*.35,0]; } // the smaller set sits inside the bigger one, on its right
+  let L=Infinity, Rt=-Infinity, T=Infinity, B=-Infinity; C.forEach((c,i)=>{ const r=RS[i]; L=Math.min(L,c[0]-r); Rt=Math.max(Rt,c[0]+r); T=Math.min(T,c[1]-r); B=Math.max(B,c[1]+r); });
+  const lpos=C.map((c,i)=>{ const nb=names[i], r=RS[i]; if (three && i===2) return [c[0]-nb.w/2, c[1]+r+sz*.15+nb.a]; const sx=(lay==='sub0'||lay==='sub1') ? -1 : (dir[i][0]>=0?1:-1); return [c[0]+sx*r*.72+(sx>0?sz*.05:-nb.w-sz*.05), c[1]-r*.72-sz*.08]; });
   lpos.forEach((p,i)=>{ const nb=names[i]; L=Math.min(L,p[0]); Rt=Math.max(Rt,p[0]+nb.w); T=Math.min(T,p[1]-nb.a); B=Math.max(B,p[1]+nb.d); });
   const Ub=n.U&&n.U.length?rowBox(n.U, sz):null, m=n.U===null?0:(outB.length ? Math.max(sz*.5, maxE*1.15+sz*.25) : sz*.45);
   if (n.U!==null){ L-=m; Rt+=m; T-=m; B+=m; if (Ub) T-=Ub.a+Ub.d+sz*.05; }
@@ -1237,17 +1241,17 @@ function vennBox(n, sz){ // two or three overlapping circles; the elements are s
   const rnd=()=>{ seed=(seed+0x6D2B79F5)|0; let x=seed; x=Math.imul(x^(x>>>15),x|1); x^=x+Math.imul(x^(x>>>7),x|61); return ((x^(x>>>14))>>>0)/4294967296; };
   const placed=[];
   const fits=(cx,cy,b,inSet,exSet,outside)=>{ const hw=b.w/2+sz*.12, hh=(b.a+b.d)/2+sz*.1, rr=Math.hypot(hw,hh);
-    for (let i=0;i<C.length;i++){ const dd=Math.hypot(cx-C[i][0], cy-C[i][1]); if (inSet.includes(i)){ if (dd+rr>R-t) return false; } else if (dd-rr<R+t) return false; }
+    for (let i=0;i<C.length;i++){ const dd=Math.hypot(cx-C[i][0], cy-C[i][1]); if (inSet.includes(i)){ if (dd+rr>RS[i]-t) return false; } else if (dd-rr<RS[i]+t) return false; }
     if (outside){ if (cx-hw<L+t+sz*.1 || cx+hw>Rt-t-sz*.1 || cy-hh<T+t+sz*.1 || cy+hh>B-t-sz*.1) return false; }
     for (const o of obst) if (cx+hw>o[0] && cx-hw<o[2] && cy+hh>o[1] && cy-hh<o[3]) return false;
     for (const p of placed) if (Math.abs(cx-p.x)<hw+p.hw && Math.abs(cy-p.y)<hh+p.hh) return false;
     return true; };
-  const spot=(b,inSet,outside)=>{ let best=null, bd=-1; const x0=outside?L:Math.min(...inSet.map(i=>C[i][0]))-R, x1=outside?Rt:Math.max(...inSet.map(i=>C[i][0]))+R, y0=outside?T:Math.min(...inSet.map(i=>C[i][1]))-R, y1=outside?B:Math.max(...inSet.map(i=>C[i][1]))+R;
+  const spot=(b,inSet,outside)=>{ let best=null, bd=-1; const x0=outside?L:Math.max(...inSet.map(i=>C[i][0]-RS[i])), x1=outside?Rt:Math.min(...inSet.map(i=>C[i][0]+RS[i])), y0=outside?T:Math.max(...inSet.map(i=>C[i][1]-RS[i])), y1=outside?B:Math.min(...inSet.map(i=>C[i][1]+RS[i]));
     for (let tries=0, ok=0; tries<1500 && ok<24; tries++){ const cx=x0+rnd()*(x1-x0), cy=y0+rnd()*(y1-y0); if (!fits(cx,cy,b,inSet,[],outside)) continue; ok++;
-      let md=Infinity; for (const p of placed) md=Math.min(md, Math.hypot(cx-p.x, cy-p.y)); for (const i of inSet) md=Math.min(md, (R-Math.hypot(cx-C[i][0],cy-C[i][1]))*1.6);
+      let md=Infinity; for (const p of placed) md=Math.min(md, Math.hypot(cx-p.x, cy-p.y)); for (const i of inSet) md=Math.min(md, (RS[i]-Math.hypot(cx-C[i][0],cy-C[i][1]))*1.6);
       if (md>bd){ bd=md; best=[cx,cy]; } }
     return best; };
-  const at=three ? {'0':[.866*1.08*R,-.5*1.08*R],'1':[-.866*1.08*R,-.5*1.08*R],'2':[0,1.08*R],'01':[0,-.8*R],'02':[.866*.8*R,.5*.8*R],'12':[-.866*.8*R,.5*.8*R],'012':[0,0]} : {'0':[R,0],'1':[-R,0],'01':[0,0]};
+  const at=lay ? {'0':C[0],'1':C[1],'01':C[lay==='sub1'?1:0]} : three ? {'0':[.866*1.08*R,-.5*1.08*R],'1':[-.866*1.08*R,-.5*1.08*R],'2':[0,1.08*R],'01':[0,-.8*R],'02':[.866*.8*R,.5*.8*R],'12':[-.866*.8*R,.5*.8*R],'012':[0,0]} : {'0':[R,0],'1':[-R,0],'01':[0,0]};
   const pos=[]; // [box, x, y] with x,y the centre
   for (const k of keys){ const inSet=k.split('').map(Number); EB[k].forEach((b,j)=>{ let p=spot(b,inSet,false); if (!p){ const c=at[k]; p=[c[0]+(j%3-1)*(maxE+sz*.2), c[1]+(Math.floor(j/3)-.5)*(maxE*.9)]; }
     placed.push({x:p[0], y:p[1], hw:b.w/2+sz*.12, hh:(b.a+b.d)/2+sz*.1}); pos.push([b,p[0],p[1]]); }); }
@@ -1257,7 +1261,7 @@ function vennBox(n, sz){ // two or three overlapping circles; the elements are s
     const ox=x+t-L, oy=y-ax-H/2+t-T;
     if (n.U!==null){ stroke(g,t,()=>{ g.moveTo(x+t,y-ax-H/2+t); g.lineTo(x+W-t,y-ax-H/2+t); g.lineTo(x+W-t,y-ax+H/2-t); g.lineTo(x+t,y-ax+H/2-t); g.closePath(); });
       if (Ub) Ub.draw(g, x+W-t-sz*.2-Ub.w, y-ax-H/2+t+sz*.1+Ub.a); }
-    C.forEach(c=>{ g.beginPath(); g.ellipse(ox+c[0], oy+c[1], R, R, 0, 0, Math.PI*2); g.save(); g.lineWidth=t; g.strokeStyle=g.fillStyle; g.stroke(); g.restore(); });
+    C.forEach((c,i)=>{ g.beginPath(); g.ellipse(ox+c[0], oy+c[1], RS[i], RS[i], 0, 0, Math.PI*2); g.save(); g.lineWidth=t; g.strokeStyle=g.fillStyle; g.stroke(); g.restore(); });
     names.forEach((nb,i)=>nb.draw(g, ox+lpos[i][0], oy+lpos[i][1]));
     for (const [b,cx,cy] of pos) b.draw(g, ox+cx-b.w/2, oy+cy+(b.a-b.d)/2); } };
 }
