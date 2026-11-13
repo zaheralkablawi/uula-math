@@ -353,7 +353,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>حل على خط الأعداد</td><td>أضف سطرًا في <code>خط.أعداد{…}</code>: <code>الحل −٢ &lt; س ≤ ٣</code> أو <code>الحل س &gt; ١</code> أو <code>الحل س = ٢</code>، ولأكثر من جزء: <code>الحل س &lt; −١ أو س ≥ ٢</code>. (&lt; نقطة مفتوحة، ≤ مغلقة)</td></tr>
           <tr><td>نقاط وخطوط تقارب</td><td>في <code>تمثيل.بياني{…}</code> أو <code>شبكة{…}</code> أضف سطر <code>نقطة أ(٢، ٣) ب(−١، ٠)</code>، وسطر <code>تقارب س = ٢</code> أو <code>تقارب ص = ١</code> (خط متقطع)</td></tr>
           <tr><td>شجرة الاحتمالات</td><td><code>شجرة.احتمالات{</code> ثم كل فرع في سطر: <code>ح : ١/٢ (ح : ١/٢ * ت : ١/٢)</code>، ثم <code>}</code>. الحدث ثم : ثم الاحتمال، والفرع الأول في الأعلى</td></tr>
-          <tr><td>شكل فِن</td><td><code>فن{</code> ثم سطر لكل منطقة: <code>أ : ١، ٢</code> ، <code>ب : ٥</code> ، <code>أ ∩ ب : ٣</code> ، <code>ش : ٧</code> (خارج المجموعات، ويرسم المستطيل)، ثم <code>}</code>. لثلاث مجموعات أضف جـ ومناطقها</td></tr>
+          <tr><td>شكل فِن</td><td><code>فن{</code> ثم سطر لكل منطقة: <code>أ : ١، ٢</code> ، <code>ب : ٥</code> ، <code>أ ∩ ب : ٣</code> ، <code>ش : ٧</code> (خارج المجموعات، ويرسم المستطيل)، ثم <code>}</code>. لثلاث مجموعات أضف جـ ومناطقها. إن تركت التقاطع فارغًا فاكتب عناصر كل مجموعة كاملة، ويُحسب التقاطع تلقائيًا</td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
           <tr><td>زاوية</td><td><code>زاوية{أ ب جـ}</code></td></tr>
           <tr><td>نهاية، مجموع، تكامل</td><td><code>نها{س ← ٣}</code> ، <code>مجموع{ر = ١}{ن}</code> ، <code>تكامل{١}{٢}</code></td></tr>
@@ -519,14 +519,19 @@ class P {
     const s=this.s; const c=this.peek(); if(c===undefined) return null;
     if (s.startsWith('فن{', this.i) || s.startsWith('فن.ثلاثي{', this.i)){ this.i+=s.startsWith('فن{', this.i)?2:8; const body=this.raw(); // Venn: one line per region  أ : ١، ٢ / أ ∩ ب : ٣ / ش : ٧
       const lab=t=>{ t=t.trim(); try { return new P(normalizeMap(t).s).seq(null); } catch(e){ return [{t:'txt',s:t,k:'word'}]; } };
-      const sets=[], reg={}; let U=null, out=[];
+      const sets=[], reg={}, raw={}; let U=null, out=[];
       for (const ln of body.split(/[;؛]/).map(x=>x.trim()).filter(Boolean)){ const ci=ln.search(/[:：]/); const nm=(ci<0?ln:ln.slice(0,ci)).trim(), el=ci<0?'':ln.slice(ci+1);
-        const els=el.split(/[،,]/).map(x=>x.trim()).filter(Boolean).map(lab);
+        const rs=el.split(/[،,]/).map(x=>x.trim()).filter(Boolean), els=rs.map(lab);
         if (/^(ش|الشاملة|خارج|U)$/.test(nm.replace(/\s+/g,''))){ U=nm.replace(/\s+/g,'')==='خارج'?'':nm.trim(); out=els; continue; }
         const parts=nm.split(/[∩]/).map(x=>x.replace(/\s+/g,'')).filter(Boolean); if (!parts.length) continue;
         for (const q of parts) if (!sets.includes(q) && sets.length<3) sets.push(q);
-        const key=parts.map(q=>sets.indexOf(q)).filter(i=>i>=0).sort().join(''); if (key) reg[key]=(reg[key]||[]).concat(els); }
+        const key=parts.map(q=>sets.indexOf(q)).filter(i=>i>=0).sort().join(''); if (key){ reg[key]=(reg[key]||[]).concat(els); raw[key]=(raw[key]||[]).concat(rs); } }
       if (sets.length<2) this.err('اكتب مجموعتين على الأقل: أ : …');
+      // إذا لم تُكتب عناصر التقاطع: تُعامل سطور المجموعات كعناصر كاملة، ويُحسب التقاطع تلقائياً
+      if (!Object.keys(raw).some(k=>k.length>1&&raw[k].length)){
+        const nk=t=>t.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/\s+/g,'');
+        const mem=new Map(), order=[]; for (let i=0;i<sets.length;i++) for (const r of (raw[String(i)]||[])){ const k=nk(r); if (!mem.has(k)){ mem.set(k,{r,m:new Set()}); order.push(k); } mem.get(k).m.add(i); }
+        if (order.some(k=>mem.get(k).m.size>1)){ for (const k of Object.keys(reg)) delete reg[k]; for (const k of order){ const o=mem.get(k), key=[...o.m].sort().join(''); reg[key]=(reg[key]||[]).concat([lab(o.r)]); } } }
       return {t:'venn', sets:sets.map(lab), n:sets.length, reg, U:U===null?null:(U?lab(U):[]), out}; }
     if (s.startsWith('شجرة.احتمالات{', this.i)){ this.i+=13; const body=this.raw(); let k=0; // probability tree: each branch  الحدث : الاحتمال (فرع * فرع); first branch on top
       const SEP=/[*×∗·;؛]/, lab=t=>{ t=t.trim(); if (!t) return null; try { return new P(normalizeMap(t).s).seq(null); } catch(e){ return [{t:'txt',s:t,k:'word'}]; } };
