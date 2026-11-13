@@ -273,7 +273,6 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
         <div class="tabbody">
           <div id="favPanel" role="tabpanel">
       <div class="symhead" id="favHead"><button type="button" class="mini" id="editTools" aria-pressed="false">تخصيص</button><button type="button" class="mini" id="resetTools" hidden>الافتراضي</button><span class="hint" id="toolHint" hidden>اضغط على الأداة لإخفائها أو إظهارها، واسحبها لتغيير ترتيبها.</span></div>
-            <button type="button" class="symtog" id="toolTog" aria-expanded="true" aria-controls="tpl"><svg viewBox="0 0 12 8" width="11" height="8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>كل الأدوات</span></button>
             <div class="toolbar" id="tpl">
         <div class="tg" id="toolsVis">
           <button type="button" class="ico" data-ins="جذر{|}" title="جذر تربيعي" aria-label="جذر تربيعي"><svg class="ri" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true"><path d="M2 3H12V15L15.4 10.6L17.4 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="6" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 1.4"/></svg></button>
@@ -326,7 +325,6 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
       <div id="toolsHidBox" hidden><div class="catl">أدوات مخفية</div><div class="toolbar" id="toolsHid"></div></div>
       <div class="symhead" id="symHead"><button type="button" class="mini" id="editSyms" aria-pressed="false">تخصيص</button><button type="button" class="mini" id="resetSyms" hidden>الافتراضي</button><span class="hint" id="editHint" hidden>اضغط على الرمز لإضافته أو إزالته، واسحبه لتغيير ترتيبه (السحب يعمل دائمًا).</span></div>
-      <button type="button" class="symtog" id="symTog" aria-expanded="true" aria-controls="allsyms"><svg viewBox="0 0 12 8" width="11" height="8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>كل الرموز</span></button>
       <div class="toolbar" id="allsyms"></div>
       <details id="moreBox" hidden open><summary class="label">المزيد</summary><div id="mazall" class="morecats"></div></details>
           </div>
@@ -2322,9 +2320,7 @@ cpop.addEventListener('click',e=>e.stopPropagation());
 document.addEventListener('click',()=>{ if(!cpop.hidden){ colorSel=null; closeColors(); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !cpop.hidden){ colorSel=null; closeColors(); } });
 custom.addEventListener('input',()=>{ if(!customSel) setColor(custom.value); });
-// the symbols list folds away behind its arrow
-for (const [tid,bid,key] of [['symTog','allsyms','aeq-symsOpen'],['toolTog','tpl','aeq-toolsOpen']]){ const tg=$(tid), box=$(bid); const set=o=>{ tg.setAttribute('aria-expanded', String(o)); box.hidden=!o; save(key, o); };
-  set(load(key, true)!==false); tg.addEventListener('click', ()=>set(box.hidden)); }
+/* everything stays shown in the first tab */
 // background colour of the image: none (transparent) or a colour from the same grid
 { const bb=$('bgBtn'), bp=$('bgPop'), bc=$('bgCustom'), sw=$('bgSw');
   st.bg=load('aeq-bg', null);
