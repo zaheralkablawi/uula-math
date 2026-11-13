@@ -221,7 +221,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .toolbar .sym.fn{width:auto;padding:0 8px}
 #src.cc{caret-color:transparent}
 .ctxrow{display:flex;align-items:flex-start;gap:6px;margin:4px 2px 0}.ctxi{flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;border:1px solid #c3c9d2;background:var(--panel);color:#8a93a0;font:italic 700 11px/16px Georgia,serif;padding:0;cursor:pointer}.ctxi[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
-.ctxhint{margin:0;color:#9aa3b0;font-size:.8rem;line-height:1.6}#ctxHint code{all:unset;font:inherit;color:#5f6a78;font-weight:600;white-space:nowrap;unicode-bidi:isolate}
+.ctxhint{margin:0;color:#9aa3b0;font-size:.8rem;line-height:1.6}#ctxHint{font-weight:400}
 .fcaret{position:fixed;width:2px;margin-left:-1px;background:var(--ink);pointer-events:none;z-index:50;animation:fcblink 1.06s steps(1) infinite}
 @keyframes fcblink{50%{opacity:0}}
 .srcmirror{position:fixed;left:-99999px;top:0;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word;word-wrap:break-word;box-sizing:content-box;border:0}
@@ -1755,22 +1755,22 @@ function placeCaret(){
   fcaret.hidden=false; fcaret.style.animation='none'; void fcaret.offsetWidth; fcaret.style.animation='';
 }
 // light grey help under the writing box while the caret is inside a tool: shown for 10 s, the i button shows it again until pressed off
-const HJ=['<code>&amp;</code> بين الخلايا','كل صف في سطر'];
+const HJ=['الخلايا: بينها &amp;','الصفوف: كل صف في سطر'];
 const CTXHINT=Object.fromEntries(Object.entries({
- 'تمثيل.بياني':['السطر الأول: الدالة، مثل <code>ص = س^٢</code>، وكل دالة إضافية في سطر','<code>شبكة</code>: احذفها لمحاور فقط','<code>−٥ ≤ س ≤ ٥</code>: حدود س واسم المحور، ومثلها لـ ص','<code>أرقام</code>: احذفها لإخفاء الأرقام','نقاط: <code>نقطة أ(٢، ٣)</code>','خط تقارب: <code>تقارب س = ٢</code>'],
- 'شبكة':['<code>شبكة</code>: احذفها لمحاور فقط','<code>−٥ ≤ س ≤ ٥</code>: حدود س واسم المحور، ومثلها لـ ص','<code>أرقام</code>: احذفها لإخفاء الأرقام','نقاط: <code>نقطة أ(٢، ٣)</code>'],
- 'خط.أعداد':['<code>−٥ &lt; س &lt; ٥</code>: المدى واسم المحور','<code>أرقام</code> و<code>علامات</code>: احذف ما لا تريده','الحل: <code>الحل −٢ &lt; س ≤ ٣</code> (&lt; مفتوحة، ≤ مغلقة)','لأكثر من جزء: <code>الحل س &lt; −١ أو س ≥ ٢</code>'],
- 'فن':['<code>ش</code>: المجموعة الشاملة التي تحتوي كل العناصر','<code>س</code> ، <code>ص</code> ، <code>ع</code>: عناصر كل مجموعة كاملة، والتقاطعات تُحسب وحدها','للتظليل: <code>ظلل : س ∩ ص &amp; أحمر</code>','∩ تقاطع ، ∪ اتحاد ، − فرق ، \' متممة ، والأقواس للتجميع'],
- 'تحليل.رأسي':['سطر لكل خطوة: <code>العدد | العامل</code>','السطر الأخير: <code>١</code>'],
- 'تحليل.شجرة':['السطر الأول: العدد','كل فرع في سطر: <code>٩ (٣ * ٣)</code>','التفريع داخل القوس: <code>٨ (٢ * ٤ (٢ * ٢))</code>','الفرع الأول يُرسم يمينًا'],
- 'شجرة.احتمالات':['كل فرع في سطر: <code>الحدث : الاحتمال (فرع * فرع)</code>','مثال: <code>ح : ١/٢ (ح : ١/٢ * ت : ١/٢)</code>','الفرع الأول في الأعلى'],
- 'عمودي':['كل عدد في سطر','العملية ملتصقة بالعدد: <code>+٢٥</code>','ثم <code>=</code> والناتج','سطر يبدأ بـ <code>^</code> لأرقام الحمل'],
- 'ضرب.رأسي':['كل عدد في سطر، والعملية ملتصقة به: <code>×١٣</code>','كل <code>=</code> خط أفقي','رقم الحمل فوق رقم: <code>{٢}↑{١}</code>'],
- 'قسمة':['السطر الأول: الناتج','ثم <code>المقسوم &amp; المقسوم عليه</code>','كل طرح في سطر يبدأ بـ <code>−</code>','ثم <code>=</code> والباقي'],
+ 'تمثيل.بياني':['الدالة: في السطر الأول مثل ص = س^٢، وكل دالة إضافية في سطر','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)','خط تقارب: تقارب س = ٢'],
+ 'شبكة':['شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)'],
+ 'خط.أعداد':['المدى: −٥ &lt; س &lt; ٥ مع اسم المحور','أرقام وعلامات: احذف ما لا تريده','الحل: الحل −٢ &lt; س ≤ ٣، و&lt; مفتوحة و≤ مغلقة','أكثر من جزء: الحل س &lt; −١ أو س ≥ ٢'],
+ 'فن':['ش: المجموعة الشاملة التي تحتوي كل العناصر','س، ص، ع: عناصر كل مجموعة كاملة، والتقاطعات تُحسب وحدها','التظليل: ظلل : س ∩ ص &amp; أحمر','الرموز: ∩ تقاطع، ∪ اتحاد، − فرق، \' متممة، () للتجميع'],
+ 'تحليل.رأسي':['الخطوات: كل خطوة في سطر بالشكل العدد | العامل','النهاية: السطر الأخير ١'],
+ 'تحليل.شجرة':['العدد: في السطر الأول','الفروع: كل فرع في سطر مثل ٩ (٣ * ٣)','التفريع: داخل القوس مثل ٨ (٢ * ٤ (٢ * ٢))','الترتيب: الفرع الأول يُرسم يمينًا'],
+ 'شجرة.احتمالات':['الفروع: كل فرع في سطر بالشكل الحدث : الاحتمال (فرع * فرع)','مثال: ح : ١/٢ (ح : ١/٢ * ت : ١/٢)','الترتيب: الفرع الأول في الأعلى'],
+ 'عمودي':['الأعداد: كل عدد في سطر','العملية: ملتصقة بالعدد مثل +٢٥','الناتج: بعد = في سطر','الحمل: سطر يبدأ بـ ^'],
+ 'ضرب.رأسي':['الأعداد: كل عدد في سطر، والعملية ملتصقة به مثل ×١٣','الخط: كل = خط أفقي','الحمل: رقم فوق رقم بالشكل {٢}↑{١}'],
+ 'قسمة':['الناتج: في السطر الأول','المقسوم: المقسوم &amp; المقسوم عليه','الطرح: كل طرح في سطر يبدأ بـ −','الباقي: بعد ='],
  'جدول':HJ, 'مصفوفة':HJ, 'محدد':HJ, 'ترتيب':HJ,
- 'نظام':['كل معادلة في سطر'], 'قواعد':['كل قاعدة في سطر: <code>الصيغة &amp; الشرط</code>'],
- 'دائرة':['<code>دائرة{العدد &amp; اللون}</code>','احذف اللون لدائرة مفرغة'],
- 'سهم':['الكتابة فوق السهم، والسهم يطول معها','<code>سهم.يمين{…}</code> للسهم المتجه يمينًا']
+ 'نظام':['المعادلات: كل معادلة في سطر'], 'قواعد':['القواعد: كل قاعدة في سطر بالشكل الصيغة &amp; الشرط'],
+ 'دائرة':['الشكل: دائرة{العدد &amp; اللون}','دائرة مفرغة: احذف اللون'],
+ 'سهم':['الكتابة: فوق السهم، والسهم يطول معها','الاتجاه: سهم.يمين{…} للسهم المتجه يمينًا']
 }).map(([k,v])=>[k, v.join('<br>')]));
 let hintKey='', hintUntil=0, hintPin=false, hintTm=0;
 function hintAt(v,p){ let best=null; // the innermost tool block around the caret
