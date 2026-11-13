@@ -218,7 +218,8 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .toolbar button.favedit[data-fav="1"]::after{content:'★';color:#e8a400}
 .toolbar .sym.fn{width:auto;padding:0 8px}
 #src.cc{caret-color:transparent}
-.ctxhint{margin:4px 2px 0;color:#9aa3b0;font-size:.8rem;line-height:1.6}.ctxhint code{font-family:inherit;color:#7d8794;background:#f1f3f6;border-radius:4px;padding:0 4px}
+.ctxrow{display:flex;align-items:flex-start;gap:6px;margin:4px 2px 0}.ctxi{flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;border:1px solid #c3c9d2;background:var(--panel);color:#8a93a0;font:italic 700 11px/16px Georgia,serif;padding:0;cursor:pointer}.ctxi[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ctxhint{margin:0;color:#9aa3b0;font-size:.8rem;line-height:1.6}.ctxhint code{font-family:inherit;color:#7d8794;background:#f1f3f6;border-radius:4px;padding:0 4px}
 .fcaret{position:fixed;width:2px;margin-left:-1px;background:var(--ink);pointer-events:none;z-index:50;animation:fcblink 1.06s steps(1) infinite}
 @keyframes fcblink{50%{opacity:0}}
 .srcmirror{position:fixed;left:-99999px;top:0;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word;word-wrap:break-word;box-sizing:content-box;border:0}
@@ -262,7 +263,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
         </div>
       </div>
       <textarea id="src" dir="rtl" spellcheck="false"></textarea>
-      <p class="ctxhint" id="ctxHint" hidden></p>
+      <div class="ctxrow" id="ctxRow" hidden><button type="button" class="ctxi" id="ctxI" title="التعليمات" aria-label="التعليمات" aria-pressed="false">i</button><p class="ctxhint" id="ctxHint" hidden></p></div>
       <div class="sugg" id="sugg" hidden></div>
       <p class="err" id="err" role="status"></p>
       <div class="ribbon">
@@ -1748,12 +1749,37 @@ function placeCaret(){
   src.classList.add('cc'); fcaret.style.left=Math.round(x)+'px'; fcaret.style.top=Math.round(y)+'px'; fcaret.style.height=Math.round(h)+'px';
   fcaret.hidden=false; fcaret.style.animation='none'; void fcaret.offsetWidth; fcaret.style.animation='';
 }
-// light grey help under the writing box while the caret is inside some tools
-const CTXHINT={'فن':'للتظليل أضف سطرًا: <code>ظلل : س ∩ ص &amp; أحمر</code> — ∩ تقاطع، ∪ اتحاد، − فرق، \' متممة، والأقواس للتجميع'};
-function ctxHint(){ const el=$('ctxHint'); if (!el) return; if (el.previousElementSibling!==src) src.after(el); /* the add-in moves the writing box */ const v=src.value, p=src.selectionStart; let show='';
-  for (const cmd in CTXHINT){ let i=p; while ((i=v.lastIndexOf(cmd, i-1))>=0){ const o=v.indexOf('{', i); if (o<0 || !/^[.\u0600-\u06FF]*$/.test(v.slice(i+cmd.length,o))) { if (i===0) break; continue; }
-      let d=0, k=o; for (; k<v.length; k++){ if (v[k]==='{') d++; else if (v[k]==='}' && --d===0) break; } if (o<p && p<=k){ show=CTXHINT[cmd]; } break; } if (show) break; }
-  el.hidden=!show; if (show && el.innerHTML!==show) el.innerHTML=show; }
+// light grey help under the writing box while the caret is inside a tool: shown for 10 s, the i button shows it again until pressed off
+const HJ='<code>&amp;</code> بين الخلايا، وكل صف في سطر';
+const CTXHINT={
+ 'تمثيل.بياني':'سطر لكل خيار: الدالة، ثم <code>شبكة</code>، ثم <code>−٥ ≤ س ≤ ٥</code>، ثم <code>−٥ ≤ ص ≤ ٥</code>، ثم <code>أرقام</code> — امسح ما لا تريده. نقاط: <code>نقطة أ(٢، ٣)</code> ، خط تقارب: <code>تقارب س = ٢</code> ، وكل دالة إضافية في سطر',
+ 'شبكة':'امسح «شبكة» لمحاور فقط و«أرقام» لإخفاء الأرقام؛ الحدود واسم المحور: <code>−٥ ≤ س ≤ ٥</code> ؛ نقاط: <code>نقطة أ(٢، ٣)</code>',
+ 'خط.أعداد':'المدى واسم المحور: <code>−٥ &lt; س &lt; ٥</code> ؛ امسح «أرقام» أو «علامات» لإخفائها؛ الحل: <code>الحل −٢ &lt; س ≤ ٣</code> (&lt; مفتوحة، ≤ مغلقة، أو <code>أو</code> لأكثر من جزء)',
+ 'فن':'ش أولًا ثم عناصر كل مجموعة كاملة (التقاطعات تُحسب وحدها). للتظليل: <code>ظلل : س ∩ ص &amp; أحمر</code> — ∩ تقاطع، ∪ اتحاد، − فرق، \' متممة، والأقواس للتجميع',
+ 'تحليل.رأسي':'سطر لكل خطوة: <code>العدد | العامل</code> ، والسطر الأخير <code>١</code>',
+ 'تحليل.شجرة':'العدد في السطر الأول، ثم كل فرع في سطر: <code>٩ (٣ * ٣)</code> ، والتفريع داخل القوس: <code>٨ (٢ * ٤ (٢ * ٢))</code> ؛ الفرع الأول يمينًا',
+ 'شجرة.احتمالات':'كل فرع في سطر: <code>الحدث : الاحتمال (فرع * فرع)</code> مثل <code>ح : ١/٢ (ح : ١/٢ * ت : ١/٢)</code> ؛ الفرع الأول في الأعلى',
+ 'عمودي':'كل عدد في سطر، والعملية ملتصقة بالعدد <code>+٢٥</code> ، ثم <code>=</code> والناتج؛ سطر يبدأ بـ <code>^</code> للحمل؛ الفواصل العشرية تُصفّ وحدها',
+ 'ضرب.رأسي':'كل عدد في سطر، <code>×١٣</code> ، وكل <code>=</code> خط أفقي؛ رقم الحمل فوق رقم: <code>{٢}↑{١}</code>',
+ 'قسمة':'الناتج، ثم <code>المقسوم &amp; المقسوم عليه</code> ، ثم كل طرح في سطر يبدأ بـ <code>−</code> ، ثم <code>=</code> والباقي',
+ 'جدول':HJ, 'مصفوفة':HJ, 'محدد':HJ, 'ترتيب':HJ,
+ 'نظام':'كل معادلة في سطر', 'قواعد':'كل قاعدة في سطر: <code>الصيغة &amp; الشرط</code>',
+ 'دائرة':'<code>دائرة{العدد &amp; اللون}</code> ، واحذف اللون لدائرة مفرغة',
+ 'سهم':'الكتابة فوق السهم، والسهم يطول معها؛ <code>سهم.يمين{…}</code> للسهم ←→ لليمين'};
+let hintKey='', hintUntil=0, hintPin=false, hintTm=0;
+function hintAt(v,p){ let best=null; // the innermost tool block around the caret
+  for (const cmd in CTXHINT){ let i=p; while ((i=v.lastIndexOf(cmd, i-1))>=0){ const o=v.indexOf('{', i);
+      if (o>=0 && /^[.؀-ۿ]*$/.test(v.slice(i+cmd.length,o)) && !/[؀-ۿ]/.test(v[i-1]||'')){ let d=0, k=o; for (; k<v.length; k++){ if (v[k]==='{') d++; else if (v[k]==='}' && --d===0) break; }
+        if (o<p && p<=k){ if (!best || o>best.o) best={cmd,o}; break; } }
+      if (i===0) break; } }
+  return best; }
+function ctxHint(){ const row=$('ctxRow'), el=$('ctxHint'), ib=$('ctxI'); if (!row) return; if (row.previousElementSibling!==src) src.after(row); /* the add-in moves the writing box */
+  const h=hintAt(src.value, src.selectionStart); if (!h){ row.hidden=true; hintKey=''; return; }
+  const key=h.cmd+':'+h.o, now=Date.now(); if (key!==hintKey){ hintKey=key; hintUntil=now+10000; clearTimeout(hintTm); hintTm=setTimeout(ctxHint, 10050); }
+  const show=hintPin || now<hintUntil; row.hidden=false; el.hidden=!show; if (show && el.innerHTML!==CTXHINT[h.cmd]) el.innerHTML=CTXHINT[h.cmd];
+  ib.setAttribute('aria-pressed', String(hintPin)); }
+$('ctxI').addEventListener('mousedown', e=>e.preventDefault()); // keep the caret in the writing box
+$('ctxI').addEventListener('click', ()=>{ hintPin=!hintPin; if (!hintPin) hintUntil=0; ctxHint(); });
 const caretSoon=()=>requestAnimationFrame(()=>{ placeCaret(); ctxHint(); });
 // a click on a grey placeholder word (عدد، بسط، اكتب.هنا…) selects the whole word, ready to type over
 src.addEventListener('mouseup', ()=>setTimeout(()=>{
