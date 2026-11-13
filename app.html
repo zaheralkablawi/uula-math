@@ -217,6 +217,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .toolbar button.favedit[data-fav="1"]::after{content:'★';color:#e8a400}
 .toolbar .sym.fn{width:auto;padding:0 8px}
 #src.cc{caret-color:transparent}
+.ctxhint{margin:4px 2px 0;color:#9aa3b0;font-size:.8rem;line-height:1.6}.ctxhint code{font-family:inherit;color:#7d8794;background:#f1f3f6;border-radius:4px;padding:0 4px}
 .fcaret{position:fixed;width:2px;margin-left:-1px;background:var(--ink);pointer-events:none;z-index:50;animation:fcblink 1.06s steps(1) infinite}
 @keyframes fcblink{50%{opacity:0}}
 .srcmirror{position:fixed;left:-99999px;top:0;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word;word-wrap:break-word;box-sizing:content-box;border:0}
@@ -260,6 +261,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
         </div>
       </div>
       <textarea id="src" dir="rtl" spellcheck="false"></textarea>
+      <p class="ctxhint" id="ctxHint" hidden></p>
       <div class="sugg" id="sugg" hidden></div>
       <p class="err" id="err" role="status"></p>
       <div class="ribbon">
@@ -1728,20 +1730,28 @@ function placeCaret(){
   const p=src.selectionStart;
   if (document.activeElement!==src || p!==src.selectionEnd){ fcaret.hidden=true; src.classList.remove('cc'); return; }
   const v=src.value, ls=v.lastIndexOf('\n', p-1)+1; let le=v.indexOf('\n', p); if (le<0) le=v.length;
-  const nb=c=>c!==undefined && c!=='\n' && !STRONG.test(c); // a symbol, digit or space next to the caret: WebKit may draw its own caret at the far left
-  if (STRONG.test(v.slice(ls, le)) && !(p>ls && nb(v[p-1])) && !(p<le && nb(v[p]))){ fcaret.hidden=true; src.classList.remove('cc'); return; }
   const cs=getComputedStyle(src);
-  for (const k of ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','paddingTop','paddingRight','paddingBottom','paddingLeft','direction','textAlign','tabSize']) mirror.style[k]=cs[k];
+  for (const k of ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','paddingTop','paddingRight','paddingBottom','paddingLeft','direction','textAlign','tabSize','unicodeBidi','wordSpacing','fontFeatureSettings']) mirror.style[k]=cs[k];
   mirror.style.width=(src.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))+'px';
-  mirror.textContent=v.slice(0, p); const mk=document.createElement('span'); mk.textContent='​'; mirror.appendChild(mk); mirror.appendChild(document.createTextNode(v.slice(p)+'​'));
-  const r=src.getBoundingClientRect(), mr=mirror.getBoundingClientRect(), kr=mk.getBoundingClientRect();
+  // our own caret everywhere (the system caret jumps to the far left next to symbols, digits and line ends in WebKit)
+  let kr=null; const L=c=>c!==undefined && STRONG.test(c);
+  if (L(v[p-1]) && L(v[p])){ // inside a word: measure on the unbroken text so the letters keep their joined shapes
+    mirror.textContent=v+'\u200b'; const rg=document.createRange(); rg.setStart(mirror.firstChild,p); rg.collapse(true); const rs=rg.getClientRects(); if (rs.length) kr=rs[0]; }
+  if (!kr || !kr.height){ mirror.textContent=v.slice(0, p); var mk=document.createElement('span'); mk.textContent='\u200b'; mirror.appendChild(mk); mirror.appendChild(document.createTextNode(v.slice(p)+'\u200b')); kr=mk.getBoundingClientRect(); }
+  const r=src.getBoundingClientRect(), mr=mirror.getBoundingClientRect();
   const x=r.left+src.clientLeft+(kr.left-mr.left)-src.scrollLeft, y=r.top+src.clientTop+(kr.top-mr.top)-src.scrollTop, h=kr.height||parseFloat(cs.fontSize)*1.2;
   const top=r.top+src.clientTop, bot=top+src.clientHeight;
   if (y+h<top+2 || y>bot-2){ fcaret.hidden=true; return; } // scrolled out of view
   src.classList.add('cc'); fcaret.style.left=Math.round(x)+'px'; fcaret.style.top=Math.round(y)+'px'; fcaret.style.height=Math.round(h)+'px';
   fcaret.hidden=false; fcaret.style.animation='none'; void fcaret.offsetWidth; fcaret.style.animation='';
 }
-const caretSoon=()=>requestAnimationFrame(placeCaret);
+// light grey help under the writing box while the caret is inside some tools
+const CTXHINT={'فن':'للتظليل أضف سطرًا: <code>ظلل : س ∩ ص &amp; أحمر</code> — ∩ تقاطع، ∪ اتحاد، − فرق، \' متممة، والأقواس للتجميع'};
+function ctxHint(){ const el=$('ctxHint'); if (!el) return; if (el.previousElementSibling!==src) src.after(el); /* the add-in moves the writing box */ const v=src.value, p=src.selectionStart; let show='';
+  for (const cmd in CTXHINT){ let i=p; while ((i=v.lastIndexOf(cmd, i-1))>=0){ const o=v.indexOf('{', i); if (o<0 || !/^[.\u0600-\u06FF]*$/.test(v.slice(i+cmd.length,o))) { if (i===0) break; continue; }
+      let d=0, k=o; for (; k<v.length; k++){ if (v[k]==='{') d++; else if (v[k]==='}' && --d===0) break; } if (o<p && p<=k){ show=CTXHINT[cmd]; } break; } if (show) break; }
+  el.hidden=!show; if (show && el.innerHTML!==show) el.innerHTML=show; }
+const caretSoon=()=>requestAnimationFrame(()=>{ placeCaret(); ctxHint(); });
 // a click on a grey placeholder word (عدد، بسط، اكتب.هنا…) selects the whole word, ready to type over
 src.addEventListener('mouseup', ()=>setTimeout(()=>{
   const p=src.selectionStart; if (p!==src.selectionEnd) return;
