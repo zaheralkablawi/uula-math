@@ -520,8 +520,9 @@ class P {
     if (s.startsWith('فن{', this.i) || s.startsWith('فن.ثلاثي{', this.i)){ this.i+=s.startsWith('فن{', this.i)?2:8; const body=this.raw(); // Venn: one line per region  أ : ١، ٢ / أ ∩ ب : ٣ / ش : ٧
       const lab=t=>{ t=t.trim(); try { return new P(normalizeMap(t).s).seq(null); } catch(e){ return [{t:'txt',s:t,k:'word'}]; } };
       const sets=[], reg={}, raw={}, inter=[]; let U=null, uRaw=[];
+      const untail=w=>w.replace(/[\uE073\u{1EE4E}]/gu,'س').replace(/[\uE074\u{1EE54}]/gu,'ش').replace(/[\uE075\u{1EE51}]/gu,'ص').replace(/[\uE072\u{1EE47}]/gu,'ح').replace(/\u{1EE4F}/gu,'ع');
       const key=t=>HINTW.has(t) ? Symbol() : toLatinDigits(t).replace(/\s+/g,'').replace(/[−–]/g,'-');
-      for (const ln of body.split(/[;؛]/).map(x=>x.trim()).filter(Boolean)){ const ci=ln.search(/[:：]/); const nm=(ci<0?ln:ln.slice(0,ci)).trim(), el=ci<0?'':ln.slice(ci+1);
+      for (const ln of body.split(/[;؛]/).map(x=>x.trim()).filter(Boolean)){ const ci=ln.search(/[:：]/); const nm=untail((ci<0?ln:ln.slice(0,ci)).trim()), el=ci<0?'':ln.slice(ci+1);
         const els=el.split(/[،,]/).map(x=>x.trim()).filter(Boolean);
         if (/^(ش|الشاملة|خارج|U)$/.test(nm.replace(/\s+/g,''))){ U=nm.replace(/\s+/g,'')==='خارج'?'':nm.trim(); uRaw=els; continue; }
         const parts=nm.split(/[∩]/).map(x=>x.replace(/\s+/g,'')).filter(Boolean); if (!parts.length) continue;
@@ -538,7 +539,8 @@ class P {
         if (sets.length===2){ const rc={}; for (const kk of order){ const o=seen.get(kk); if (!HINTW.has(o.e)){ const r=[...o.m].sort().join(''); rc[r]=(rc[r]||0)+1; } }
           const a=rc['0']>0, b=rc['1']>0, ab=rc['01']>0; var lay = a && b && !ab ? 'apart' : (ab && !a && b ? 'sub0' : (ab && a && !b ? 'sub1' : '')); } }
       if (sets.length<2) this.err('اكتب مجموعتين على الأقل: أ : …');
-      return {t:'venn', sets:sets.map(lab), n:sets.length, reg, U:U===null?null:(U?lab(U):[]), out, lay:typeof lay==='string'?lay:''}; }
+      const TAIL={'س':'\uE073','ش':'\uE074','ص':'\uE075','ح':'\uE072','ع':'\u{1EE4F}'}, nameLab=q=>TAIL[q] ? [{t:'txt',s:TAIL[q],k:'word'}] : lab(q); // set names in the tailed letters of the booklet
+      return {t:'venn', sets:sets.map(nameLab), n:sets.length, reg, U:U===null?null:(U?nameLab(U.replace(/\s+/g,'')):[]), out, lay:typeof lay==='string'?lay:''}; }
     if (s.startsWith('شجرة.احتمالات{', this.i)){ this.i+=13; const body=this.raw(); let k=0; // probability tree: each branch  الحدث : الاحتمال (فرع * فرع); first branch on top
       const SEP=/[*×∗·;؛]/, lab=t=>{ t=t.trim(); if (!t) return null; try { return new P(normalizeMap(t).s).seq(null); } catch(e){ return [{t:'txt',s:t,k:'word'}]; } };
       const ws=()=>{ while (k<body.length && /\s/.test(body[k])) k++; };
