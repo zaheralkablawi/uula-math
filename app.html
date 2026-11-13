@@ -1215,32 +1215,51 @@ function compileFn(src){
 }
 const PLOTCOL=['#1f71de','#e0322b','#1f9d55','#b58cff','#f08a24'];
 function niceStep(span, gap){ for (const s of [.5,1,2,5,10,20,50,100,200,500,1000]) if (span/s<=12 && (!gap || s>=gap)) return s; return Math.ceil(span/12); } // gap: the smallest step that leaves room for the numbers
-function vennBox(n, sz){ // two or three overlapping circles, elements written in each region, optional universal rectangle
-  const t=lw(sz), es=sz*.85, gx=sz*.35, gy=sz*.15;
-  const block=(els,cols)=>{ const B=els.map(e=>rowBox(e, es)); if (!B.length) return null; const rows=[]; for (let i=0;i<B.length;i+=cols) rows.push(B.slice(i,i+cols));
-    const rw=rows.map(r=>r.reduce((s,b)=>s+b.w,0)+gx*(r.length-1)), ra=rows.map(r=>Math.max(...r.map(b=>b.a))), rd=rows.map(r=>Math.max(...r.map(b=>b.d)));
-    const w=Math.max(...rw), h=ra.reduce((s,a,i)=>s+a+rd[i],0)+gy*(rows.length-1);
-    return { w, h, draw(g,cx,cy){ let yy=cy-h/2; rows.forEach((r,i)=>{ let xx=cx+rw[i]/2; const by=yy+ra[i]; for (const b of r){ xx-=b.w; b.draw(g,xx,by); xx-=gx; } yy+=ra[i]+rd[i]+gy; }); } }; };
+function vennBox(n, sz){ // two or three overlapping circles; the elements are scattered at random (same input, same picture) inside their region
+  const t=lw(sz), es=sz*.85;
   const three=n.n===3, keys=three?['0','1','2','01','02','12','012']:['0','1','01'];
-  const BL={}; for (const k of keys) BL[k]=block(n.reg[k]||[], k.length===1?(three?2:2):(k.length===3?1:(three?1:2)));
-  const mw=Math.max(0,...keys.map(k=>BL[k]?BL[k].w:0)), mh=Math.max(0,...keys.map(k=>BL[k]?BL[k].h:0));
-  const W_=k=>BL[k]?BL[k].w:0, R=three ? Math.max(sz*2.3, mw*1.75, mh*1.9) : Math.max(sz*2.1, W_('0')*1.3, W_('1')*1.3, W_('01')/.7+sz*.2, mh*1.2+sz*.4);
+  const EB={}; let cnt=0, maxE=sz*.5; for (const k of keys){ EB[k]=(n.reg[k]||[]).map(e=>rowBox(e, es)); cnt=Math.max(cnt,EB[k].length); for (const b of EB[k]) maxE=Math.max(maxE,b.w,b.a+b.d); }
+  const outB=(n.out||[]).map(e=>rowBox(e, es)); for (const b of outB) maxE=Math.max(maxE,b.w,b.a+b.d);
+  const room=k=>{ const c=EB[k].length; return c ? Math.sqrt(c)*maxE*1.9 : 0; }; // a region needs about this much width
+  const R = three ? Math.max(sz*2.3, ...keys.map(k=>room(k)*(k.length===1?1.15:1.6))) : Math.max(sz*2.1, room('0')*1.05, room('1')*1.05, room('01')/.75);
   const names=n.sets.map(l=>rowBox(l, sz)), d=three?R:R*1.1, r0=d/Math.sqrt(3);
   const dir=three?[[.866,-.5],[-.866,-.5],[0,1]]:[[1,0],[-1,0]], C=dir.map(v=>three?[v[0]*r0,v[1]*r0]:[v[0]*d/2,0]);
   let L=Infinity, Rt=-Infinity, T=Infinity, B=-Infinity; for (const c of C){ L=Math.min(L,c[0]-R); Rt=Math.max(Rt,c[0]+R); T=Math.min(T,c[1]-R); B=Math.max(B,c[1]+R); }
   const lpos=C.map((c,i)=>{ const nb=names[i]; if (three && i===2) return [c[0]-nb.w/2, c[1]+R+sz*.15+nb.a]; const sx=dir[i][0]>=0?1:-1; return [c[0]+sx*R*.72+(sx>0?sz*.05:-nb.w-sz*.05), c[1]-R*.72-sz*.08]; });
   lpos.forEach((p,i)=>{ const nb=names[i]; L=Math.min(L,p[0]); Rt=Math.max(Rt,p[0]+nb.w); T=Math.min(T,p[1]-nb.a); B=Math.max(B,p[1]+nb.d); });
-  const UO=n.U!==null ? block(n.out||[], 4) : null, Ub=n.U&&n.U.length?rowBox(n.U, sz):null, m=sz*.45;
-  if (n.U!==null){ L-=m; Rt+=m; T-=m+(Ub?Ub.a+Ub.d:0)*.0; B+=m+(UO?UO.h+sz*.25:0); if (Ub){ T-=Ub.a+Ub.d+sz*.05; } }
+  const Ub=n.U&&n.U.length?rowBox(n.U, sz):null, m=n.U===null?0:(outB.length ? Math.max(sz*.5, maxE*1.15+sz*.25) : sz*.45);
+  if (n.U!==null){ L-=m; Rt+=m; T-=m; B+=m; if (Ub) T-=Ub.a+Ub.d+sz*.05; }
+  // obstacles: the set names and the ش label (boxes, in circle coordinates)
+  const obst=lpos.map((p,i)=>[p[0]-sz*.1, p[1]-names[i].a-sz*.1, p[0]+names[i].w+sz*.1, p[1]+names[i].d+sz*.1]);
+  if (Ub) obst.push([Rt-sz*.2-Ub.w-sz*.1, T, Rt, T+Ub.a+Ub.d+sz*.4]);
+  // seeded random: the same diagram always comes out the same
+  let seed=2166136261; for (const k of keys) for (const e of (n.reg[k]||[])) for (const ch of JSON.stringify(e)) seed=Math.imul(seed^ch.charCodeAt(0),16777619);
+  const rnd=()=>{ seed=(seed+0x6D2B79F5)|0; let x=seed; x=Math.imul(x^(x>>>15),x|1); x^=x+Math.imul(x^(x>>>7),x|61); return ((x^(x>>>14))>>>0)/4294967296; };
+  const placed=[];
+  const fits=(cx,cy,b,inSet,exSet,outside)=>{ const hw=b.w/2+sz*.12, hh=(b.a+b.d)/2+sz*.1, rr=Math.hypot(hw,hh);
+    for (let i=0;i<C.length;i++){ const dd=Math.hypot(cx-C[i][0], cy-C[i][1]); if (inSet.includes(i)){ if (dd+rr>R-t) return false; } else if (dd-rr<R+t) return false; }
+    if (outside){ if (cx-hw<L+t+sz*.1 || cx+hw>Rt-t-sz*.1 || cy-hh<T+t+sz*.1 || cy+hh>B-t-sz*.1) return false; }
+    for (const o of obst) if (cx+hw>o[0] && cx-hw<o[2] && cy+hh>o[1] && cy-hh<o[3]) return false;
+    for (const p of placed) if (Math.abs(cx-p.x)<hw+p.hw && Math.abs(cy-p.y)<hh+p.hh) return false;
+    return true; };
+  const spot=(b,inSet,outside)=>{ let best=null, bd=-1; const x0=outside?L:Math.min(...inSet.map(i=>C[i][0]))-R, x1=outside?Rt:Math.max(...inSet.map(i=>C[i][0]))+R, y0=outside?T:Math.min(...inSet.map(i=>C[i][1]))-R, y1=outside?B:Math.max(...inSet.map(i=>C[i][1]))+R;
+    for (let tries=0, ok=0; tries<1500 && ok<24; tries++){ const cx=x0+rnd()*(x1-x0), cy=y0+rnd()*(y1-y0); if (!fits(cx,cy,b,inSet,[],outside)) continue; ok++;
+      let md=Infinity; for (const p of placed) md=Math.min(md, Math.hypot(cx-p.x, cy-p.y)); for (const i of inSet) md=Math.min(md, (R-Math.hypot(cx-C[i][0],cy-C[i][1]))*1.6);
+      if (md>bd){ bd=md; best=[cx,cy]; } }
+    return best; };
+  const at=three ? {'0':[.866*1.08*R,-.5*1.08*R],'1':[-.866*1.08*R,-.5*1.08*R],'2':[0,1.08*R],'01':[0,-.8*R],'02':[.866*.8*R,.5*.8*R],'12':[-.866*.8*R,.5*.8*R],'012':[0,0]} : {'0':[R,0],'1':[-R,0],'01':[0,0]};
+  const pos=[]; // [box, x, y] with x,y the centre
+  for (const k of keys){ const inSet=k.split('').map(Number); EB[k].forEach((b,j)=>{ let p=spot(b,inSet,false); if (!p){ const c=at[k]; p=[c[0]+(j%3-1)*(maxE+sz*.2), c[1]+(Math.floor(j/3)-.5)*(maxE*.9)]; }
+    placed.push({x:p[0], y:p[1], hw:b.w/2+sz*.12, hh:(b.a+b.d)/2+sz*.1}); pos.push([b,p[0],p[1]]); }); }
+  outB.forEach((b,j)=>{ let p=spot(b,[],true); if (!p) p=[L+m/2+j*(maxE+sz*.2), B-m/2]; placed.push({x:p[0], y:p[1], hw:b.w/2+sz*.12, hh:(b.a+b.d)/2+sz*.1}); pos.push([b,p[0],p[1]]); });
   const W=Rt-L+t*2, H=B-T+t*2, ax=AXIS(sz);
   return { w:W, a:ax+H/2, d:H/2-ax, draw(g,x,y){
     const ox=x+t-L, oy=y-ax-H/2+t-T;
     if (n.U!==null){ stroke(g,t,()=>{ g.moveTo(x+t,y-ax-H/2+t); g.lineTo(x+W-t,y-ax-H/2+t); g.lineTo(x+W-t,y-ax+H/2-t); g.lineTo(x+t,y-ax+H/2-t); g.closePath(); });
-      if (Ub) Ub.draw(g, x+W-t-sz*.2-Ub.w, y-ax-H/2+t+sz*.1+Ub.a); if (UO) UO.draw(g, x+t+sz*.3+UO.w/2, y-ax+H/2-t-sz*.2-UO.h/2); }
+      if (Ub) Ub.draw(g, x+W-t-sz*.2-Ub.w, y-ax-H/2+t+sz*.1+Ub.a); }
     C.forEach(c=>{ g.beginPath(); g.ellipse(ox+c[0], oy+c[1], R, R, 0, 0, Math.PI*2); g.save(); g.lineWidth=t; g.strokeStyle=g.fillStyle; g.stroke(); g.restore(); });
     names.forEach((nb,i)=>nb.draw(g, ox+lpos[i][0], oy+lpos[i][1]));
-    const at=three ? {'0':[.866*1.08*R,-.5*1.08*R],'1':[-.866*1.08*R,-.5*1.08*R],'2':[0,1.08*R],'01':[0,-.8*R],'02':[.866*.8*R,.5*.8*R],'12':[-.866*.8*R,.5*.8*R],'012':[0,0]} : {'0':[R,0],'1':[-R,0],'01':[0,0]};
-    for (const k of keys) if (BL[k]) BL[k].draw(g, ox+at[k][0], oy+at[k][1]); } };
+    for (const [b,cx,cy] of pos) b.draw(g, ox+cx-b.w/2, oy+cy+(b.a-b.d)/2); } };
 }
 function ptreeBox(n, sz){ // probability tree, drawn right to left: a dot, then branches with the probability on each
   const t=lw(sz), pad=sz*.2, cg=sz*.3; let NA=sz*.7, ND=sz*.25, PH=sz*.6, PW=sz*.6; const colW=[], R=n.root;
