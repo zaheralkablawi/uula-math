@@ -66,6 +66,7 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .toolbar{display:flex;flex-wrap:wrap;gap:4px}
 .tg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:4px 6px}
 .symhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.symtog{display:flex;align-items:center;gap:6px;width:100%;margin:6px 0 2px;padding:3px 2px;border:0;border-top:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:.78rem;cursor:pointer;direction:rtl}.symtog svg{transition:transform .15s}.symtog[aria-expanded=false] svg{transform:rotate(90deg)}.symtog:hover{color:var(--accent)}
 .mini{font:inherit;font-size:.75rem;border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:6px;padding:1px 8px;cursor:pointer}
 .iconbar{display:inline-flex;gap:4px;align-items:center}
 .ib{display:inline-grid;place-items:center;width:30px;height:28px;border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:7px;cursor:pointer;padding:0}
@@ -323,6 +324,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       </div>
       <div id="toolsHidBox" hidden><div class="catl">أدوات مخفية</div><div class="toolbar" id="toolsHid"></div></div>
       <div class="symhead" id="symHead"><button type="button" class="mini" id="editSyms" aria-pressed="false">تخصيص</button><button type="button" class="mini" id="resetSyms" hidden>الافتراضي</button><span class="hint" id="editHint" hidden>اضغط على الرمز لإضافته أو إزالته، واسحبه لتغيير ترتيبه (السحب يعمل دائمًا).</span></div>
+      <button type="button" class="symtog" id="symTog" aria-expanded="true" aria-controls="allsyms"><svg viewBox="0 0 12 8" width="11" height="8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>الرموز</span></button>
       <div class="toolbar" id="allsyms"></div>
       <details id="moreBox" hidden open><summary class="label">المزيد</summary><div id="mazall" class="morecats"></div></details>
           </div>
@@ -2321,10 +2323,13 @@ cpop.addEventListener('click',e=>e.stopPropagation());
 document.addEventListener('click',()=>{ if(!cpop.hidden){ colorSel=null; closeColors(); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !cpop.hidden){ colorSel=null; closeColors(); } });
 custom.addEventListener('input',()=>{ if(!customSel) setColor(custom.value); });
+// the symbols list folds away behind its arrow
+{ const tg=$('symTog'), box=$('allsyms'); const set=o=>{ tg.setAttribute('aria-expanded', String(o)); box.hidden=!o; save('aeq-symsOpen', o); };
+  set(load('aeq-symsOpen', true)!==false); tg.addEventListener('click', ()=>set(box.hidden)); }
 // background colour of the image: none (transparent) or a colour from the same grid
 { const bb=$('bgBtn'), bp=$('bgPop'), bc=$('bgCustom'), sw=$('bgSw');
   st.bg=load('aeq-bg', null);
-  const show=()=>{ if (st.bg){ sw.style.fill=st.bg; sw.style.stroke='rgb(0 0 0 / .35)'; } else { sw.style.fill='none'; sw.style.stroke=''; } };
+  const show=()=>{ if (st.bg){ sw.style.fill=st.bg; sw.style.stroke='rgb(0 0 0 / .35)'; } else { sw.style.fill='none'; sw.style.stroke=''; } const sh=$('sheet'); sh.style.backgroundColor=st.bg||''; sh.style.backgroundImage=st.bg?'none':''; }; // the preview box takes the background colour too
   const setBg=c=>{ st.bg=c; save('aeq-bg', c); show(); update(); };
   const close=()=>{ bp.hidden=true; bb.setAttribute('aria-expanded','false'); };
   const sw2=c=>{ const b=document.createElement('button'); b.type='button'; b.className='c'+(String(st.bg).toLowerCase()===c.toLowerCase()?' on':''); b.style.background=c; b.title=c; b.addEventListener('click',()=>{ close(); setBg(c); }); return b; };
