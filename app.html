@@ -1706,7 +1706,8 @@ function placeCaret(){
   const p=src.selectionStart;
   if (document.activeElement!==src || p!==src.selectionEnd){ fcaret.hidden=true; src.classList.remove('cc'); return; }
   const v=src.value, ls=v.lastIndexOf('\n', p-1)+1; let le=v.indexOf('\n', p); if (le<0) le=v.length;
-  if (STRONG.test(v.slice(ls, le))){ fcaret.hidden=true; src.classList.remove('cc'); return; }
+  const nb=c=>c!==undefined && c!=='\n' && !STRONG.test(c); // a symbol, digit or space next to the caret: WebKit may draw its own caret at the far left
+  if (STRONG.test(v.slice(ls, le)) && !(p>ls && nb(v[p-1])) && !(p<le && nb(v[p]))){ fcaret.hidden=true; src.classList.remove('cc'); return; }
   const cs=getComputedStyle(src);
   for (const k of ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','paddingTop','paddingRight','paddingBottom','paddingLeft','direction','textAlign','tabSize']) mirror.style[k]=cs[k];
   mirror.style.width=(src.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))+'px';
