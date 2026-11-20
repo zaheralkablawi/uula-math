@@ -235,8 +235,6 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
     <div class="appmenu">
       <button type="button" class="ib" id="menuBtn" aria-haspopup="true" aria-expanded="false" data-tip="القائمة" aria-label="القائمة"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h12M4 10h12M4 14h12"/></svg></button>
       <div class="menu" id="appMenu" role="menu" hidden>
-        <button type="button" role="menuitem" data-act="new">جديد<span class="mk">مسح مربع الكتابة</span></button>
-        <div class="msep"></div>
         <button type="button" role="menuitem" data-act="help">تعليمات الكتابة</button>
         <button type="button" role="menuitem" data-act="keys">اختصارات لوحة المفاتيح</button>
         <button type="button" role="menuitem" data-act="news">ما الجديد</button>
@@ -368,6 +366,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط سهمي</td><td><code>مخطط.سهمي{</code> ثم <code>النقاط : ١، ٢، ٣، ٥</code> ثم <code>العلاقة : (١، ٣)، (٣، ٥)، (٥، ٣)، (٣، ٣)</code> ثم <code>}</code>. كل زوج سهم من الأول إلى الثاني، والزوج (أ، أ) حلقة، والزوجان المتعاكسان قوسان متقابلان</td></tr>
           <tr><td>مخطط سهمي بين مجموعتين</td><td><code>مخطط.سهمي{</code> ثم <code>س : ٣، ٤، ٥</code> ثم <code>ص : ٠، ١، ٢، ٣</code> ثم <code>العلاقة : (٣، ٠)، (٤، ١)</code> ثم <code>}</code>. الأولى يمينًا والثانية يسارًا، والسهم من الأولى إلى الثانية. للمستطيلات بدل البيضاوي: <code>مخطط.سهمي.مستطيل{…}</code></td></tr>
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
+          <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
           <tr><td>رسم المتباينات</td><td>في <code>تمثيل.بياني{…}</code> اكتب المتباينة مكان الدالة: <code>ص &gt; س + ٣</code> ، <code>ص ≤ س − ١</code> ، <code>س ≥ ٢</code>. تُظلَّل منطقة الحل بشفافية ٤٠٪، والخط متقطع مع &lt; و&gt; ومتصل مع ≤ و≥. اللون: <code>ص &gt; س &amp; أحمر</code></td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
           <tr><td>زاوية</td><td><code>زاوية{أ ب جـ}</code></td></tr>
@@ -1971,8 +1970,32 @@ function undo(){ if (hist.i>0) applyHist(hist.i-1); }
 function redo(){ if (hist.i<hist.stack.length-1) applyHist(hist.i+1); }
 $('undoBtn').addEventListener('click', () => { undo(); src.focus(); });
 // toggle the selection between Mazeri math letters (رمز{…}) and ordinary text (نص{…})
+// typed Arabic words that become symbols: باي → π …
+const WORDSYM=[['لا نهاية','∞'],['لانهاية','∞'],['لا ينتمي','∉'],['باي','π'],['تقاطع','∩'],['اتحاد','∪'],['إتحاد','∪'],['زائد','+'],['زايد','+'],['ناقص','−'],['ضرب','×'],['تقسيم','÷'],['أكبر','>'],['اكبر','>'],['أصغر','<'],['اصغر','<'],['ينتمي','∈'],['درجة','°'],['دلتا','∆'],['تربيع','^٢'],['تكعيب','^٣']];
+const SYMWORD={}; for (const [w,y] of WORDSYM) if (!SYMWORD[y]) SYMWORD[y]=w;
+SYMWORD['∞']='لا نهاية'; SYMWORD['∪']='اتحاد'; SYMWORD['+']='زائد'; SYMWORD['>']='أكبر'; SYMWORD['<']='أصغر';
+const inTextCmd=(v,i)=>{ let d=0; for (let k=i-1;k>=0;k--){ const c=v[k]; if(c==='}') d++; else if(c==='{'){ if(d) d--; else if(/(نص|رمز)$/.test(v.slice(Math.max(0,k-3),k))) return true; } } return false; };
+src.addEventListener('input', e => {
+  if (e.inputType!=='insertText' || !e.data || !/^[\s،,:;)}\]]$/.test(e.data)) return;
+  const v=src.value, end=src.selectionStart-1; if (src.selectionEnd!==src.selectionStart) return;
+  for (const [w,y] of WORDSYM){
+    const a=end-w.length; if (a<0 || v.slice(a,end)!==w) continue;
+    if (a>0 && /[\u0600-\u06FF.\w]/.test(v[a-1])) continue;
+    if (inTextCmd(v,a)) return;
+    let a2=a; if (y[0]==='^'||y==='°') while (a2>0 && v[a2-1]===' ') a2--;
+    snap(true); src.setRangeText(y, a2, end, 'preserve'); const c=a2+y.length+1; src.setSelectionRange(c,c); snap(true); schedule(); return;
+  }
+});
 $('mathBtn').addEventListener('click', () => {
   let a=src.selectionStart, b=src.selectionEnd, v=src.value;
+  // a word-symbol (π ∩ ∞ ^٢ …) at/before the caret or selected → its word, and back
+  { const one=v.slice(a,b); let y=null, p=a, q=b;
+    if (a===b){ for (const k of Object.keys(SYMWORD)) if (v.slice(a-k.length,a)===k){ y=k; p=a-k.length; q=a; break; } }
+    else if (SYMWORD[one.trim()]) y=one.trim();
+    if (y){ const out='نص{'+SYMWORD[y]+'}'; src.focus(); src.setRangeText(out,p,q,'end'); snap(true); schedule(); flash('رجعت كتابة.'); return; }
+    let m=/^نص\{(.+)\}$/.exec(one); if (!m && a===b){ const k=v.lastIndexOf('نص{',a); if(k>=0){ const e2=v.indexOf('}',k); if(e2>=a-1){ m=/^نص\{(.+)\}$/.exec(v.slice(k,e2+1)); if(m){ p=k; q=e2+1; } } } }
+    const hit=m && WORDSYM.find(([w])=>w===m[1].trim());
+    if (hit){ src.focus(); src.setRangeText(hit[1],p,q,'end'); snap(true); schedule(); flash('صارت رمزًا.'); return; } }
   if (a===b){ src.focus(); flash('حدّد الكلام أولًا.', false); return; }
   // if the selection sits inside (or is) a رمز{…} / نص{…} wrapper, use the whole wrapper
   const grow = (cmd) => { const k=v.lastIndexOf(cmd+'{', a); if (k<0) return false; let d=0, e=k+cmd.length; for (; e<v.length; e++){ if(v[e]==='{') d++; else if(v[e]==='}'){ d--; if(!d) break; } } if (e>=b-1 && k<=a){ a=k; b=e+1; return true; } return false; };
@@ -2565,7 +2588,8 @@ st.darkBg=0; $('darkBg').setAttribute('aria-pressed','false'); // opens in the n
 st.strokeMul=1;
 { const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight;
 // ---- what's new: shown once after each update (change NEWS.id and the list with every release) ----
-const NEWS = { id:'2026-11-20c', items:[
+const NEWS = { id:'2026-11-20d', items:[
+  'اكتب باي أو تقاطع أو أكبر… ثم مسافة فتصير رمزًا، وزر «أب ↔» يرجعها كلمة',
   'رسم المتباينات: اكتب ص > س + ٣ مكان الدالة في التمثيل البياني',
   'مخطط بياني لعلاقة: سطر العلاقة : (١، ٠)، (٢، ٣) داخل شبكة{…}',
   'مخطط سهمي للعلاقات: مخطط.سهمي{النقاط … العلاقة …}، وبين مجموعتين: س : … ص : …',
@@ -2622,7 +2646,7 @@ let showNews = ()=>{};
     for (const t of NEWS.items){ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }
     modal('ما الجديد في هذا التحديث', ul); save('aeq-news', NEWS.id); };
   { const seen=load('aeq-news', null), known=load('aeq-draft', null)!==null || load('aeq-tools', null)!==null;
-    if (seen!==NEWS.id){ if (known) setTimeout(showNews, 600); else save('aeq-news', NEWS.id); } } // brand-new users don't need it
+    if (seen!==NEWS.id) save('aeq-news', NEWS.id); /* no auto popup */ } // brand-new users don't need it
   $('modal').addEventListener('click',e=>{ if (e.target.id==='modal') $('modal').hidden=true; });
   const NAME={}; for (const [,ins,label] of CMDLIST) if (!NAME[ins]) NAME[ins]=label;
   menu.addEventListener('click', e=>{ const act=e.target.closest('[data-act]')?.dataset.act; if (!act) return; close();
