@@ -2557,7 +2557,12 @@ async function restoreFrom(file){
 }
 // ---- read an equation from a picture with Claude ----
 let sampleFn=null, ocrBusy=false;
-const OCR_PROMPT = `The image shows math from an Arabic school booklet (written right-to-left): equations, and possibly ordinary Arabic words or sentences mixed with them. Transcribe ALL of it into the syntax of an Arabic equation editor and reply with ONLY that text, no explanation, no code fences.
+const OCR_PROMPT = `The image shows math from an Arabic school booklet (written right-to-left): equations, and possibly ordinary Arabic words or sentences mixed with them. Transcribe ALL of it into the syntax of an Arabic equation editor. Reply in the format described next, with no explanation and no code fences.
+HOW TO ANSWER (two parts):
+1) First a scratch part: for every line of the image write one line starting with L2R: that lists what you SEE from LEFT to RIGHT, items separated by " | " (a root or fraction is one item: write its inside also left to right, e.g. √(٦² − ١٠²) , (١٣)/(٢)). Numbers keep their digits in normal order (١٠ stays ١٠); Arabic words are written normally.
+2) Then a line with only ===
+3) Then the final answer: each line = its L2R items in REVERSE order, and the inside of every root, fraction and bracket reversed too, written in the editor syntax below. Only the part after === is used.
+Example — L2R: ٨ سم | = | √(٦٤) | = | √(٦² − ١٠²) | = | ب د   →   final: ب د = جذر{١٠^٢ − ٦^٢} = جذر{٦٤} = ٨ نص{سم}
 READING DIRECTION — the most common mistake, check it before answering:
 - Every line (and the inside of every fraction, bracket and root) is read from RIGHT to LEFT. The first thing you write is the RIGHTMOST item of that line in the picture, the last thing is the LEFTMOST.
 - In booklets a line usually starts (on the right) with the words or the quantity being found and ends (on the left) with the numeric result. Example: a line that looks, from left to right, like  ٧ = ١٤/٢ = (٧ − −٧)/(٥ − ٣) = ميل هـ  must be written  ميل هـ = كسر{٧ − −٧}{٥ − ٣} = كسر{١٤}{٢} = ٧
@@ -2604,6 +2609,7 @@ async function readEquationImage(file){
   try {
     const { text } = await sampleFn(OCR_PROMPT, { images: file });
     let t = text.replace(/^```[a-z]*\n?|```$/g,'').trim();
+    { const k=t.lastIndexOf('\n==='); if (k>=0) t=t.slice(t.indexOf('\n',k+1)+1).trim(); else if (t.startsWith('===')) t=t.slice(3).trim(); t=t.split('\n').filter(l=>!/^\s*L2R:/.test(l)).join('\n').trim(); } // keep the final part only
     for (let k=0;k<4;k++) t=t.replace(/([٠-٩]) (?=[٠-٩])/g,'$1').replace(/([٠-٩]) [,٫] ?(?=[٠-٩])/g,'$1,'); // ١ ٣ → ١٣ ، ٦ , ٥ → ٦,٥
     if (!t || t==='NONE'){ flash('لم أجد معادلة في الصورة.', false); }
     else { src.focus(); const s0=src.selectionStart, e0=src.selectionEnd; src.setRangeText(t, s0, e0, 'end'); snap(true); update(); flash('أُضيف النص من الصورة. راجعه.'); }
