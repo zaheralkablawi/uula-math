@@ -2919,6 +2919,8 @@ let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 const OMML = (() => {
   const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
   const isD = c => /[0-9٠-٩]/.test(c);
@@ -2942,6 +2944,7 @@ const OMML = (() => {
           const c = t[i];
           if (/\s/.test(c)){ i++; continue; }
           if (isD(c)){ let k = i; while (k < t.length && (isD(t[k]) || (/[.,٫]/.test(t[k]) && isD(t[k+1])))) k++; out.push({s:t.slice(i,k), pos, num:true}); i = k; continue; }
+          if (c === 'ـ'){ out.push({s:'−', pos}); i++; continue; } // a tatweel standing alone is used as a minus
           if (isAr(c) && isAr(t[i+1])){ let k = i; while (k < t.length && isAr(t[k])) k++; const w = t.slice(i,k), bare = w.replace(/[\u064B-\u065F\u0670\u0640]/g,'');
             if (MW.has(bare)){ out.push({s:w, pos}); i = k; continue; } // نق ، جا … stay math words
             if (bare.length >= 3 || n.getElementsByTagNameNS(M,'nor').length){ out.push({s:'نص{'+w+'}', pos, word:true}); i = k; continue; } // a word stays as written
@@ -2999,16 +3002,22 @@ const OMML = (() => {
   }
   // plain text runs (already in Arabic order) next to the equation: raised runs become powers
   function textLine(parts){ // parts: [{t, pos}]
-    const res = [];
+    const res = []; let lastPos = '';
     for (const {t,pos} of parts){
       for (let i = 0; i < t.length; ){
         const c = t[i];
         if (/\s/.test(c)){ i++; continue; }
         let tok;
         if (isD(c)){ let k=i; while (k<t.length && (isD(t[k]) || (/[.,٫]/.test(t[k]) && isD(t[k+1])))) k++; tok=t.slice(i,k); i=k; }
+        else if (c === 'ـ'){ tok = '−'; i++; }
         else if (isAr(c) && isAr(t[i+1])){ let k=i; while (k<t.length && isAr(t[k])) k++; tok='نص{'+t.slice(i,k)+'}'; i=k; }
         else { tok = c==='-'?'−':c; i++; }
-        if (pos && res.length){ res[res.length-1] += (pos==='sup'?'^':'_') + tok; } else res.push(tok);
+        if (pos && res.length){ const last = res[res.length-1], mk = pos==='sup'?'^':'_';
+          const m = last.match(new RegExp('\\'+mk+'\\{([^{}]*)\\}$'));
+          if (m && lastPos === pos) res[res.length-1] = last.slice(0, last.length - m[0].length) + mk + '{' + m[1] + tok + '}'; // same raised group
+          else res[res.length-1] = last + mk + '{' + tok + '}'; }
+        else res.push(tok);
+        lastPos = pos;
       }
     }
     // neighbouring words become one text: نص{أوجد ناتج}
