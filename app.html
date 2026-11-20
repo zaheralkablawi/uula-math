@@ -366,6 +366,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط سهمي</td><td><code>مخطط.سهمي{</code> ثم <code>النقاط : ١، ٢، ٣، ٥</code> ثم <code>العلاقة : (١، ٣)، (٣، ٥)، (٥، ٣)، (٣، ٣)</code> ثم <code>}</code>. كل زوج سهم من الأول إلى الثاني، والزوج (أ، أ) حلقة، والزوجان المتعاكسان قوسان متقابلان</td></tr>
           <tr><td>مخطط سهمي بين مجموعتين</td><td><code>مخطط.سهمي{</code> ثم <code>س : ٣، ٤، ٥</code> ثم <code>ص : ٠، ١، ٢، ٣</code> ثم <code>العلاقة : (٣، ٠)، (٤، ١)</code> ثم <code>}</code>. الأولى يمينًا والثانية يسارًا، والسهم من الأولى إلى الثانية. للمستطيلات بدل البيضاوي: <code>مخطط.سهمي.مستطيل{…}</code></td></tr>
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
+          <tr><td>حرف بذيل</td><td>اكتب الحرف مرتين: <code>سس</code> ، <code>شش</code> ، <code>صص</code> ، <code>حح</code></td></tr>
           <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
           <tr><td>رسم المتباينات</td><td>في <code>تمثيل.بياني{…}</code> اكتب المتباينة مكان الدالة: <code>ص &gt; س + ٣</code> ، <code>ص ≤ س − ١</code> ، <code>س ≥ ٢</code>. تُظلَّل منطقة الحل بشفافية ٤٠٪، والخط متقطع مع &lt; و&gt; ومتصل مع ≤ و≥. اللون: <code>ص &gt; س &amp; أحمر</code></td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
@@ -755,7 +756,7 @@ const COLORN=Object.fromEntries(Object.entries(COLORNAME).map(([k,v])=>[colKey(k
 const colorOf=t=>COLORNAME[t.trim()]||COLORN[colKey(t)]||null;
 // digits drawn with the Mazeri math digits (and its comma)
 const mathDigits = t => t.replace(/[٠-٩]/g, d=>String.fromCharCode(0xE030+'٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[,،٫]/g, String.fromCharCode(0xE02C));
-const MATHWORD={'جا':0x65,'جتا':0x66,'ظا':0x67,'ظتا':0x68,'قا':0x69,'قتا':0x6A,'نق':0x6B,'المجاور':0xF3,'المقابل':0xF4,'الوتر':0xF9};
+const MATHWORD={'سس':0x73,'شش':0x74,'صص':0x75,'حح':0x72,'جا':0x65,'جتا':0x66,'ظا':0x67,'ظتا':0x68,'قا':0x69,'قتا':0x6A,'نق':0x6B,'المجاور':0xF3,'المقابل':0xF4,'الوتر':0xF9};
 const MATHLETTER={'ا':0x41,'أ':0x41,'إ':0x41,'آ':0x41,'ب':0x42,'ت':0x43,'ث':0x44,'ج':0x46,'\u0001':0x45,'ح':0x48,'خ':0x47,'د':0x49,'ذ':0x4E,'ر':0x4B,'ز':0x4D,'س':0x4F,'ش':0x50,'ص':0x51,'ض':0x52,'ط':0x53,'ظ':0x54,'ع':0x55,'غ':0x56,'ف':0x57,'ق':0x58,'ك':0x59,'ل':0x5A,'م':0x5C,'ن':0x5D,'ه':0x60,'و':0x61,'ي':0x62,'ى':0x62,'ء':0x4A};
 // normalise one line and remember, for every character, where it came from in what was typed
 function normalizeMap(line){
