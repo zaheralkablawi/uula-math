@@ -2918,10 +2918,12 @@ let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 const OMML = (() => {
   const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
   const isD = c => /[0-9٠-٩]/.test(c);
   const isAr = c => /[\u0621-\u065F\u0670-\u06D3\u0640]/.test(c||''); // letters, harakat, tatweel
+  const MW = new Set(['نق','جا','جتا','ظا','ظتا','قا','قتا','لو','لط','هـ','نها','مج']);
   const MIR = {'<':'>','>':'<','≤':'≥','≥':'≤','(':')',')':'(','[':']',']':'[','{':'}','}':'{'};
   const kids = (el, name) => [...el.childNodes].filter(n => n.nodeType === 1 && n.localName === name);
   const kid = (el, name) => kids(el, name)[0];
@@ -2940,7 +2942,11 @@ const OMML = (() => {
           const c = t[i];
           if (/\s/.test(c)){ i++; continue; }
           if (isD(c)){ let k = i; while (k < t.length && (isD(t[k]) || (/[.,٫]/.test(t[k]) && isD(t[k+1])))) k++; out.push({s:t.slice(i,k), pos, num:true}); i = k; continue; }
-          if (isAr(c) && isAr(t[i+1])){ let k = i; while (k < t.length && isAr(t[k])) k++; out.push({s:'نص{'+t.slice(i,k)+'}', pos, word:true}); i = k; continue; } // a word stays as written
+          if (isAr(c) && isAr(t[i+1])){ let k = i; while (k < t.length && isAr(t[k])) k++; const w = t.slice(i,k), bare = w.replace(/[\u064B-\u065F\u0670\u0640]/g,'');
+            if (MW.has(bare)){ out.push({s:w, pos}); i = k; continue; } // نق ، جا … stay math words
+            if (bare.length >= 3 || n.getElementsByTagNameNS(M,'nor').length){ out.push({s:'نص{'+w+'}', pos, word:true}); i = k; continue; } // a word stays as written
+          }
+          if (isAr(c)){ let k = i+1; while (k < t.length && /[\u064B-\u065F\u0670\u0640]/.test(t[k])) k++; out.push({s:t.slice(i,k), pos, letter:true}); i = k; continue; } // one letter (with its tatweel/harakat)
           out.push({s: c === '-' ? '−' : c, pos}); i++;
         }
       }
@@ -2953,7 +2959,18 @@ const OMML = (() => {
       else if (ln === 'sSup') out.push({s:wrap(conv(kid(n,'e')))+'^{'+conv(kid(n,'sup'))+'}'});
       else if (ln === 'sSub') out.push({s:wrap(conv(kid(n,'e')))+'_{'+conv(kid(n,'sub'))+'}'});
       else if (ln === 'sSubSup') out.push({s:wrap(conv(kid(n,'e')))+'_{'+conv(kid(n,'sub'))+'}^{'+conv(kid(n,'sup'))+'}'});
-      else if (ln === 'bar' || ln === 'acc' || ln === 'groupChr' || ln === 'box' || ln === 'borderBox' || ln === 'e' || ln === 'oMath') out.push({s:conv(kid(n,'e')||n)});
+      else if (ln === 'acc' || ln === 'groupChr' || ln === 'bar'){ // marks over letters: line, segment, ray, arc, angle
+        const pr = kid(n, ln + 'Pr'), g = nm => { const e = pr && kid(pr,nm); return e ? (e.getAttributeNS(M,'val') || e.getAttribute('m:val')) : null; };
+        const ch = ln === 'bar' ? (g('pos') === 'top' ? '‾' : '_') : (g('chr') || (ln === 'acc' ? '\u0302' : '\u23DF'));
+        const pos = ln === 'groupChr' ? (g('pos') || 'bot') : 'top';
+        const c = conv(kid(n,'e')), cl = c.replace(/\s+/g,' ');
+        if (pos === 'top' && /^[↔⟷\u20E1\u21FF]$/.test(ch)) out.push({s:'مستقيم{'+cl+'}'});
+        else if (pos === 'top' && /^[→⟶\u20D7\u20EF]$/.test(ch)) out.push({s:'متجه{'+cl+'}'});
+        else if (pos === 'top' && /^[‾¯\u0305\u0304\u203E─]$/.test(ch)) out.push({s:'خط{'+cl+'}'});
+        else if (pos === 'top' && /^[⌒⏜\u0311\u2322]$/.test(ch)) out.push({s:'قوس{'+cl+'}'});
+        else if (pos === 'top' && /^[\u0302^ˆ∧\u02C6]$/.test(ch)) out.push(cl.split(' ').length >= 3 ? {s:'زاوية{'+cl+'}'} : {s:cl, angle:true}); // hat on the middle letter
+        else out.push({s:c}); }
+      else if (ln === 'box' || ln === 'borderBox' || ln === 'e' || ln === 'oMath') out.push({s:conv(kid(n,'e')||n)});
       else if (ln === 'func') out.push({s:conv(kid(n,'fName'))+' '+conv(kid(n,'e'))});
       else if (ln === 'nary'){ const pr = kid(n,'naryPr'); const ch = pr && kid(pr,'chr'); const c = ch ? (ch.getAttributeNS(M,'val')||ch.getAttribute('m:val')) : '∫'; out.push({s:c+' '+conv(kid(n,'e'))}); }
       else if (ln === 'm' && kids(n,'mr').length===2 && kids(n,'mr').every(r=>kids(r,'e').length===1) && kids(n,'mr').some(r=>!r.textContent.trim())){ // a 2-row column used to raise/lower a small number
@@ -2972,7 +2989,10 @@ const OMML = (() => {
       if (x.pos && res.length && !res[res.length-1].pos){ // gather the whole raised group
         let s = x.s; while (it[i+1] && it[i+1].pos === x.pos){ s += it[++i].s; }
         const base = res[res.length-1]; base.s += (x.pos==='sup'?'^':'_') + (s.length>1?'{'+s+'}':s); continue; }
-      res.push({s: MIR[x.s] && !'(){}[]'.includes(x.s) ? MIR[x.s] : x.s, pos:''});
+      if (x.angle){ // ∠: the letter before (in Arabic order), the marked one, the letter after
+        const prev = res.length && res[res.length-1].letter ? res.pop().s : '', nx = it[i+1] && it[i+1].letter && !it[i+1].pos ? it[++i].s : '';
+        res.push({s:'زاوية{'+[prev, x.s, nx].filter(Boolean).join(' ')+'}', pos:''}); continue; }
+      res.push({s: MIR[x.s] && !'(){}[]'.includes(x.s) ? MIR[x.s] : x.s, pos:'', letter:x.letter});
     }
     // join: numbers right before letters stay glued visually by a space only
     return res.map(r=>r.s).join(' ').replace(/\s+/g,' ').trim();
