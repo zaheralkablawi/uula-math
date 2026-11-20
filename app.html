@@ -2564,6 +2564,8 @@ READING DIRECTION — the most common mistake, check it before answering:
 - Inside a fraction read the numerator and the denominator right to left as well: a denominator that looks like  ٣ − ٥  (left to right) is كسر{…}{٥ − ٣}.
 - A minus sign standing to the RIGHT of a number or fraction is its sign and is written before it: −كسر{١}{٧} , −١.
 - After writing, re-read each of your lines: if a line begins with a number and ends with Arabic words, it is reversed — fix it.
+- Lines that begin with Arabic letters (a segment name like ب جـ, a point, a word) follow the SAME rule: the parts between the = signs keep their right-to-left order. Example: a line that looks, from left to right, like  ١٣ سم = جذر(١٦٩) = جذر(٥² + ١٢²) = ب جـ  is written  ب جـ = جذر{١٢^٢ + ٥^٢} = جذر{١٦٩} = ١٣ نص{سم}
+- Write each number as one block of digits with no spaces inside it: ١٣ ، ١٦٩ ، ٦,٥ (never ١ ٣).
 - A number or fraction standing to the RIGHT of a word multiplies it and is written before it: كسر{١}{٢} نص{حجم الكرة} (not نص{حجم الكرة} × كسر{١}{٢}).
 - Copy exactly what is printed, once: never repeat a part, never add steps, results or cancellations (شطب) that are not visibly drawn; small or low-placed fractions are still ordinary fractions كسر{…}{…}.
 - Read digits carefully (٢ vs ٣, ٦ vs ٢); units like م ، سم ، دسم go in نص{…} with their power: نص{م}^٣
@@ -2601,7 +2603,8 @@ async function readEquationImage(file){
   ocrBusy=true; $('ocrStatus').textContent='يقرأ Claude الصورة...';
   try {
     const { text } = await sampleFn(OCR_PROMPT, { images: file });
-    const t = text.replace(/^```[a-z]*\n?|```$/g,'').trim();
+    let t = text.replace(/^```[a-z]*\n?|```$/g,'').trim();
+    for (let k=0;k<4;k++) t=t.replace(/([٠-٩]) (?=[٠-٩])/g,'$1').replace(/([٠-٩]) ?([,،٫]) ?(?=[٠-٩])/g,'$1,'); // ١ ٣ → ١٣ ، ٦ , ٥ → ٦,٥
     if (!t || t==='NONE'){ flash('لم أجد معادلة في الصورة.', false); }
     else { src.focus(); const s0=src.selectionStart, e0=src.selectionEnd; src.setRangeText(t, s0, e0, 'end'); snap(true); update(); flash('أُضيف النص من الصورة. راجعه.'); }
   } catch(e){
