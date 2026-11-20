@@ -369,7 +369,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط سهمي بين مجموعتين</td><td><code>مخطط.سهمي{</code> ثم <code>س : ٣، ٤، ٥</code> ثم <code>ص : ٠، ١، ٢، ٣</code> ثم <code>العلاقة : (٣، ٠)، (٤، ١)</code> ثم <code>}</code>. الأولى يمينًا والثانية يسارًا، والسهم من الأولى إلى الثانية. للمستطيلات بدل البيضاوي: <code>مخطط.سهمي.مستطيل{…}</code></td></tr>
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
           <tr><td>حرف بذيل</td><td>اكتب الحرف مرتين: <code>سس</code> ، <code>شش</code> ، <code>صص</code> ، <code>حح</code></td></tr>
-          <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
+          <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، يوازي // ، يعامد ⊥ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
           <tr><td>نوع خط الدالة</td><td>ضع المؤشر على سطر الدالة في <code>تمثيل.بياني{…}</code> واختر: متصل، متقطع، منقط. أو اكتب <code>ص = س^٢ &amp; متقطع</code> ، <code>ص = س &amp; منقط &amp; أحمر</code></td></tr>
           <tr><td>رسم المتباينات</td><td>في <code>تمثيل.بياني{…}</code> اكتب المتباينة مكان الدالة: <code>ص &gt; س + ٣</code> ، <code>ص ≤ س − ١</code> ، <code>س ≥ ٢</code>. تُظلَّل منطقة الحل بشفافية ٤٠٪، والخط متقطع مع &lt; و&gt; ومتصل مع ≤ و≥. اللون: <code>ص &gt; س &amp; أحمر</code></td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
@@ -484,6 +484,7 @@ class P {
         let n=0; while(this.peek()==="'"||this.peek()==='’'){ n++; this.i++; }
         const base=out.pop()||{t:'row',c:[]}; out.push({t:'prime',base:[base],n}); continue;
       }
+      if (c==='/' && this.s[this.i+1]==='/'){ this.i+=2; out.push({t:'txt',s:'∥',k:'rel'}); continue; } // // = parallel
       if (c==='/'){
         this.i++; let num=out.pop(); while(num && num.t==='space') num=out.pop();
         while (this.peek()===' ') this.i++;
@@ -738,6 +739,7 @@ class P {
     }
     this.i++;
     if (BIN.has(c)) return {t:'txt',s:c,k:'bin'};
+    if (c==='\uE0B9' || c==='⫽' || c==='∥') return {t:'txt',s:'∥',k:'rel'};
     if (REL.has(c)) return {t:'txt',s:c,k:'rel'};
     if (c==='،'||c===',') return {t:'txt',s:'،',k:'comma'};
     if (c==='}'||c===')'||c===']') return {t:'txt',s:c,k:'sym'};
@@ -858,6 +860,11 @@ function txtBox(n, sz, ctx){
 }
 // symbols missing from UULA Sans, drawn by hand to match the font
 function drawnSym(s, sz, k){
+  if (s==='∥'){ // parallel: two slanted strokes ⫽ as in the booklets
+    const P_=sz*.28, dx=sz*.24, gp=sz*.17, top=sz*.66, bot=sz*.04;
+    return { w:dx+gp+2*P_, a:top+sz*.02, d:Math.max(bot, sz*.12), draw(g,x,y){ g.save(); g.lineWidth=lw(sz); g.lineCap='round'; g.strokeStyle=g.fillStyle; g.beginPath();
+      for (const o of [0,gp]){ g.moveTo(x+P_+o, y+bot); g.lineTo(x+P_+o+dx, y-top); } g.stroke(); g.restore(); } };
+  }
   if (s==='⊄'||s==='⊅'){
     const base = s==='⊄'?'⊂':'⊃', m=measure(base, sz);
     return { w:m.w+2*pad, a:Math.max(m.a+sz*.1, sz*.62), d:Math.max(m.d+sz*.1, sz*.12), draw(g,x,y){
@@ -1991,7 +1998,7 @@ function redo(){ if (hist.i<hist.stack.length-1) applyHist(hist.i+1); }
 $('undoBtn').addEventListener('click', () => { undo(); src.focus(); });
 // toggle the selection between Mazeri math letters (رمز{…}) and ordinary text (نص{…})
 // typed Arabic words that become symbols: باي → π …
-const WORDSYM=[['لا نهاية','∞'],['لانهاية','∞'],['لا ينتمي','∉'],['باي','π'],['تقاطع','∩'],['اتحاد','∪'],['إتحاد','∪'],['زائد','+'],['زايد','+'],['ناقص','−'],['ضرب','×'],['تقسيم','÷'],['أكبر','>'],['اكبر','>'],['أصغر','<'],['اصغر','<'],['ينتمي','∈'],['درجة','°'],['دلتا','∆'],['تربيع','^٢'],['تكعيب','^٣']];
+const WORDSYM=[['لا نهاية','∞'],['لانهاية','∞'],['لا ينتمي','∉'],['باي','π'],['تقاطع','∩'],['اتحاد','∪'],['إتحاد','∪'],['زائد','+'],['زايد','+'],['ناقص','−'],['ضرب','×'],['تقسيم','÷'],['أكبر','>'],['اكبر','>'],['أصغر','<'],['اصغر','<'],['ينتمي','∈'],['لا يوازي','\uE0BB'],['يوازي','∥'],['يعامد','⊥'],['درجة','°'],['دلتا','∆'],['تربيع','^٢'],['تكعيب','^٣']];
 const SYMWORD={}; for (const [w,y] of WORDSYM) if (!SYMWORD[y]) SYMWORD[y]=w;
 SYMWORD['∞']='لا نهاية'; SYMWORD['∪']='اتحاد'; SYMWORD['+']='زائد'; SYMWORD['>']='أكبر'; SYMWORD['<']='أصغر';
 const inTextCmd=(v,i)=>{ let d=0; for (let k=i-1;k>=0;k--){ const c=v[k]; if(c==='}') d++; else if(c==='{'){ if(d) d--; else if(/(نص|رمز)$/.test(v.slice(Math.max(0,k-3),k))) return true; } } return false; };
