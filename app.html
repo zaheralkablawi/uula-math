@@ -2537,6 +2537,12 @@ async function restoreFrom(file){
 // ---- read an equation from a picture with Claude ----
 let sampleFn=null, ocrBusy=false;
 const OCR_PROMPT = `The image shows math from an Arabic school booklet (written right-to-left): equations, and possibly ordinary Arabic words or sentences mixed with them. Transcribe ALL of it into the syntax of an Arabic equation editor and reply with ONLY that text, no explanation, no code fences.
+READING DIRECTION — the most common mistake, check it before answering:
+- Every line (and the inside of every fraction, bracket and root) is read from RIGHT to LEFT. The first thing you write is the RIGHTMOST item of that line in the picture, the last thing is the LEFTMOST.
+- In booklets a line usually starts (on the right) with the words or the quantity being found and ends (on the left) with the numeric result. Example: a line that looks, from left to right, like  ٧ = ١٤/٢ = (٧ − −٧)/(٥ − ٣) = ميل هـ  must be written  ميل هـ = كسر{٧ − −٧}{٥ − ٣} = كسر{١٤}{٢} = ٧
+- Inside a fraction read the numerator and the denominator right to left as well: a denominator that looks like  ٣ − ٥  (left to right) is كسر{…}{٥ − ٣}.
+- A minus sign standing to the RIGHT of a number or fraction is its sign and is written before it: −كسر{١}{٧} , −١.
+- After writing, re-read each of your lines: if a line begins with a number and ends with Arabic words, it is reversed — fix it.
 Syntax (write in logical reading order, first token = rightmost on the page):
 - Eastern Arabic digits ٠١٢٣٤٥٦٧٨٩, decimal comma ","; Arabic letters as written (س ص ع أ ب جـ ...). Operators: + − × ÷ ± = ≠ < > ≤ ≥ ≅ ∈ ∉ ⊂ ⊆ ∩ ∪ ∅ ° π.
 - square root: جذر{...}; cube/nth root: جذر[٣]{...}
