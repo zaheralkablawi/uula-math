@@ -2902,6 +2902,7 @@ let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 const OMML = (() => {
   const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
   const isD = c => /[0-9٠-٩]/.test(c);
@@ -2989,7 +2990,10 @@ const OMML = (() => {
       if (n.localName === 'r' && n.namespaceURI === A){ const rp = kid(n,'rPr'); const bl = rp ? +(rp.getAttribute('baseline')||0) : 0; txt.push({t: (kid(n,'t')||{}).textContent||'', pos: bl>0?'sup':bl<0?'sub':''}); }
       else { const ms = n.localName==='oMath' ? [n] : [...n.getElementsByTagNameNS(M,'oMath')]; if (ms.length){ flush(); for (const m of ms) segs.push(conv(m)); } }
     }
-    flush(); return segs.join(' ');
+    flush();
+    const pPr = kid(p,'pPr'), bu = pPr && kid(pPr,'buChar'); // the booklet's red Q is a bullet of the paragraph
+    if (bu && bu.getAttribute('char') === 'Q' && segs.length) segs.unshift('Q');
+    return segs.join(' ');
   }
   // every shape that holds an equation → its code (one line per paragraph with math)
   function fromSlideXml(xml){
