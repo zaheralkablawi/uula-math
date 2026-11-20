@@ -2832,7 +2832,10 @@ let matchedVal = null, matchedPt = false; // the size was taken from a text box 
 const eqMeta = code => encodeURIComponent(JSON.stringify({ v:1, c:code, color:st.color, align:st.align, pt:st.pt, weight:st.weight, m:matchedPt }));
 const SLIDE_W=540; // UULA booklet slides are 540 pt wide; «outside on the right» starts just after that
 function officeInsert(data, type, place, fallback, meta){ return new Promise(done => officeInsert0(data, type, place, fallback ? () => fallback().then(done) : null, meta, done)); }
-function officeInsert0(data, type, place, fallback, meta, done){
+async function slideIds(){ try { return await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+  if (!sl.items.length) return null; const sh = sl.items[0].shapes; sh.load('items/id'); await ctx.sync(); return sh.items.map(x => x.id); }); } catch(e){ return null; } }
+async function officeInsert0(data, type, place, fallback, meta, done){
+  const before = (window.PowerPoint && typeof hasPPT==='function' && hasPPT()) ? await slideIds() : null; // the new picture = the shape that was not there before
   const w=st.lastW*.75, h=st.lastH*.75; // points, so the size matches the font size (on a 540 pt wide booklet slide)
   const opts = { coercionType: type, imageWidth: w, imageHeight: h };
   const info = place && place.info, outside = place && place.outside, keepId = place && place.center ? place.refId : null;
@@ -2844,7 +2847,7 @@ function officeInsert0(data, type, place, fallback, meta, done){
       if (fallback){ flash('أُدرجت PNG بدل SVG.', false); return fallback(); }
       flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return done(false); }
     let ok = true;
-    if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place ? (outside ? place.refId : place.id) : keepId, meta, noScale: matchedPt });
+    if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place ? (outside ? place.refId : place.id) : keepId, meta, noScale: matchedPt, before });
     if (place && !outside){ const gone = await deleteOld(place.id); for (const x of (place.extra || [])) await deleteOld(x);
       flash(gone ? 'وُضعت المعادلة مكان القديمة وحُذفت القديمة.' : 'وُضعت المعادلة مكانها، لكن تعذّر حذف القديمة فنُقلت خارج الشريحة.', gone); }
     else if (outside) flash(ok && ok.side ? 'أُدرجت المعادلة خارج الشريحة على ' + (ok.side==='left' ? 'اليسار' : 'اليمين') + '.' : 'أُدرجت المعادلة.', true);
@@ -2864,7 +2867,12 @@ async function deleteOld(id){
   }); } catch(e){ return false; }
 }
 // the picture just inserted (selected, else the newest shape on the slide), never the old/selected object
-async function newestShape(ctx, oldId){
+async function newestShape(ctx, oldId, before){
+  if (before){ const was = new Set(before); // several tries: PowerPoint may need a moment to list the new picture
+    for (let k = 0; k < 6; k++){ const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+      if (sl.items.length){ const shapes = sl.items[0].shapes; shapes.load('items/id'); await ctx.sync();
+        const fresh = shapes.items.filter(x => !was.has(x.id)); if (fresh.length) return fresh[fresh.length-1]; }
+      await new Promise(r => setTimeout(r, 120)); } }
   const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id'); await ctx.sync();
   let sh = sel.items.find(x => x.id !== oldId);
   if (!sh){ const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
@@ -2873,7 +2881,7 @@ async function newestShape(ctx, oldId){
 }
 async function placeNew(o){
   try { return await PowerPoint.run(async ctx => {
-    const sh = await newestShape(ctx, o.oldId); if (!sh) return false;
+    const sh = await newestShape(ctx, o.oldId, o.before); if (!sh) return false;
     sh.load('left,top,width,height'); await ctx.sync();
     const slideW = 2*sh.left + sh.width, slideH = 2*sh.top + sh.height; // it was dropped in the middle of the slide
     const f = o.noScale ? 1 : slideW > 100 ? Math.min(3, Math.max(.5, slideW / SLIDE_W)) : 1; // wide 16:9 slide (960 pt) → about 1.8× bigger
