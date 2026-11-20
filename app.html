@@ -370,7 +370,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
           <tr><td>حرف بذيل</td><td>اكتب الحرف مرتين: <code>سس</code> ، <code>شش</code> ، <code>صص</code> ، <code>حح</code></td></tr>
           <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، يوازي // ، يعامد ⊥ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
-          <tr><td>معادلة باوربوينت</td><td>في باوربوينت: حدّد مربع معادلة باوربوينت الأصلية واضغط زر التعديل ✎ ، فتُكتب هنا بالترتيب العربي. راجعها ثم اضغط «تعديل» فتحل مكانها</td></tr>
+          <tr><td>معادلة باوربوينت</td><td>في باوربوينت: حدّد مربع معادلة باوربوينت الأصلية (أو عدة مربعات بـ Shift) واضغط زر التعديل ✎ ، فتُكتب هنا بالترتيب العربي من الأعلى للأسفل. راجعها ثم اضغط «تعديل» فتحل مكانها</td></tr>
           <tr><td>عكس الترتيب</td><td>إذا ظهر سطر معكوسًا (مثلًا بعد القراءة من صورة): ضع المؤشر في السطر واضغط زر ⇄ ، فيُعكس ترتيبه ومعه ما داخل الجذور والكسور والأقواس. أو حدّد جزءًا فيُعكس وحده</td></tr>
           <tr><td>محاذاة جزء</td><td>حدّد الأسطر ثم اختر المحاذاة، فتُطبَّق عليها وحدها. أو اكتب في أول السطر <code>محاذاة{يساوي}</code> (أو يمين، يسار، وسط) فتسري عليه وعلى ما بعده</td></tr>
           <tr><td>نوع خط الدالة</td><td>ضع المؤشر على سطر الدالة في <code>تمثيل.بياني{…}</code> واختر: متصل، متقطع، منقط. أو اكتب <code>ص = س^٢ &amp; متقطع</code> ، <code>ص = س &amp; منقط &amp; أحمر</code></td></tr>
@@ -2842,7 +2842,7 @@ function officeInsert(data, type, place, fallback, meta){
       flash('تعذّر الإدراج: ' + (r.error && r.error.message || ''), false); return; }
     let ok = true;
     if (ppt) ok = await placeNew({ w, h, place, outside, oldId: place ? (outside ? place.refId : place.id) : keepId, meta, noScale: matchedPt });
-    if (place && !outside){ const gone = await deleteOld(place.id);
+    if (place && !outside){ const gone = await deleteOld(place.id); for (const x of (place.extra || [])) await deleteOld(x);
       flash(gone ? 'وُضعت المعادلة مكان القديمة وحُذفت القديمة.' : 'وُضعت المعادلة مكانها، لكن تعذّر حذف القديمة فنُقلت خارج الشريحة.', gone); }
     else if (outside) flash(ok && ok.side ? 'أُدرجت المعادلة خارج الشريحة على ' + (ok.side==='left' ? 'اليسار' : 'اليمين') + '.' : 'أُدرجت المعادلة.', true);
     else flash(info || ('أُدرجت المعادلة في الوسط. v'+ADDIN_VER), !info);
@@ -3024,14 +3024,15 @@ function wholeFile(){ return new Promise((res, rej) => { Office.context.document
   const f = r.value, n = f.sliceCount, parts = []; let got = 0;
   for (let i = 0; i < n; i++) f.getSliceAsync(i, s => { if (s.status !== Office.AsyncResultStatus.Succeeded){ f.closeAsync(); return rej(new Error('slice')); }
     parts[i] = new Uint8Array(s.value.data); if (++got === n){ f.closeAsync(); const out = new Uint8Array(parts.reduce((a,p)=>a+p.length,0)); let o = 0; parts.forEach(p=>{ out.set(p,o); o+=p.length; }); res(out); } }); }); }); }
-async function nativeEq(pic){ // null = could not read; false = no equation in that shape
+async function nativeEq(pic){ const r = await nativeEqs([pic]); return r === null ? null : r[0]; }
+async function nativeEqs(pics){ // per shape: its equation, or false; null = could not read the slide
   try {
     const info = await PowerPoint.run(async ctx => {
       const P = ctx.presentation, all = P.slides; all.load('items/id'); const sl = P.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
-      const slide = sl.items[0]; const sh = slide.shapes.getItem(pic.id); sh.load('id,name,left,top,width,height'); await ctx.sync();
+      const slide = sl.items[0]; const shs = pics.map(pc => { const sh = slide.shapes.getItem(pc.id); sh.load('id,name,left,top,width,height'); return sh; }); await ctx.sync();
       let b64 = null;
       if (Office.context.requirements.isSetSupported('PowerPointApi','1.8')){ try { const ex = slide.exportAsBase64(); await ctx.sync(); b64 = ex.value; } catch(e){} }
-      return { b64, idx: all.items.findIndex(x => x.id === slide.id), sh: { id: sh.id, name: sh.name, left: sh.left, top: sh.top, width: sh.width, height: sh.height } };
+      return { b64, idx: all.items.findIndex(x => x.id === slide.id), shs: shs.map(sh => ({ id: sh.id, name: sh.name, left: sh.left, top: sh.top, width: sh.width, height: sh.height })) };
     });
     let xml = null;
     if (info.b64){ const z = zipOf(Uint8Array.from(atob(info.b64), c => c.charCodeAt(0))); const nm = Object.keys(z.files).find(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)); xml = nm && await z.text(nm); }
@@ -3041,11 +3042,11 @@ async function nativeEq(pic){ // null = could not read; false = no equation in t
       const tgt = rid && (rels.match(new RegExp('Id="'+rid+'"[^>]*Target="([^"]+)"')) || rels.match(new RegExp('Target="([^"]+)"[^>]*Id="'+rid+'"')) || [])[1];
       if (tgt) xml = await z.text('ppt/' + tgt.replace(/^\/?ppt\//,'').replace(/^\.\.\//,'')); }
     if (!xml) return null;
-    const list = OMML.fromSlideXml(xml); if (!list.length) return false;
-    const s = info.sh, near = f => Math.abs(f.left - s.left) + Math.abs(f.top - s.top) + Math.abs(f.width - s.width) + Math.abs(f.height - s.height);
+    const list = OMML.fromSlideXml(xml);
+    return info.shs.map(s => { if (!list.length) return false; const near = f => Math.abs(f.left - s.left) + Math.abs(f.top - s.top) + Math.abs(f.width - s.width) + Math.abs(f.height - s.height);
     const byId = list.find(f => String(f.id) === String(s.id) && f.name === s.name);
     const hit = byId || list.filter(f => f.name === s.name).sort((a,b)=>near(a)-near(b))[0] || list.slice().sort((a,b)=>near(a)-near(b))[0];
-    return hit && (byId || hit.name === s.name || near(hit) < 40) ? hit : false;
+    return hit && (byId || hit.name === s.name || near(hit) < 40) ? hit : false; });
   } catch(e){ return null; }
 }
 window.__aeq.nativeEq = nativeEq;
@@ -3152,6 +3153,8 @@ if (window.Office) Office.onReady(info => {
       const now = await readSelection();
       const pic = now.id ? now : (picStillMeant() && (!now.slide || lastPic.slide === now.slide) ? lastPic : null);
       if (!pic) return flash('حدد المعادلة أولًا.', false);
+      const many = now.id ? await selectedAll() : [];
+      if (many.length > 1) return editMany(many, now.slide);
       let raw = null;
       try { raw = await PowerPoint.run(async ctx => {
         const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
@@ -3176,6 +3179,32 @@ if (window.Office) Office.onReady(info => {
       $('insertDoc').classList.add('replacing'); $('insertDoc').dataset.tip = 'تعديل';
     });
   }
+  // several boxes selected: each one read (saved code, or a PowerPoint equation), top to bottom, into one writing; «تعديل» puts the result in their place
+  async function selectedAll(){ try { return await PowerPoint.run(async ctx => { const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id,items/left,items/top,items/width,items/height'); await ctx.sync();
+    return sel.items.map(x => ({ id: x.id, left: x.left, top: x.top, width: x.width, height: x.height })); }); } catch(e){ return []; } }
+  async function editMany(list, slide){
+    flash('جارٍ قراءة ' + list.length + ' مربعات…');
+    list.sort((a,b) => (Math.abs(a.top-b.top) > 6 ? a.top-b.top : (b.left+b.width)-(a.left+a.width))); // top first; same row: the right one first
+    let tags = [];
+    try { tags = await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+      const ts = list.map(x => { const t = sl.items[0].shapes.getItem(x.id).tags.getItemOrNullObject(TAG); t.load('value'); return t; }); await ctx.sync();
+      return ts.map(t => t.isNullObject ? null : t.value); }); } catch(e){ tags = list.map(()=>null); }
+    const need = list.filter((x,i) => !tags[i]); const nat = need.length ? (await nativeEqs(need)) || need.map(()=>null) : [];
+    const lines = [], used = []; let first = null;
+    list.forEach((x,i) => { let code = null, meta = null;
+      if (tags[i]){ try { meta = JSON.parse(decodeURIComponent(tags[i])); code = meta.c; } catch(e){} }
+      else { const r = nat[need.indexOf(x)]; if (r){ code = r.code; meta = r; } }
+      if (code){ lines.push(String(code)); used.push(x); if (!first) first = meta; } });
+    if (!lines.length) return flash('لم أجد معادلات في المربعات المحددة.', false);
+    if (first && first.color) setColor(first.color);
+    if (first && first.pt) setSize(+first.pt, !!first.m);
+    src.focus(); src.setRangeText(lines.join('\n'), 0, src.value.length, 'end'); snap(true);
+    ensureFont().then(update);
+    const R = Math.max(...used.map(x => x.left + x.width)), T = Math.min(...used.map(x => x.top)), L = Math.min(...used.map(x => x.left));
+    editTarget = { id: used[0].id, extra: used.slice(1).map(x => x.id), slide, box: { left: L, top: T, width: R - L } };
+    $('insertDoc').classList.add('replacing'); $('insertDoc').dataset.tip = 'تعديل';
+    flash('قُرئت ' + used.length + ' من ' + list.length + '. راجعها ثم اضغط «تعديل».', used.length === list.length);
+  }
   $('insertDoc').addEventListener('click', async () => {
     const blob = await (curBlobPromise || Promise.resolve(st.lastPng));
     const b64 = await new Promise(res => { const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
@@ -3183,6 +3212,7 @@ if (window.Office) Office.onReady(info => {
     if (isPPT && editTarget){ const t = editTarget; editTarget = null; showMode();
       const now = await readSelection();
       place = (!now.slide || !t.slide || now.slide === t.slide) ? await placeOf(t.id) : null;
+      if (place && t.box && typeof place.left === 'number'){ Object.assign(place, t.box); place.extra = t.extra; } // the new one takes the place of all of them
       if (!place) place = { info: 'لم أجد المعادلة الأصلية.' }; }
     else if (isPPT && hasPPT()){ // in the middle of the slide; whatever is selected stays untouched
       const now = await readSelection();
