@@ -130,6 +130,7 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 .sugg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.8rem;color:var(--muted)}
 .sugg button{font:inherit;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 8px;cursor:pointer}
 .sugg button:first-of-type{border-color:var(--accent)}
+.lsty button{gap:4px;padding:0 7px}.lsty{flex-wrap:nowrap}.lsty button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}.sugg.lsty button:first-of-type:not(.on){background:var(--panel);border-color:var(--line);color:var(--ink)}
 .tgl{font-size:.72rem;font-weight:600;color:var(--muted);padding-inline:2px 4px}
 .toolbar button,.chip{font:inherit;font-size:.8rem;line-height:1.3;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:2px 7px;cursor:pointer;min-height:28px}
 .toolbar button:hover,.chip:hover{border-color:var(--accent);color:var(--accent)}
@@ -265,6 +266,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
       <textarea id="src" dir="rtl" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" writingsuggestions="false" data-gramm="false"></textarea>
       <div class="ctxrow" id="ctxRow" hidden><button type="button" class="ctxi" id="ctxI" title="التعليمات" aria-label="التعليمات" aria-pressed="false">i</button><p class="ctxhint" id="ctxHint" hidden></p></div>
       <div class="sugg" id="sugg" hidden></div>
+      <div class="sugg lsty" id="lineSty" hidden><span>خط الدالة:</span><button type="button" data-ls="" title="متصل"><svg viewBox="0 0 28 8" width="18" height="8"><path d="M2 4h24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>متصل</button><button type="button" data-ls="متقطع" title="متقطع"><svg viewBox="0 0 28 8" width="18" height="8"><path d="M2 4h24" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round"/></svg>متقطع</button><button type="button" data-ls="منقط" title="منقط"><svg viewBox="0 0 28 8" width="18" height="8"><path d="M2 4h24" stroke="currentColor" stroke-width="2.4" stroke-dasharray="0 5" stroke-linecap="round"/></svg>منقط</button></div>
       <p class="err" id="err" role="status"></p>
       <div class="ribbon">
         <div class="tabs" id="tabs" role="tablist" aria-label="القوائم"></div>
@@ -368,6 +370,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
           <tr><td>حرف بذيل</td><td>اكتب الحرف مرتين: <code>سس</code> ، <code>شش</code> ، <code>صص</code> ، <code>حح</code></td></tr>
           <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
+          <tr><td>نوع خط الدالة</td><td>ضع المؤشر على سطر الدالة في <code>تمثيل.بياني{…}</code> واختر: متصل، متقطع، منقط. أو اكتب <code>ص = س^٢ &amp; متقطع</code> ، <code>ص = س &amp; منقط &amp; أحمر</code></td></tr>
           <tr><td>رسم المتباينات</td><td>في <code>تمثيل.بياني{…}</code> اكتب المتباينة مكان الدالة: <code>ص &gt; س + ٣</code> ، <code>ص ≤ س − ١</code> ، <code>س ≥ ٢</code>. تُظلَّل منطقة الحل بشفافية ٤٠٪، والخط متقطع مع &lt; و&gt; ومتصل مع ≤ و≥. اللون: <code>ص &gt; س &amp; أحمر</code></td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
           <tr><td>زاوية</td><td><code>زاوية{أ ب جـ}</code></td></tr>
@@ -538,9 +541,10 @@ class P {
       if (iq){ let rhs=iq[3]; const ai=rhs.lastIndexOf('&'); if (ai>=0){ col=colorOf(rhs.slice(ai+1))||col; rhs=rhs.slice(0,ai); } if (HINTW.has(rhs.trim())) return;
         const big=/[>≥⩾]/.test(iq[2]), strict=/[<>]/.test(iq[2]); let f; try { f=compileFn('ص = '+rhs); } catch(er){ this.err('لم أفهم المتباينة: '+e.trim(), this.at(i0)); }
         fns.push({f, color: col || '#1f71de', ineq:{up:big, strict, vert:/^(س|x)$/i.test(iq[1])}}); return; }
+      let style=null; { const pp=e.split('&'); if (pp.length>1){ e=pp[0]; for (const tk of pp.slice(1).map(x=>x.trim())){ if (/^متقطع/.test(tk)) style='dash'; else if (/^منقط/.test(tk)) style='dot'; else if (/^متصل/.test(tk)) style=null; else col=colorOf(tk)||col; } } }
       const ex=e.replace(/^\s*(ص|y)\s*=\s*/i,'').trim();
       if (!ex || HINTW.has(ex)) return; let f; try { f=compileFn(e); } catch(er){ this.err('لم أفهم الدالة: '+e.trim(), this.at(i0)); }
-      fns.push({f, color: col || PLOTCOL[k%PLOTCOL.length]}); });
+      fns.push({f, style, color: col || PLOTCOL[k%PLOTCOL.length]}); });
     return {t:'plot', fns, x0, x1, y0, y1, grid:F.grid, nums:F.nums, nolab:F.nolab, xl:F.xl, yl:F.yl, pts:F.pts||[], asy:F.asy||[]}; }
   atom(end){ const i0=this.i; const r=this.atom0(end); if (r && typeof r==='object' && this.map){ r.o0=this.at(i0); r.o1=this.at(this.i); } return r; }
   atom0(end){
@@ -1464,14 +1468,19 @@ function plotBox(n, sz){
         const k2=Math.min(edge.length-1, 8); tip(edge[0], edge[k2]); tip(edge[edge.length-1], edge[edge.length-1-k2]); }
       g.restore(); }
     for (const fn of n.fns.filter(f=>!f.ineq)){ const N=900; let prev=null; g.save(); g.fillStyle=fn.color;
-      stroke(g,t*1.7,()=>{ let lx=null, ly=null;
-        for (let k=0;k<=N;k++){ const xv=x0+sx*k/N; let yv; try{ yv=fn.f(xv); }catch(e){ yv=NaN; }
-          const ok=isFinite(yv) && Math.abs(yv)<1e7, cur=ok?[X(xv),Y(yv),yv]:null;
-          if (prev && cur && !(Math.abs(cur[2]-prev[2])>sy*3 && Math.sign(cur[2])!==Math.sign(prev[2]))){
-            const c=clip(prev[0],prev[1],cur[0],cur[1]);
-            if (c){ if (lx===null || Math.abs(c[0]-lx)>.01 || Math.abs(c[1]-ly)>.01) g.moveTo(c[0],c[1]); g.lineTo(c[2],c[3]); lx=c[2]; ly=c[3]; } else lx=null; }
-          else lx=null;
-          prev=cur; } });
+      const segs=[]; let seg=null; // visible pieces of the curve
+      for (let k=0;k<=N;k++){ const xv=x0+sx*k/N; let yv; try{ yv=fn.f(xv); }catch(e){ yv=NaN; }
+        const ok=isFinite(yv) && Math.abs(yv)<1e7, cur=ok?[X(xv),Y(yv),yv]:null;
+        if (prev && cur && !(Math.abs(cur[2]-prev[2])>sy*3 && Math.sign(cur[2])!==Math.sign(prev[2]))){
+          const c=clip(prev[0],prev[1],cur[0],cur[1]);
+          if (c){ const L=seg&&seg[seg.length-1]; if (!L || Math.abs(c[0]-L[0])>.01 || Math.abs(c[1]-L[1])>.01){ seg=[[c[0],c[1]]]; segs.push(seg); } seg.push([c[2],c[3]]); } else seg=null; }
+        else seg=null;
+        prev=cur; }
+      const lw_=t*1.7;
+      if (fn.style==='dot'){ const gap=sz*.2; for (const P_ of segs){ let acc=gap; for (let k=1;k<P_.length;k++){ const [ax_,ay]=P_[k-1], [bx,by]=P_[k], L=Math.hypot(bx-ax_,by-ay); let s0=0; while (acc+ (L-s0) >= gap){ s0+=gap-acc; acc=0; const tx=ax_+(bx-ax_)*s0/L, ty=ay+(by-ay)*s0/L; g.beginPath(); g.ellipse(tx,ty,lw_*.75,lw_*.75,0,0,Math.PI*2); g.fill(); } acc+=L-s0; } } }
+      else if (fn.style==='dash'){ const dl=sz*.22, gl=sz*.14; stroke(g,lw_,()=>{ for (const P_ of segs){ let acc=0, on=true; g.moveTo(P_[0][0],P_[0][1]); for (let k=1;k<P_.length;k++){ const [ax_,ay]=P_[k-1], [bx,by]=P_[k], L=Math.hypot(bx-ax_,by-ay); let s0=0;
+          while (s0<L){ const lim=on?dl:gl, step=Math.min(lim-acc, L-s0); const tx=ax_+(bx-ax_)*(s0+step)/L, ty=ay+(by-ay)*(s0+step)/L; if (on) g.lineTo(tx,ty); else g.moveTo(tx,ty); s0+=step; acc+=step; if (acc>=lim-1e-6){ acc=0; on=!on; } } } } }); }
+      else stroke(g,lw_,()=>{ for (const P_ of segs){ g.moveTo(P_[0][0],P_[0][1]); for (const p of P_) g.lineTo(p[0],p[1]); } });
       g.restore(); }
     for (const a of n.asy||[]){ if (a.ax==='x' && a.v>=x0 && a.v<=x1) dashLine(g,t*1.1,X(a.v),gy,X(a.v),gy+gh,sz*.14); else if (a.ax==='y' && a.v>=y0 && a.v<=y1) dashLine(g,t*1.1,gx,Y(a.v),gx+gw,Y(a.v),sz*.14); }
     for (const q of n.pts||[]){ if (q.x<x0||q.x>x1||q.y<y0||q.y>y1) continue; const px=X(q.x), py=Y(q.y); dotAt(g,px,py,q.rel?sz*.15:sz*.11,true,t); if (!q.lab) continue;
@@ -1859,7 +1868,7 @@ function placeCaret(){
 // light grey help under the writing box while the caret is inside a tool: shown for 10 s, the i button shows it again until pressed off
 const HJ=['الخلايا: بينها &amp;','الصفوف: كل صف في سطر'];
 const CTXHINT=Object.fromEntries(Object.entries({
- 'تمثيل.بياني':['الدالة: في السطر الأول مثل ص = س^٢، وكل دالة إضافية في سطر','المتباينة: مكان الدالة مثل ص > س + ٣ (يُظلَّل الحل، والخط متقطع مع < و>)','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)','خط تقارب: تقارب س = ٢'],
+ 'تمثيل.بياني':['الدالة: في السطر الأول مثل ص = س^٢، وكل دالة إضافية في سطر','المتباينة: مكان الدالة مثل ص > س + ٣ (يُظلَّل الحل، والخط متقطع مع < و>)','نوع الخط: ضع المؤشر على الدالة واختر متصل أو متقطع أو منقط، أو اكتب ص = س^٢ & متقطع','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)','خط تقارب: تقارب س = ٢'],
  'شبكة':['العلاقة: العلاقة : (١، ٠)، (٢، ٣) نقطة لكل زوج، والحدود «عدد» تُضبط وحدها','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)'],
  'خط.أعداد':['المدى: −٥ &lt; س &lt; ٥ مع اسم المحور','أرقام وعلامات: احذف ما لا تريده','الحل: الحل −٢ &lt; س ≤ ٣، و&lt; مفتوحة و≤ مغلقة','أكثر من جزء: الحل س &lt; −١ أو س ≥ ٢'],
  'فن':['ش: المجموعة الشاملة التي تحتوي كل العناصر','س، ص، ع: عناصر كل مجموعة كاملة، والتقاطعات تُحسب وحدها','التظليل: ظلل : س ∩ ص &amp; أحمر','الرموز: ∩ تقاطع، ∪ اتحاد، − فرق، \' متممة، () للتجميع'],
@@ -1907,6 +1916,16 @@ src.addEventListener('mouseup', ()=>setTimeout(()=>{
 }, 0));
 for (const ev of ['input','keyup','mouseup','focus','blur','scroll']) src.addEventListener(ev, caretSoon);
 document.addEventListener('selectionchange', caretSoon);
+// line style of a function in a graph: shown when the caret is on a function line inside تمثيل.بياني{…}
+const lineSty=$('lineSty');
+function fnLineAt(){ const v=src.value, c=src.selectionStart; const a=v.lastIndexOf('\n',c-1)+1, e=(v.indexOf('\n',c)+1||v.length+1)-1, line=v.slice(a,e);
+  if (!/^\s*(لون\s*\{[^{}]*\}\s*\{)?\s*(ص|y)\s*=/.test(line)) return null;
+  const k=v.lastIndexOf('تمثيل.بياني',a); if (k<0) return null; let d=0; for (let i=k;i<a;i++){ if(v[i]==='{') d++; else if(v[i]==='}') d--; } return d>0?{a,e,line}:null; }
+function showLineSty(){ const L=document.activeElement===src && fnLineAt(); lineSty.hidden=!L; if (!L) return; const cur=/&\s*متقطع/.test(L.line)?'متقطع':/&\s*منقط/.test(L.line)?'منقط':''; lineSty.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.ls===cur)); }
+document.addEventListener('selectionchange', ()=>setTimeout(showLineSty,0)); src.addEventListener('blur', ()=>setTimeout(()=>{ if (!lineSty.matches(':hover')) lineSty.hidden=true; },150));
+lineSty.addEventListener('mousedown', e=>{ const b=e.target.closest('button'); if (!b) return; e.preventDefault(); const L=fnLineAt(); if (!L) return;
+  let t=L.line.replace(/\s*&\s*(متقطع|منقط|متصل)\s*/g,' ').replace(/\s+$/,''); if (b.dataset.ls) t+=' & '+b.dataset.ls;
+  src.setRangeText(t, L.a, L.e, 'end'); snap(true); schedule(); showLineSty(); });
 window.addEventListener('resize', caretSoon); window.addEventListener('scroll', caretSoon, true);
 src.addEventListener('input', schedule);
 
@@ -2593,7 +2612,8 @@ st.darkBg=0; $('darkBg').setAttribute('aria-pressed','false'); // opens in the n
 st.strokeMul=1;
 { const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight;
 // ---- what's new: shown once after each update (change NEWS.id and the list with every release) ----
-const NEWS = { id:'2026-11-20d', items:[
+const NEWS = { id:'2026-11-20e', items:[
+  'نوع خط الدالة في التمثيل البياني: متصل، متقطع، منقط',
   'اكتب باي أو تقاطع أو أكبر… ثم مسافة فتصير رمزًا، وزر «أب ↔» يرجعها كلمة',
   'رسم المتباينات: اكتب ص > س + ٣ مكان الدالة في التمثيل البياني',
   'مخطط بياني لعلاقة: سطر العلاقة : (١، ٠)، (٢، ٣) داخل شبكة{…}',
