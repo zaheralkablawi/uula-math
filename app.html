@@ -2922,6 +2922,7 @@ let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 const OMML = (() => {
   const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
   const isD = c => /[0-9٠-٩]/.test(c);
@@ -2990,6 +2991,11 @@ const OMML = (() => {
     const it = items(el).reverse(), res = [];
     for (let i = 0; i < it.length; i++){
       const x = it[i];
+      const OPS = /^[=+−\-×÷±<>≤≥≠≈،,:;]$/;
+      if (x.pos && (!res.length || OPS.test(res[res.length-1].s)) && it[i+1] && !it[i+1].pos){ // no base before it: it belongs to what follows (a number written left to right)
+        let s = MIR[x.s] || x.s; while (it[i+1] && it[i+1].pos === x.pos){ const y = it[++i].s; s += MIR[y] || y; }
+        if (it[i+1] && !it[i+1].pos && !OPS.test(it[i+1].s)){ const nx = it[++i]; res.push({s: nx.s + (x.pos==='sup'?'^':'_') + (s.length>1?'{'+s+'}':s), pos:''}); continue; }
+        res.push({s, pos:''}); continue; }
       if (x.pos && res.length && !res[res.length-1].pos){ // gather the whole raised group
         let s = MIR[x.s] || x.s; while (it[i+1] && it[i+1].pos === x.pos){ const y = it[++i].s; s += MIR[y] || y; } // brackets turn round with the order
         const base = res[res.length-1]; base.s += (x.pos==='sup'?'^':'_') + (s.length>1?'{'+s+'}':s); continue; }
@@ -3003,7 +3009,7 @@ const OMML = (() => {
   }
   // plain text runs (already in Arabic order) next to the equation: raised runs become powers
   function textLine(parts){ // parts: [{t, pos}]
-    const res = []; let lastPos = '';
+    const toks = [];
     for (const {t,pos} of parts){
       for (let i = 0; i < t.length; ){
         const c = t[i];
@@ -3013,13 +3019,19 @@ const OMML = (() => {
         else if (c === 'ـ'){ tok = '−'; i++; }
         else if (isAr(c) && isAr(t[i+1])){ let k=i; while (k<t.length && isAr(t[k])) k++; tok='نص{'+t.slice(i,k)+'}'; i=k; }
         else { tok = c==='-'?'−':c; i++; }
-        if (pos && res.length){ const last = res[res.length-1], mk = pos==='sup'?'^':'_';
-          const m = last.match(new RegExp('\\'+mk+'\\{([^{}]*)\\}$'));
-          if (m && lastPos === pos) res[res.length-1] = last.slice(0, last.length - m[0].length) + mk + '{' + m[1] + tok + '}'; // same raised group
-          else res[res.length-1] = last + mk + '{' + tok + '}'; }
-        else res.push(tok);
-        lastPos = pos;
+        toks.push({tok, pos, gap: i - tok.length > 0 && /\s/.test(t[i - (tok==='−'&&c==='ـ'?1:tok.length) - 1] || '') });
       }
+    }
+    const res = []; const OPS = /^[=+−×÷±<>≤≥≠≈،,:;]$/;
+    for (let k = 0; k < toks.length; k++){
+      const x = toks[k];
+      if (!x.pos){ res.push(x.tok); continue; }
+      let g = x.tok; while (toks[k+1] && toks[k+1].pos === x.pos){ g += toks[++k].tok; }
+      const mk = x.pos==='sup'?'^':'_', nx = toks[k+1], prev = res[res.length-1];
+      if (nx && !nx.pos && /^[٠-٩0-9]/.test(nx.tok) && /[٠-٩0-9]$/.test(g) && !nx.gap){ res.push(nx.tok + mk + '{' + g + '}'); k++; continue; } // ٥ then ٢ → ٢^٥
+      if (prev && !OPS.test(prev)) res[res.length-1] = prev + mk + '{' + g + '}';
+      else if (nx && !nx.pos){ res.push(nx.tok + mk + '{' + g + '}'); k++; }
+      else res.push(g);
     }
     // neighbouring words become one text: نص{أوجد ناتج}
     const out = []; for (const tk of res){ const m = /^نص\{(.*)\}$/.exec(tk), last = out[out.length-1], lm = last && /^نص\{(.*)\}$/.exec(last);
