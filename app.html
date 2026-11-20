@@ -2903,6 +2903,7 @@ let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 const OMML = (() => {
   const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
   const isD = c => /[0-9٠-٩]/.test(c);
@@ -3002,7 +3003,7 @@ const OMML = (() => {
     for (const sp of doc.getElementsByTagName('*')){
       if (sp.localName !== 'sp' && sp.localName !== 'txBody') continue;
       if (sp.localName === 'txBody' && sp.parentNode && sp.parentNode.localName === 'sp') continue;
-      if (!sp.getElementsByTagNameNS(M,'oMath').length) continue;
+      if (!sp.getElementsByTagNameNS(M,'oMath').length && ![...sp.getElementsByTagNameNS(A,'t')].some(t=>t.textContent.trim())) continue; // equations, or plain text
       const nv = sp.getElementsByTagNameNS('*','cNvPr')[0];
       const lines = [...sp.getElementsByTagNameNS(A,'p')].map(paraLine).filter(Boolean); // every line of the box: sentences too
       const off = sp.getElementsByTagNameNS(A,'off')[0], ext = sp.getElementsByTagNameNS(A,'ext')[0], E = 12700;
