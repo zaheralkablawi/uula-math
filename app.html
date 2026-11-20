@@ -370,6 +370,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
           <tr><td>حرف بذيل</td><td>اكتب الحرف مرتين: <code>سس</code> ، <code>شش</code> ، <code>صص</code> ، <code>حح</code></td></tr>
           <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، يوازي // ، يعامد ⊥ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
+          <tr><td>معادلة باوربوينت</td><td>في باوربوينت: حدّد مربع معادلة باوربوينت الأصلية واضغط زر التعديل ✎ ، فتُكتب هنا بالترتيب العربي. راجعها ثم اضغط «تعديل» فتحل مكانها</td></tr>
           <tr><td>عكس الترتيب</td><td>إذا ظهر سطر معكوسًا (مثلًا بعد القراءة من صورة): ضع المؤشر في السطر واضغط زر ⇄ ، فيُعكس ترتيبه ومعه ما داخل الجذور والكسور والأقواس. أو حدّد جزءًا فيُعكس وحده</td></tr>
           <tr><td>محاذاة جزء</td><td>حدّد الأسطر ثم اختر المحاذاة، فتُطبَّق عليها وحدها. أو اكتب في أول السطر <code>محاذاة{يساوي}</code> (أو يمين، يسار، وسط) فتسري عليه وعلى ما بعده</td></tr>
           <tr><td>نوع خط الدالة</td><td>ضع المؤشر على سطر الدالة في <code>تمثيل.بياني{…}</code> واختر: متصل، متقطع، منقط. أو اكتب <code>ص = س^٢ &amp; متقطع</code> ، <code>ص = س &amp; منقط &amp; أحمر</code></td></tr>
@@ -2892,6 +2893,159 @@ async function placeNew(o){
 // Remember the picture selected on the slide: clicking into this pane can clear PowerPoint's selection before «إدراج» is pressed
 const hasPPT = () => window.PowerPoint && Office.context.requirements.isSetSupported('PowerPointApi','1.5');
 let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+const OMML = (() => {
+  const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
+  const isD = c => /[0-9٠-٩]/.test(c);
+  const isAr = c => /[ء-يٱ-ۓ]/.test(c);
+  const MIR = {'<':'>','>':'<','≤':'≥','≥':'≤','(':')',')':'(','[':']',']':'[','{':'}','}':'{'};
+  const kids = (el, name) => [...el.childNodes].filter(n => n.nodeType === 1 && n.localName === name);
+  const kid = (el, name) => kids(el, name)[0];
+  // items of one container, in visual left-to-right order: {s, sup, sub, num}
+  function items(el){
+    const out = [];
+    for (const n of el.childNodes){
+      if (n.nodeType !== 1) continue;
+      const ln = n.localName;
+      if (ln === 'r'){
+        const t = [...n.getElementsByTagNameNS(M,'t')].map(x=>x.textContent).join('');
+        const rp = n.getElementsByTagNameNS('http://schemas.openxmlformats.org/drawingml/2006/main','rPr')[0];
+        const bl = rp ? +(rp.getAttribute('baseline')||0) : 0;
+        const pos = bl > 0 ? 'sup' : bl < 0 ? 'sub' : '';
+        for (let i = 0; i < t.length; ){
+          const c = t[i];
+          if (/\s/.test(c)){ i++; continue; }
+          if (isD(c)){ let k = i; while (k < t.length && (isD(t[k]) || (/[.,٫]/.test(t[k]) && isD(t[k+1])))) k++; out.push({s:t.slice(i,k), pos, num:true}); i = k; continue; }
+          if (isAr(c) && isAr(t[i+1])){ let k = i; while (k < t.length && isAr(t[k])) k++; out.push({s:'نص{'+t.slice(i,k)+'}', pos, word:true}); i = k; continue; } // a word stays as written
+          out.push({s: c === '-' ? '−' : c, pos}); i++;
+        }
+      }
+      else if (ln === 'f') out.push({s:'كسر{'+conv(kid(n,'num'))+'}{'+conv(kid(n,'den'))+'}'});
+      else if (ln === 'rad'){ const dg = kid(n,'deg'), d = dg ? conv(dg) : ''; out.push({s:'جذر'+(d?'['+d+']':'')+'{'+conv(kid(n,'e'))+'}'}); }
+      else if (ln === 'd'){ const pr = kid(n,'dPr'); const g = (nm,dflt)=>{ const e = pr && kid(pr,nm); return e ? (e.getAttributeNS(M,'val') ?? e.getAttribute('m:val') ?? dflt) : dflt; };
+        const b = g('begChr','('), e = g('endChr',')'); const parts = kids(n,'e').map(conv).reverse();
+        // visual left bracket becomes the right one in Arabic order
+        out.push({s:(MIR[e]||e)+parts.join(' ، ')+(MIR[b]||b)}); }
+      else if (ln === 'sSup') out.push({s:wrap(conv(kid(n,'e')))+'^{'+conv(kid(n,'sup'))+'}'});
+      else if (ln === 'sSub') out.push({s:wrap(conv(kid(n,'e')))+'_{'+conv(kid(n,'sub'))+'}'});
+      else if (ln === 'sSubSup') out.push({s:wrap(conv(kid(n,'e')))+'_{'+conv(kid(n,'sub'))+'}^{'+conv(kid(n,'sup'))+'}'});
+      else if (ln === 'bar' || ln === 'acc' || ln === 'groupChr' || ln === 'box' || ln === 'borderBox' || ln === 'e' || ln === 'oMath') out.push({s:conv(kid(n,'e')||n)});
+      else if (ln === 'func') out.push({s:conv(kid(n,'fName'))+' '+conv(kid(n,'e'))});
+      else if (ln === 'nary'){ const pr = kid(n,'naryPr'); const ch = pr && kid(pr,'chr'); const c = ch ? (ch.getAttributeNS(M,'val')||ch.getAttribute('m:val')) : '∫'; out.push({s:c+' '+conv(kid(n,'e'))}); }
+      else if (ln === 'm' && kids(n,'mr').length===2 && kids(n,'mr').every(r=>kids(r,'e').length===1) && kids(n,'mr').some(r=>!r.textContent.trim())){ // a 2-row column used to raise/lower a small number
+        const [top,bot]=kids(n,'mr').map(r=>conv(kids(r,'e')[0])); out.push({s: top||bot, pos: top?'sup':'sub'}); }
+      else if (ln === 'm'){ out.push({s:'مصفوفة{'+kids(n,'mr').map(r=>kids(r,'e').map(conv).reverse().join(' & ')).join(' ; ')+'}'}); }
+    }
+    return out;
+  }
+  const wrap = s => /^[^\s]+$/.test(s) ? s : '('+s+')';
+  // reverse to Arabic order; a raised/lowered item that came before its base now follows it
+  function conv(el){
+    if (!el) return '';
+    const it = items(el).reverse(), res = [];
+    for (let i = 0; i < it.length; i++){
+      const x = it[i];
+      if (x.pos && res.length && !res[res.length-1].pos){ // gather the whole raised group
+        let s = x.s; while (it[i+1] && it[i+1].pos === x.pos){ s += it[++i].s; }
+        const base = res[res.length-1]; base.s += (x.pos==='sup'?'^':'_') + (s.length>1?'{'+s+'}':s); continue; }
+      res.push({s: MIR[x.s] && !'(){}[]'.includes(x.s) ? MIR[x.s] : x.s, pos:''});
+    }
+    // join: numbers right before letters stay glued visually by a space only
+    return res.map(r=>r.s).join(' ').replace(/\s+/g,' ').trim();
+  }
+  // plain text runs (already in Arabic order) next to the equation: raised runs become powers
+  function textLine(parts){ // parts: [{t, pos}]
+    const res = [];
+    for (const {t,pos} of parts){
+      for (let i = 0; i < t.length; ){
+        const c = t[i];
+        if (/\s/.test(c)){ i++; continue; }
+        let tok;
+        if (isD(c)){ let k=i; while (k<t.length && (isD(t[k]) || (/[.,٫]/.test(t[k]) && isD(t[k+1])))) k++; tok=t.slice(i,k); i=k; }
+        else if (isAr(c) && isAr(t[i+1])){ let k=i; while (k<t.length && isAr(t[k])) k++; tok='نص{'+t.slice(i,k)+'}'; i=k; }
+        else { tok = c==='-'?'−':c; i++; }
+        if (pos && res.length){ res[res.length-1] += (pos==='sup'?'^':'_') + tok; } else res.push(tok);
+      }
+    }
+    return res.join(' ');
+  }
+  const A = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+  function paraLine(p){ // one paragraph: text runs and equations in their (Arabic) order
+    const segs = []; let txt = [];
+    const flush = () => { if (txt.length){ const s = textLine(txt); if (s) segs.push(s); txt = []; } };
+    for (const n of p.childNodes){
+      if (n.nodeType !== 1) continue;
+      if (n.localName === 'r' && n.namespaceURI === A){ const rp = kid(n,'rPr'); const bl = rp ? +(rp.getAttribute('baseline')||0) : 0; txt.push({t: (kid(n,'t')||{}).textContent||'', pos: bl>0?'sup':bl<0?'sub':''}); }
+      else { const ms = n.localName==='oMath' ? [n] : [...n.getElementsByTagNameNS(M,'oMath')]; if (ms.length){ flush(); for (const m of ms) segs.push(conv(m)); } }
+    }
+    flush(); return segs.join(' ');
+  }
+  // every shape that holds an equation → its code (one line per paragraph with math)
+  function fromSlideXml(xml){
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    const out = [];
+    for (const sp of doc.getElementsByTagName('*')){
+      if (sp.localName !== 'sp' && sp.localName !== 'txBody') continue;
+      if (sp.localName === 'txBody' && sp.parentNode && sp.parentNode.localName === 'sp') continue;
+      if (!sp.getElementsByTagNameNS(M,'oMath').length) continue;
+      const nv = sp.getElementsByTagNameNS('*','cNvPr')[0];
+      const lines = [...sp.getElementsByTagNameNS(A,'p')].filter(p=>p.getElementsByTagNameNS(M,'oMath').length).map(paraLine).filter(Boolean);
+      const off = sp.getElementsByTagNameNS(A,'off')[0], ext = sp.getElementsByTagNameNS(A,'ext')[0], E = 12700;
+      const clr = [...sp.getElementsByTagNameNS(M,'oMath')].map(m=>m.getElementsByTagNameNS(A,'srgbClr')[0]).find(Boolean);
+      const szs = [...sp.getElementsByTagNameNS(M,'oMath')].flatMap(m=>[...m.getElementsByTagNameNS(A,'rPr')]).map(r=>+r.getAttribute('sz')).filter(Boolean);
+      out.push({id: nv ? nv.getAttribute('id') : '', name: nv ? nv.getAttribute('name') : '', code: lines.join('\n'),
+        left: off ? +off.getAttribute('x')/E : 0, top: off ? +off.getAttribute('y')/E : 0, width: ext ? +ext.getAttribute('cx')/E : 0, height: ext ? +ext.getAttribute('cy')/E : 0,
+        color: clr ? '#'+clr.getAttribute('val').toLowerCase() : null, pt: szs.length ? Math.max(...szs)/100 : null});
+    }
+    return out;
+  }
+  function fromXml(xml){ return fromSlideXml(xml).map(x=>x.code); }
+  return { conv, fromXml, fromSlideXml, paraLine };
+})();
+
+
+// the slide holding the selected shape, as XML (one-slide export when PowerPoint allows it, else the whole file)
+const zipOf = (() => {
+  async function inflateRaw(u8){ const ds = new DecompressionStream('deflate-raw'); return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(ds)).arrayBuffer()); }
+  return u8 => { const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength); let e = u8.length - 22;
+    while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--; if (e < 0) throw new Error('zip');
+    const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const files = {}, td = new TextDecoder();
+    for (let i = 0; i < n; i++){ const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+      files[td.decode(u8.subarray(p + 46, p + 46 + nl))] = { method, csize, off }; p += 46 + nl + xl + cl; }
+    return { files, async text(name){ const f = files[name]; if (!f) return null; const lnl = dv.getUint16(f.off + 26, true), lxl = dv.getUint16(f.off + 28, true);
+      const raw = u8.subarray(f.off + 30 + lnl + lxl, f.off + 30 + lnl + lxl + f.csize); return td.decode(f.method === 0 ? raw : await inflateRaw(raw)); } }; };
+})();
+function wholeFile(){ return new Promise((res, rej) => { Office.context.document.getFileAsync(Office.FileType.Compressed, { sliceSize: 4194304 }, r => {
+  if (r.status !== Office.AsyncResultStatus.Succeeded) return rej(new Error('getFile'));
+  const f = r.value, n = f.sliceCount, parts = []; let got = 0;
+  for (let i = 0; i < n; i++) f.getSliceAsync(i, s => { if (s.status !== Office.AsyncResultStatus.Succeeded){ f.closeAsync(); return rej(new Error('slice')); }
+    parts[i] = new Uint8Array(s.value.data); if (++got === n){ f.closeAsync(); const out = new Uint8Array(parts.reduce((a,p)=>a+p.length,0)); let o = 0; parts.forEach(p=>{ out.set(p,o); o+=p.length; }); res(out); } }); }); }); }
+async function nativeEq(pic){ // null = could not read; false = no equation in that shape
+  try {
+    const info = await PowerPoint.run(async ctx => {
+      const P = ctx.presentation, all = P.slides; all.load('items/id'); const sl = P.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+      const slide = sl.items[0]; const sh = slide.shapes.getItem(pic.id); sh.load('id,name,left,top,width,height'); await ctx.sync();
+      let b64 = null;
+      if (Office.context.requirements.isSetSupported('PowerPointApi','1.8')){ try { const ex = slide.exportAsBase64(); await ctx.sync(); b64 = ex.value; } catch(e){} }
+      return { b64, idx: all.items.findIndex(x => x.id === slide.id), sh: { id: sh.id, name: sh.name, left: sh.left, top: sh.top, width: sh.width, height: sh.height } };
+    });
+    let xml = null;
+    if (info.b64){ const z = zipOf(Uint8Array.from(atob(info.b64), c => c.charCodeAt(0))); const nm = Object.keys(z.files).find(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)); xml = nm && await z.text(nm); }
+    if (!xml){ const z = zipOf(await wholeFile());
+      const pres = await z.text('ppt/presentation.xml'), rels = await z.text('ppt/_rels/presentation.xml.rels');
+      const rid = [...pres.matchAll(/<p:sldId\b[^>]*r:id="([^"]+)"/g)].map(m => m[1])[info.idx];
+      const tgt = rid && (rels.match(new RegExp('Id="'+rid+'"[^>]*Target="([^"]+)"')) || rels.match(new RegExp('Target="([^"]+)"[^>]*Id="'+rid+'"')) || [])[1];
+      if (tgt) xml = await z.text('ppt/' + tgt.replace(/^\/?ppt\//,'').replace(/^\.\.\//,'')); }
+    if (!xml) return null;
+    const list = OMML.fromSlideXml(xml); if (!list.length) return false;
+    const s = info.sh, near = f => Math.abs(f.left - s.left) + Math.abs(f.top - s.top) + Math.abs(f.width - s.width) + Math.abs(f.height - s.height);
+    const byId = list.find(f => String(f.id) === String(s.id) && f.name === s.name);
+    const hit = byId || list.filter(f => f.name === s.name).sort((a,b)=>near(a)-near(b))[0] || list.slice().sort((a,b)=>near(a)-near(b))[0];
+    return hit && (byId || hit.name === s.name || near(hit) < 40) ? hit : false;
+  } catch(e){ return null; }
+}
+window.__aeq.nativeEq = nativeEq;
+
 async function readSelection(){
   if (!hasPPT()) return { unsupported:true };
   return PowerPoint.run(async ctx => {
@@ -2999,8 +3153,15 @@ if (window.Office) Office.onReady(info => {
         const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
         const t = sl.items[0].shapes.getItem(pic.id).tags.getItemOrNullObject(TAG); t.load('value'); await ctx.sync();
         return t.isNullObject ? null : t.value; }); } catch(e){}
-      if (!raw) return flash('لا يوجد كود محفوظ لهذه الصورة.', false);
-      let m; try { m = JSON.parse(decodeURIComponent(raw)); } catch(e){ return flash('تعذّرت قراءة الكود.', false); }
+      let m;
+      if (!raw){ // a native PowerPoint equation: read it from the slide file and write it in Arabic order
+        flash('جارٍ قراءة المعادلة…');
+        const nat = await nativeEq(pic);
+        if (!nat) return flash(nat===false ? 'لا يوجد كود محفوظ لهذه الصورة.' : 'تعذّرت قراءة المعادلة.', false);
+        m = { c: nat.code, color: nat.color, pt: nat.pt };
+        setTimeout(()=>flash('حُوّلت المعادلة. راجعها ثم اضغط «تعديل».'), 50);
+      }
+      else { try { m = JSON.parse(decodeURIComponent(raw)); } catch(e){ return flash('تعذّرت قراءة الكود.', false); } }
       if (m.color) setColor(m.color);
       if (m.align) setAlign(m.align);
       if (m.pt) setSize(+m.pt, !!m.m);
