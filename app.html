@@ -2923,6 +2923,8 @@ let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 const OMML = (() => {
   const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
   const isD = c => /[0-9٠-٩]/.test(c);
@@ -2944,12 +2946,14 @@ const OMML = (() => {
         const pos = bl > 0 ? 'sup' : bl < 0 ? 'sub' : '';
         for (let i = 0; i < t.length; ){
           const c = t[i];
-          if (/\s/.test(c)){ i++; continue; }
+          if (/\s/.test(c) || c === '&'){ i++; continue; } // & only marks an alignment point
           if (isD(c)){ let k = i; while (k < t.length && (isD(t[k]) || (/[.,٫]/.test(t[k]) && isD(t[k+1])))) k++; out.push({s:t.slice(i,k), pos, num:true}); i = k; continue; }
           if (c === 'ـ'){ out.push({s:'−', pos}); i++; continue; } // a tatweel standing alone is used as a minus
           if (isAr(c) && isAr(t[i+1])){ let k = i; while (k < t.length && isAr(t[k])) k++; const w = t.slice(i,k), bare = w.replace(/[\u064B-\u065F\u0670\u0640]/g,'');
             if (MW.has(bare)){ out.push({s:w, pos}); i = k; continue; } // نق ، جا … stay math words
-            if (bare.length >= 3 || n.getElementsByTagNameNS(M,'nor').length){ out.push({s:'نص{'+w+'}', pos, word:true}); i = k; continue; } // a word stays as written
+            if (bare.length >= 3 || n.getElementsByTagNameNS(M,'nor').length){ // a word (and the words right after it: one phrase) stays as written
+              let e = k; for (;;){ let q = e; while (t[q] === ' ') q++; if (q === e || !isAr(t[q]) || !isAr(t[q+1])) break; let r = q; while (r < t.length && isAr(t[r])) r++; e = r; }
+              out.push({s:'نص{'+t.slice(i,e)+'}', pos, word:true}); i = e; continue; }
           }
           if (isAr(c)){ let k = i+1; while (k < t.length && /[\u064B-\u065F\u0670\u0640]/.test(t[k])) k++; out.push({s:t.slice(i,k), pos, letter:true}); i = k; continue; } // one letter (with its tatweel/harakat)
           out.push({s: c === '-' ? '−' : c, pos}); i++;
@@ -2980,6 +2984,10 @@ const OMML = (() => {
       else if (ln === 'nary'){ const pr = kid(n,'naryPr'); const ch = pr && kid(pr,'chr'); const c = ch ? (ch.getAttributeNS(M,'val')||ch.getAttribute('m:val')) : '∫'; out.push({s:c+' '+conv(kid(n,'e'))}); }
       else if (ln === 'm' && kids(n,'mr').length===2 && kids(n,'mr').every(r=>kids(r,'e').length===1) && kids(n,'mr').some(r=>!r.textContent.trim())){ // a 2-row column used to raise/lower a small number
         const [top,bot]=kids(n,'mr').map(r=>conv(kids(r,'e')[0])); out.push({s: top||bot, pos: top?'sup':'sub'}); }
+      else if (ln === 'm' && kids(n,'mr').length === 1){ out.push({s: kids(kids(n,'mr')[0],'e').map(conv).reverse().filter(Boolean).join(' '), aligned:true}); } // a one-row matrix only lines things up: keep its content
+      else if (ln === 'm' && kids(n,'mr').some(r => kids(r,'e').some(e => /^\s*=/.test(conv(e)) || /=\s*$/.test(conv(e))))){ // rows lined up on = : one line per row
+        out.push({s: kids(n,'mr').map(r => kids(r,'e').map(conv).reverse().filter(Boolean).join(' ')).join('\n'), aligned:true}); }
+      else if (ln === 'eqArr'){ out.push({s: kids(n,'e').map(conv).join('\n'), aligned:true}); }
       else if (ln === 'm'){ out.push({s:'مصفوفة{'+kids(n,'mr').map(r=>kids(r,'e').map(conv).reverse().join(' & ')).join(' ; ')+'}'}); }
     }
     return out;
@@ -3067,7 +3075,10 @@ const OMML = (() => {
       const runs = [...sp.getElementsByTagName('*')].filter(e => e.localName==='r' && [...e.childNodes].some(c => c.localName==='t' && c.textContent.trim()));
       const clr = runs.map(r => { const rp = kid(r,'rPr'); const f = rp && kid(rp,'solidFill'); return f && kid(f,'srgbClr'); }).find(Boolean);
       const szs = runs.map(r => kid(r,'rPr')).filter(Boolean).filter(r => !r.getAttribute('baseline')).map(r=>+r.getAttribute('sz')).filter(Boolean);
-      out.push({id: nv ? nv.getAttribute('id') : '', name: nv ? nv.getAttribute('name') : '', code: lines.join('\n'),
+      let code = lines.join('\n');
+      const lined = [...sp.getElementsByTagNameNS(M,'m'), ...sp.getElementsByTagNameNS(M,'eqArr')].length && code.split('\n').filter(l => /=/.test(l)).length > 1;
+      if (lined) code = 'محاذاة{يساوي} ' + code; // the lines were lined up on = in PowerPoint
+      out.push({id: nv ? nv.getAttribute('id') : '', name: nv ? nv.getAttribute('name') : '', code,
         left: off ? +off.getAttribute('x')/E : 0, top: off ? +off.getAttribute('y')/E : 0, width: ext ? +ext.getAttribute('cx')/E : 0, height: ext ? +ext.getAttribute('cy')/E : 0,
         color: clr ? '#'+clr.getAttribute('val').toLowerCase() : null, pt: szs.length ? Math.max(...szs)/100 : null});
     }
