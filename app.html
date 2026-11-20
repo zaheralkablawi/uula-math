@@ -2604,7 +2604,7 @@ async function readEquationImage(file){
   try {
     const { text } = await sampleFn(OCR_PROMPT, { images: file });
     let t = text.replace(/^```[a-z]*\n?|```$/g,'').trim();
-    for (let k=0;k<4;k++) t=t.replace(/([٠-٩]) (?=[٠-٩])/g,'$1').replace(/([٠-٩]) ?([,،٫]) ?(?=[٠-٩])/g,'$1,'); // ١ ٣ → ١٣ ، ٦ , ٥ → ٦,٥
+    for (let k=0;k<4;k++) t=t.replace(/([٠-٩]) (?=[٠-٩])/g,'$1').replace(/([٠-٩]) [,٫] ?(?=[٠-٩])/g,'$1,'); // ١ ٣ → ١٣ ، ٦ , ٥ → ٦,٥
     if (!t || t==='NONE'){ flash('لم أجد معادلة في الصورة.', false); }
     else { src.focus(); const s0=src.selectionStart, e0=src.selectionEnd; src.setRangeText(t, s0, e0, 'end'); snap(true); update(); flash('أُضيف النص من الصورة. راجعه.'); }
   } catch(e){
