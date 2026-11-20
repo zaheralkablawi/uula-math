@@ -368,6 +368,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط سهمي</td><td><code>مخطط.سهمي{</code> ثم <code>النقاط : ١، ٢، ٣، ٥</code> ثم <code>العلاقة : (١، ٣)، (٣، ٥)، (٥، ٣)، (٣، ٣)</code> ثم <code>}</code>. كل زوج سهم من الأول إلى الثاني، والزوج (أ، أ) حلقة، والزوجان المتعاكسان قوسان متقابلان</td></tr>
           <tr><td>مخطط سهمي بين مجموعتين</td><td><code>مخطط.سهمي{</code> ثم <code>س : ٣، ٤، ٥</code> ثم <code>ص : ٠، ١، ٢، ٣</code> ثم <code>العلاقة : (٣، ٠)، (٤، ١)</code> ثم <code>}</code>. الأولى يمينًا والثانية يسارًا، والسهم من الأولى إلى الثانية. للمستطيلات بدل البيضاوي: <code>مخطط.سهمي.مستطيل{…}</code></td></tr>
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
+          <tr><td>رسم المتباينات</td><td>في <code>تمثيل.بياني{…}</code> اكتب المتباينة مكان الدالة: <code>ص &gt; س + ٣</code> ، <code>ص ≤ س − ١</code> ، <code>س ≥ ٢</code>. تُظلَّل منطقة الحل بشفافية ٤٠٪، والخط متقطع مع &lt; و&gt; ومتصل مع ≤ و≥. اللون: <code>ص &gt; س &amp; أحمر</code></td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
           <tr><td>زاوية</td><td><code>زاوية{أ ب جـ}</code></td></tr>
           <tr><td>نهاية، مجموع، تكامل</td><td><code>نها{س ← ٣}</code> ، <code>مجموع{ر = ١}{ن}</code> ، <code>تكامل{١}{٢}</code></td></tr>
@@ -504,7 +505,7 @@ class P {
     const key=w=>w.replace(/\s+/g,'').replace(/[أإآ]/g,'ا').replace(/ة$/,'ه'), isG=w=>key(w)==='شبكه', isN=w=>/^(ارقام|الارقام)$/.test(key(w)), REL=/[≤≥<>⩽⩾]/;
     const num=w=>{ const v=parseFloat(toLatinDigits(w||'').replace(/\s+/g,'').replace(/[−–]/g,'-').replace(/[٫،,]/g,'.')); return isNaN(v)?null:v; };
     const lab=w=>(w||'').replace(/\s+/g,' ').trim();
-    if (split(body,/&/).length>1){ // older form: الدالة & شبكة & س & ص & أرقام
+    if (split(body,/&/).length>1 && split(body,/;/).length<2){ // older form: الدالة & شبكة & س & ص & أرقام
       const parts=split(body,/&/), opt=parts.slice(1), grid=opt.some(isG), nums=opt.some(isN); let labs;
       if (parts.length===5) labs=[parts[2],parts[3]].map(w=>isG(w)||isN(w)?'':w); else labs=opt.filter(w=>w && !isG(w) && !isN(w));
       const xl=lab(labs[0]), yl=lab(labs[1]); return this.plotFrom(parts[0]||'', {pos:q1, grid, nums, nolab:!xl&&!yl, xl, yl}, i0); }
@@ -514,6 +515,7 @@ class P {
       else if (/^(ال)?علاقة\s*[:：]/.test(it)){ const re=/\(\s*([^()،,]+?)\s*[،,]\s*([^()]+?)\s*\)/g; let m; while ((m=re.exec(it))){ const x=num(m[1]), y=num(m[2]); if (x!=null && y!=null) pts.push({x,y,lab:'',rel:true}); } } // graph of a relation: a dot for each pair, no labels
       else if (/^نقط[ةه]/.test(it)){ const re=/([^\s()]*)\s*\(\s*([^()،,]+?)\s*[،,]\s*([^()]+?)\s*\)/g; let m; while ((m=re.exec(it.replace(/^نقط[ةه]\s*/,'')))){ const x=num(m[2]), y=num(m[3]); if (x!=null && y!=null) pts.push({x,y,lab:m[0].trim()}); } }
       else if (/^(خط\.?)?تقارب/.test(it)){ const m=/(س|ص)\s*=\s*(.+)$/.exec(it); if (m && num(m[2])!=null) asy.push({ax:m[1]==='س'?'x':'y', v:num(m[2])}); }
+      else if (/^(لون\s*\{[^{}]*\}\s*\{)?\s*(ص|س)\s*[<>≤≥⩽⩾]/.test(it) && (it.match(/[<>≤≥⩽⩾]/g)||[]).length===1) fns.push(it); // an inequality to shade
       else if (REL.test(it)){ const ps=it.split(REL).map(x=>x.trim()); let lo=null, hi=null, nm='';
         if (ps.length>=3){ lo=num(ps[0]); nm=ps[1]; hi=num(ps[ps.length-1]); } else if (num(ps[0])!=null || ps[0]==='عدد'){ lo=num(ps[0]); nm=ps[1]; } else { nm=ps[0]; hi=num(ps[1]); }
         if (lo!=null && hi!=null && lo>hi) [lo,hi]=[hi,lo]; axes.push({lo,hi,nm:lab(nm)}); }
@@ -531,7 +533,12 @@ class P {
     while (this.peek()==='{' && nums.length<4){ const v=parseFloat(toLatinDigits(this.raw()).replace(/[−–]/g,'-').replace(/[٫،,]/g,'.')); nums.push(v); }
     const D0=F.pos?0:-5, D1=F.pos?10:5; let [x0=D0,x1=D1,y0,y1]=nums; if (!(x1>x0)){ x0=D0; x1=D1; } if (y0==null||isNaN(y0)) y0=x0; if (y1==null||isNaN(y1)||!(y1>y0)) y1=y0===x0?x1:y0+(x1-x0);
     if (F.range && !nums.length) [x0,x1,y0,y1]=F.range;
-    const fns=[]; body.split(/[;؛]/).map(x=>x.trim()).filter(Boolean).forEach((e,k)=>{ let col=null; const lm=/^لون\s*\{([^{}]*)\}\s*\{(.*)\}$/s.exec(e); if (lm){ col=colorOf(lm[1]); e=lm[2]; } const ex=e.replace(/^\s*(ص|y)\s*=\s*/i,'').trim();
+    const fns=[]; body.split(/[;؛]/).map(x=>x.trim()).filter(Boolean).forEach((e,k)=>{ let col=null; const lm=/^لون\s*\{([^{}]*)\}\s*\{(.*)\}$/s.exec(e); if (lm){ col=colorOf(lm[1]); e=lm[2]; }
+      const iq=/^\s*(ص|y|س|x)\s*([<>≤≥⩽⩾])\s*(.+)$/i.exec(e); // inequality: shade above / below (or right / left), dashed edge for < >
+      if (iq){ let rhs=iq[3]; const ai=rhs.lastIndexOf('&'); if (ai>=0){ col=colorOf(rhs.slice(ai+1))||col; rhs=rhs.slice(0,ai); } if (HINTW.has(rhs.trim())) return;
+        const big=/[>≥⩾]/.test(iq[2]), strict=/[<>]/.test(iq[2]); let f; try { f=compileFn('ص = '+rhs); } catch(er){ this.err('لم أفهم المتباينة: '+e.trim(), this.at(i0)); }
+        fns.push({f, color: col || '#1f71de', ineq:{up:big, strict, vert:/^(س|x)$/i.test(iq[1])}}); return; }
+      const ex=e.replace(/^\s*(ص|y)\s*=\s*/i,'').trim();
       if (!ex || HINTW.has(ex)) return; let f; try { f=compileFn(e); } catch(er){ this.err('لم أفهم الدالة: '+e.trim(), this.at(i0)); }
       fns.push({f, color: col || PLOTCOL[k%PLOTCOL.length]}); });
     return {t:'plot', fns, x0, x1, y0, y1, grid:F.grid, nums:F.nums, nolab:F.nolab, xl:F.xl, yl:F.yl, pts:F.pts||[], asy:F.asy||[]}; }
@@ -1441,7 +1448,22 @@ function plotBox(n, sz){
       if (x0<=0&&0<=x1&&y0<=0&&0<=y1){ const b=numB(0); b.draw(g, ox-b.w-sz*.1, oy+b.a+sz*.12); } }
     // curves, clipped to the grid
     const clip=(ax_,ay,bx,by)=>{ let t0=0,t1=1; const dx=bx-ax_, dy=by-ay; for (const [pp,q] of [[-dx,ax_-gx],[dx,gx+gw-ax_],[-dy,ay-gy],[dy,gy+gh-ay]]){ if (pp===0){ if (q<0) return null; } else { const r=q/pp; if (pp<0){ if (r>t1) return null; if (r>t0) t0=r; } else { if (r<t0) return null; if (r<t1) t1=r; } } } return [ax_+t0*dx, ay+t0*dy, ax_+t1*dx, ay+t1*dy]; };
-    for (const fn of n.fns){ const N=900; let prev=null; g.save(); g.fillStyle=fn.color;
+    for (const fn of n.fns.filter(f=>f.ineq)){ const q=fn.ineq, N=600; g.save(); // shaded half-plane, then its edge with arrows at both ends
+      let edge=[];
+      if (q.vert){ let c; try { c=fn.f(0); } catch(e){ c=NaN; } if (!isFinite(c)){ g.restore(); continue; } const cx=X(Math.max(x0,Math.min(x1,c)));
+        g.globalAlpha=.4; g.fillStyle=fn.color; g.beginPath(); if (q.up){ g.rect(cx,gy,gx+gw-cx,gh); } else g.rect(gx,gy,cx-gx,gh); g.fill(); g.globalAlpha=1;
+        if (c>=x0 && c<=x1) edge=[[cx,gy+gh],[cx,gy]]; }
+      else { const P_=[]; for (let k=0;k<=N;k++){ const xv=x0+sx*k/N; let yv; try{ yv=fn.f(xv); }catch(e){ yv=NaN; } if (!isFinite(yv)) continue; P_.push([X(xv), Y(Math.max(y0,Math.min(y1,yv))), yv>=y0 && yv<=y1]); }
+        if (P_.length>1){ g.globalAlpha=.4; g.fillStyle=fn.color; g.beginPath(); g.moveTo(P_[0][0], q.up?gy:gy+gh); for (const p of P_) g.lineTo(p[0],p[1]); g.lineTo(P_[P_.length-1][0], q.up?gy:gy+gh); g.closePath(); g.fill(); g.globalAlpha=1;
+          edge=P_.filter(p=>p[2]).map(p=>[p[0],p[1]]); } }
+      if (edge.length>1){ g.fillStyle=fn.color;
+        if (q.strict){ const dl=sz*.16; let acc=0, on=true; stroke(g,t*1.5,()=>{ g.moveTo(edge[0][0],edge[0][1]); for (let k=1;k<edge.length;k++){ const [ax_,ay]=edge[k-1], [bx,by]=edge[k]; let L=Math.hypot(bx-ax_,by-ay), s0=0;
+            while (s0<L){ const step=Math.min(dl-acc, L-s0); const tx=ax_+(bx-ax_)*(s0+step)/L, ty=ay+(by-ay)*(s0+step)/L; if (on) g.lineTo(tx,ty); else g.moveTo(tx,ty); s0+=step; acc+=step; if (acc>=dl-1e-6){ acc=0; on=!on; } } } }); }
+        else stroke(g,t*1.5,()=>{ g.moveTo(edge[0][0],edge[0][1]); for (const p of edge) g.lineTo(p[0],p[1]); });
+        const tip=(a,b)=>{ const L=Math.hypot(a[0]-b[0],a[1]-b[1])||1, ux=(a[0]-b[0])/L, uy=(a[1]-b[1])/L; stroke(g,t*1.5,()=>{ g.moveTo(a[0]-ux*ah-uy*ah*.6, a[1]-uy*ah+ux*ah*.6); g.lineTo(a[0],a[1]); g.lineTo(a[0]-ux*ah+uy*ah*.6, a[1]-uy*ah-ux*ah*.6); }); };
+        const k2=Math.min(edge.length-1, 8); tip(edge[0], edge[k2]); tip(edge[edge.length-1], edge[edge.length-1-k2]); }
+      g.restore(); }
+    for (const fn of n.fns.filter(f=>!f.ineq)){ const N=900; let prev=null; g.save(); g.fillStyle=fn.color;
       stroke(g,t*1.7,()=>{ let lx=null, ly=null;
         for (let k=0;k<=N;k++){ const xv=x0+sx*k/N; let yv; try{ yv=fn.f(xv); }catch(e){ yv=NaN; }
           const ok=isFinite(yv) && Math.abs(yv)<1e7, cur=ok?[X(xv),Y(yv),yv]:null;
@@ -1837,7 +1859,7 @@ function placeCaret(){
 // light grey help under the writing box while the caret is inside a tool: shown for 10 s, the i button shows it again until pressed off
 const HJ=['الخلايا: بينها &amp;','الصفوف: كل صف في سطر'];
 const CTXHINT=Object.fromEntries(Object.entries({
- 'تمثيل.بياني':['الدالة: في السطر الأول مثل ص = س^٢، وكل دالة إضافية في سطر','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)','خط تقارب: تقارب س = ٢'],
+ 'تمثيل.بياني':['الدالة: في السطر الأول مثل ص = س^٢، وكل دالة إضافية في سطر','المتباينة: مكان الدالة مثل ص > س + ٣ (يُظلَّل الحل، والخط متقطع مع < و>)','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)','خط تقارب: تقارب س = ٢'],
  'شبكة':['العلاقة: العلاقة : (١، ٠)، (٢، ٣) نقطة لكل زوج، والحدود «عدد» تُضبط وحدها','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)'],
  'خط.أعداد':['المدى: −٥ &lt; س &lt; ٥ مع اسم المحور','أرقام وعلامات: احذف ما لا تريده','الحل: الحل −٢ &lt; س ≤ ٣، و&lt; مفتوحة و≤ مغلقة','أكثر من جزء: الحل س &lt; −١ أو س ≥ ٢'],
  'فن':['ش: المجموعة الشاملة التي تحتوي كل العناصر','س، ص، ع: عناصر كل مجموعة كاملة، والتقاطعات تُحسب وحدها','التظليل: ظلل : س ∩ ص &amp; أحمر','الرموز: ∩ تقاطع، ∪ اتحاد، − فرق، \' متممة، () للتجميع'],
@@ -2493,6 +2515,7 @@ Syntax (write in logical reading order, first token = rightmost on the page):
 - arrow diagram of a relation: مخطط.سهمي{⏎النقاط : ١، ٢، ٣⏎العلاقة : (١، ٢)، (٢، ١)، (٣، ٣)⏎} (each pair is an arrow from the first to the second; (أ، أ) is a loop; isolated points just appear)
 - arrow diagram between two sets: مخطط.سهمي{⏎س : ٣، ٤، ٥⏎ص : ٠، ١، ٢، ٣⏎العلاقة : (٣، ٠)، (٤، ١)⏎} (first set drawn on the right in an oval, arrows go from it to the second set; rectangles instead of ovals: مخطط.سهمي.مستطيل{…})
 - graph of a relation (dots on a grid): شبكة{⏎شبكة⏎عدد ≤ س ≤ عدد⏎عدد ≤ ص ≤ عدد⏎أرقام⏎العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)⏎} (write the limits seen in the picture instead of عدد)
+- graph of an inequality: in تمثيل.بياني{…} write the inequality in place of the function: ص > س + ٣ , ص ≤ س − ١ , س ≥ ٢ (shaded at 40%, dashed edge for < >), optional colour: ص > س & أحمر
 - arrow with writing above it (stretches with the text): سهم{...} (←) or سهم.يمين{...} (→)
 - limit: نها{س ← ٣}; sum with limits: مجموع{lower}{upper}; integral: تكامل{lower}{upper}; combinations ن ق ر: توافيق{ن}{ر} (or in parentheses, ن over ر: توافيق.أقواس{ن}{ر}); permutations: تباديل{ن}{ر}
 - several lines in the image: put each on its own line.
@@ -2542,7 +2565,8 @@ st.darkBg=0; $('darkBg').setAttribute('aria-pressed','false'); // opens in the n
 st.strokeMul=1;
 { const opts=[...$('size').options].map(o=>+o.value); if (!opts.includes(st.pt)) st.pt=opts.reduce((a,b)=>Math.abs(b-st.pt)<Math.abs(a-st.pt)?b:a); $('size').value=String(st.pt); } $('weight').value=st.weight;
 // ---- what's new: shown once after each update (change NEWS.id and the list with every release) ----
-const NEWS = { id:'2026-11-20b', items:[
+const NEWS = { id:'2026-11-20c', items:[
+  'رسم المتباينات: اكتب ص > س + ٣ مكان الدالة في التمثيل البياني',
   'مخطط بياني لعلاقة: سطر العلاقة : (١، ٠)، (٢، ٣) داخل شبكة{…}',
   'مخطط سهمي للعلاقات: مخطط.سهمي{النقاط … العلاقة …}، وبين مجموعتين: س : … ص : …',
   'تظليل في شكل فِن: ظلل : س ∩ ع (أو ∪ أو − أو المتممة) & لون',
