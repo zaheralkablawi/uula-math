@@ -2921,6 +2921,7 @@ let lastPic=null, emptyAt=0, paneAt=0, outStack={ slide:null, y:0 };
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 // OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
+// OMML (PowerPoint/Word native equation, typed left-to-right) → UULA Arabic Math code (Arabic right-to-left order)
 const OMML = (() => {
   const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
   const isD = c => /[0-9٠-٩]/.test(c);
@@ -2990,12 +2991,12 @@ const OMML = (() => {
     for (let i = 0; i < it.length; i++){
       const x = it[i];
       if (x.pos && res.length && !res[res.length-1].pos){ // gather the whole raised group
-        let s = x.s; while (it[i+1] && it[i+1].pos === x.pos){ s += it[++i].s; }
+        let s = MIR[x.s] || x.s; while (it[i+1] && it[i+1].pos === x.pos){ const y = it[++i].s; s += MIR[y] || y; } // brackets turn round with the order
         const base = res[res.length-1]; base.s += (x.pos==='sup'?'^':'_') + (s.length>1?'{'+s+'}':s); continue; }
       if (x.angle){ // ∠: the letter before (in Arabic order), the marked one, the letter after
         const prev = res.length && res[res.length-1].letter ? res.pop().s : '', nx = it[i+1] && it[i+1].letter && !it[i+1].pos ? it[++i].s : '';
         res.push({s:'زاوية{'+[prev, x.s, nx].filter(Boolean).join(' ')+'}', pos:''}); continue; }
-      res.push({s: MIR[x.s] && !'(){}[]'.includes(x.s) ? MIR[x.s] : x.s, pos:'', letter:x.letter});
+      res.push({s: MIR[x.s] || x.s, pos:'', letter:x.letter});
     }
     // join: numbers right before letters stay glued visually by a space only
     return res.map(r=>r.s).join(' ').replace(/\s+/g,' ').trim();
