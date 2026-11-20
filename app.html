@@ -1785,7 +1785,7 @@ class SvgCtx {
 function makeSVG(src){
   const ctx=new SvgCtx(); const {W,H}=render(src.trim()?src:' ', ctx);
   const n=SvgCtx.n;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W*.75)}pt" height="${n(H*.75)}pt" viewBox="0 0 ${n(W)} ${n(H)}" direction="ltr">${ctx.out.join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W*.75)}pt" height="${n(H*.75)}pt" viewBox="0 0 ${n(W)} ${n(H)}" direction="ltr"><metadata>${KEY}:${b64u(src)}</metadata>${ctx.out.join('')}</svg>`; // the code rides inside the picture too
 }
 
 // ---------- PNG metadata (keeps the source inside the image) ----------
@@ -2892,7 +2892,10 @@ async function placeNew(o){
     else if (o.place){ sh.left = o.place.left + o.place.width - W; sh.top = o.place.top; } // same right edge and top as the old one
     else { sh.left = (slideW - W)/2; sh.top = (slideH - H)/2; }
     await ctx.sync();
-    if (o.meta && sh.tags){ try { sh.tags.add(TAG, o.meta); sh.name = 'UULA Math'; await ctx.sync(); } catch(e){} }
+    if (o.meta && sh.tags){ try { // long codes are split over several tags (a tag holds a limited length)
+      const parts = []; for (let i = 0; i < o.meta.length; i += 800) parts.push(o.meta.slice(i, i + 800));
+      sh.tags.add(TAG, parts[0]); parts.slice(1).forEach((x,i) => sh.tags.add(TAG + '_' + (i + 2), x)); sh.tags.add(TAG + '_N', String(parts.length));
+      sh.name = 'UULA Math'; await ctx.sync(); } catch(e){ try { sh.tags.add(TAG, o.meta); await ctx.sync(); } catch(e2){} } }
     return side ? { side } : true;
   }); } catch(e){ return false; }
 }
@@ -3028,7 +3031,7 @@ const zipOf = (() => {
     const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const files = {}, td = new TextDecoder();
     for (let i = 0; i < n; i++){ const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
       files[td.decode(u8.subarray(p + 46, p + 46 + nl))] = { method, csize, off }; p += 46 + nl + xl + cl; }
-    return { files, async text(name){ const f = files[name]; if (!f) return null; const lnl = dv.getUint16(f.off + 26, true), lxl = dv.getUint16(f.off + 28, true);
+    return { files, async bytes(name){ const f = files[name]; if (!f) return null; const lnl = dv.getUint16(f.off + 26, true), lxl = dv.getUint16(f.off + 28, true); const raw = u8.subarray(f.off + 30 + lnl + lxl, f.off + 30 + lnl + lxl + f.csize); return f.method === 0 ? raw : await inflateRaw(raw); }, async text(name){ const f = files[name]; if (!f) return null; const lnl = dv.getUint16(f.off + 26, true), lxl = dv.getUint16(f.off + 28, true);
       const raw = u8.subarray(f.off + 30 + lnl + lxl, f.off + 30 + lnl + lxl + f.csize); return td.decode(f.method === 0 ? raw : await inflateRaw(raw)); } }; };
 })();
 function wholeFile(){ return new Promise((res, rej) => { Office.context.document.getFileAsync(Office.FileType.Compressed, { sliceSize: 4194304 }, r => {
@@ -3036,6 +3039,15 @@ function wholeFile(){ return new Promise((res, rej) => { Office.context.document
   const f = r.value, n = f.sliceCount, parts = []; let got = 0;
   for (let i = 0; i < n; i++) f.getSliceAsync(i, s => { if (s.status !== Office.AsyncResultStatus.Succeeded){ f.closeAsync(); return rej(new Error('slice')); }
     parts[i] = new Uint8Array(s.value.data); if (++got === n){ f.closeAsync(); const out = new Uint8Array(parts.reduce((a,p)=>a+p.length,0)); let o = 0; parts.forEach(p=>{ out.set(p,o); o+=p.length; }); res(out); } }); }); }); }
+async function readTags(ids){ // the saved code of each shape (joined back from its parts), or null
+  try { return await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+    const sh = ids.map(id => sl.items[0].shapes.getItem(id)); const t1 = sh.map(x => x.tags.getItemOrNullObject(TAG)), tn = sh.map(x => x.tags.getItemOrNullObject(TAG + '_N'));
+    t1.forEach(t => t.load('value')); tn.forEach(t => t.load('value')); await ctx.sync();
+    const more = sh.map((x,i) => { const n = tn[i].isNullObject ? 1 : +tn[i].value || 1; const a = []; for (let k = 2; k <= n; k++){ const t = x.tags.getItemOrNullObject(TAG + '_' + k); t.load('value'); a.push(t); } return a; });
+    await ctx.sync();
+    return t1.map((t,i) => t.isNullObject ? null : t.value + more[i].map(x => x.isNullObject ? '' : x.value).join('')); });
+  } catch(e){ return ids.map(() => null); }
+}
 async function nativeEq(pic){ const r = await nativeEqs([pic]); return r === null ? null : r[0]; }
 async function nativeEqs(pics){ // per shape: its equation, or false; null = could not read the slide
   try {
@@ -3046,15 +3058,31 @@ async function nativeEqs(pics){ // per shape: its equation, or false; null = cou
       if (Office.context.requirements.isSetSupported('PowerPointApi','1.8')){ try { const ex = slide.exportAsBase64(); await ctx.sync(); b64 = ex.value; } catch(e){} }
       return { b64, idx: all.items.findIndex(x => x.id === slide.id), shs: shs.map(sh => ({ id: sh.id, name: sh.name, left: sh.left, top: sh.top, width: sh.width, height: sh.height })) };
     });
-    let xml = null;
-    if (info.b64){ const z = zipOf(Uint8Array.from(atob(info.b64), c => c.charCodeAt(0))); const nm = Object.keys(z.files).find(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)); xml = nm && await z.text(nm); }
-    if (!xml){ const z = zipOf(await wholeFile());
+    let xml = null, zipRef = null, slideName = '';
+    if (info.b64){ const z = zipOf(Uint8Array.from(atob(info.b64), c => c.charCodeAt(0))); const nm = Object.keys(z.files).find(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)); xml = nm && await z.text(nm); if (xml){ zipRef = z; slideName = nm; } }
+    if (!xml){ const z = zipOf(await wholeFile()); zipRef = z;
       const pres = await z.text('ppt/presentation.xml'), rels = await z.text('ppt/_rels/presentation.xml.rels');
       const rid = [...pres.matchAll(/<p:sldId\b[^>]*r:id="([^"]+)"/g)].map(m => m[1])[info.idx];
       const tgt = rid && (rels.match(new RegExp('Id="'+rid+'"[^>]*Target="([^"]+)"')) || rels.match(new RegExp('Target="([^"]+)"[^>]*Id="'+rid+'"')) || [])[1];
-      if (tgt) xml = await z.text('ppt/' + tgt.replace(/^\/?ppt\//,'').replace(/^\.\.\//,'')); }
+      if (tgt){ slideName = 'ppt/' + tgt.replace(/^\/?ppt\//,'').replace(/^\.\.\//,''); xml = await z.text(slideName); } }
     if (!xml) return null;
     const list = OMML.fromSlideXml(xml);
+    try { // pictures of this tool: the code is kept inside the image file itself
+      const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      const relName = slideName.replace(/slides\/(slide\d+\.xml)$/, 'slides/_rels/$1.rels'), rels = await zipRef.text(relName) || '';
+      const target = id => { const m = rels.match(new RegExp('Id="'+id+'"[^>]*Target="([^"]+)"')) || rels.match(new RegExp('Target="([^"]+)"[^>]*Id="'+id+'"')); return m && ('ppt/' + m[1].replace(/^\.\.\//,'').replace(/^\/?ppt\//,'')); };
+      for (const pc of doc.getElementsByTagNameNS('*','pic')){
+        const nv = pc.getElementsByTagNameNS('*','cNvPr')[0]; if (!nv) continue;
+        const ids = [...pc.getElementsByTagNameNS('*','svgBlip'), ...pc.getElementsByTagNameNS('*','blip')].map(b => b.getAttribute('r:embed') || b.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','embed')).filter(Boolean);
+        let code = null;
+        for (const rid of ids){ const t = target(rid); if (!t) continue; const by = await zipRef.bytes(t); if (!by) continue;
+          if (/\.svg$/i.test(t)){ const m = new TextDecoder().decode(by).match(/ArabicEq:([A-Za-z0-9+\/=]+)/); if (m){ try { code = decodeURIComponent(escape(atob(m[1]))); } catch(e){} } }
+          else { try { code = await readMeta(new Blob([by])); } catch(e){} }
+          if (code) break; }
+        if (code){ const off = pc.getElementsByTagNameNS('*','off')[0], ext = pc.getElementsByTagNameNS('*','ext')[0], E = 12700;
+          list.push({ id: nv.getAttribute('id'), name: nv.getAttribute('name'), code, left: off ? +off.getAttribute('x')/E : 0, top: off ? +off.getAttribute('y')/E : 0, width: ext ? +ext.getAttribute('cx')/E : 0, height: ext ? +ext.getAttribute('cy')/E : 0 }); }
+      }
+    } catch(e){}
     return info.shs.map(s => { if (!list.length) return false; const near = f => Math.abs(f.left - s.left) + Math.abs(f.top - s.top) + Math.abs(f.width - s.width) + Math.abs(f.height - s.height);
     const byId = list.find(f => String(f.id) === String(s.id) && f.name === s.name);
     const hit = byId || list.filter(f => f.name === s.name).sort((a,b)=>near(a)-near(b))[0] || list.slice().sort((a,b)=>near(a)-near(b))[0];
@@ -3167,11 +3195,7 @@ if (window.Office) Office.onReady(info => {
       if (!pic) return flash('حدد المعادلة أولًا.', false);
       const many = now.id ? await selectedAll() : [];
       if (many.length > 1) return editMany(many, now.slide);
-      let raw = null;
-      try { raw = await PowerPoint.run(async ctx => {
-        const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
-        const t = sl.items[0].shapes.getItem(pic.id).tags.getItemOrNullObject(TAG); t.load('value'); await ctx.sync();
-        return t.isNullObject ? null : t.value; }); } catch(e){}
+      const raw = (await readTags([pic.id]))[0];
       let m;
       if (!raw){ // a native PowerPoint equation: read it from the slide file and write it in Arabic order
         flash('جارٍ قراءة المعادلة…');
@@ -3197,10 +3221,7 @@ if (window.Office) Office.onReady(info => {
   async function editMany(list, slide){
     flash('جارٍ قراءة ' + list.length + ' مربعات…');
     list.sort((a,b) => (Math.abs(a.top-b.top) > 6 ? a.top-b.top : (b.left+b.width)-(a.left+a.width))); // top first; same row: the right one first
-    let tags = [];
-    try { tags = await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
-      const ts = list.map(x => { const t = sl.items[0].shapes.getItem(x.id).tags.getItemOrNullObject(TAG); t.load('value'); return t; }); await ctx.sync();
-      return ts.map(t => t.isNullObject ? null : t.value); }); } catch(e){ tags = list.map(()=>null); }
+    const tags = await readTags(list.map(x => x.id));
     const need = list.filter((x,i) => !tags[i]); const nat = need.length ? (await nativeEqs(need)) || need.map(()=>null) : [];
     const lines = [], used = []; let first = null;
     list.forEach((x,i) => { let code = null, meta = null;
