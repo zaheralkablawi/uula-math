@@ -743,6 +743,7 @@ class P {
     }
     this.i++;
     if (BIN.has(c)) return {t:'txt',s:c,k:'bin'};
+    if (c==='\uE3A0') return {t:'qmark'}; // red Q of the booklet questions
     if (c==='\uE0B9' || c==='⫽' || c==='∥') return {t:'txt',s:'∥',k:'rel'};
     if (REL.has(c)) return {t:'txt',s:c,k:'rel'};
     if (c==='،'||c===',') return {t:'txt',s:'،',k:'comma'};
@@ -1671,6 +1672,8 @@ function box(n, sz){
 function box0(n, sz){
   switch(n.t){
     case 'txt': return txtBox(n, sz);
+    case 'qmark': { const fs=sz*1.05, F=`950 ${fs}px "UULA Sans", sans-serif`; mc.font=F; const mm=mc.measureText('Q'); const l=mm.actualBoundingBoxLeft||0, r=mm.actualBoundingBoxRight||mm.width;
+      return { w:r+l, a:mm.actualBoundingBoxAscent||fs*.72, d:mm.actualBoundingBoxDescent||fs*.05, draw(g,x,y){ g.save(); g.font=F; g.fillStyle='#ff0000'; g.direction='ltr'; g.textAlign='left'; g.textBaseline='alphabetic'; g.fillText('Q', x+l, y); g.restore(); } }; }
     case 'row': return rowBox(n.c, sz);
     case 'frac': return fracBox(n, sz);
     case 'root': return rootBox(n, sz);
@@ -2224,6 +2227,7 @@ const MAZALL={"m1": [33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
 const ALLSYM=[]; const seen=new Set();
 const addSym=(ch,name)=>{ if(seen.has(ch)) return; seen.add(ch); ALLSYM.push({ch,name}); };
 SYMS.forEach(c=>addSym(c,null));
+addSym('\uE3A0','Q سؤال');
 MAZQ.forEach(([w,c,n])=>addSym(String.fromCharCode((w===1?MAZ.m1:MAZ.m2)+c), n));
 const DEFAULT_VISIBLE = ALLSYM.map(x=>x.ch);
 MAZALL.m1.forEach(c=>addSym(String.fromCharCode(MAZ.m1+c), null));
@@ -2343,7 +2347,7 @@ function itemButton(it){
     sp.textContent = MATHLETTER[it.ch] ? String.fromCharCode(0xE000+MATHLETTER[it.ch]) : it.ch; b.appendChild(sp);
     b.title=(it.fill?'في دائرة ملونة ':'في دائرة ')+(it.ch==='ه'?'هـ':it.ch); b.addEventListener('click',()=>insert((it.fill?'دائرة.ملونة{':'دائرة{')+it.ch+'}')); }
   else if (it.t==='text'){ b.className='fn'; b.textContent=it.s; b.title='الدالة '+it.s; b.addEventListener('click',()=>insert(it.s+' ')); }
-  else { b.className='sym'+(it.ch.length>1?' fn':''); b.textContent=it.ch; if (it.name) b.title=it.name; b.addEventListener('click',()=>{ if(!favEdit) noteUse(it.ch); }); b.addEventListener('click',()=>insert(it.ch===','?'، ':it.ch.length>1?it.ch+' ':it.ch)); }
+  else { b.className='sym'+(it.ch.length>1?' fn':''); b.textContent=it.ch; if (it.ch==='\uE3A0'){ b.innerHTML='<span style="font:950 16px \'UULA Sans\',sans-serif;color:#ff0000">Q</span>'; } if (it.name) b.title=it.name; b.addEventListener('click',()=>{ if(!favEdit) noteUse(it.ch); }); b.addEventListener('click',()=>insert(it.ch===','?'، ':it.ch.length>1?it.ch+' ':it.ch)); }
   b.dataset.fav = isFav(it) ? '1' : '0';
   if (favEdit) b.classList.add('favedit');
   // in "edit favourites" mode a click adds/removes; a right-click always does
