@@ -2517,7 +2517,7 @@ async function restoreFrom(file){
 }
 // ---- read an equation from a picture with Claude ----
 let sampleFn=null, ocrBusy=false;
-const OCR_PROMPT = `The image shows a math expression from an Arabic school booklet (written right-to-left). Transcribe it into the syntax of an Arabic equation editor and reply with ONLY that text, no explanation, no code fences.
+const OCR_PROMPT = `The image shows math from an Arabic school booklet (written right-to-left): equations, and possibly ordinary Arabic words or sentences mixed with them. Transcribe ALL of it into the syntax of an Arabic equation editor and reply with ONLY that text, no explanation, no code fences.
 Syntax (write in logical reading order, first token = rightmost on the page):
 - Eastern Arabic digits ٠١٢٣٤٥٦٧٨٩, decimal comma ","; Arabic letters as written (س ص ع أ ب جـ ...). Operators: + − × ÷ ± = ≠ < > ≤ ≥ ≅ ∈ ∉ ⊂ ⊆ ∩ ∪ ∅ ° π.
 - square root: جذر{...}; cube/nth root: جذر[٣]{...}
@@ -2542,16 +2542,19 @@ Syntax (write in logical reading order, first token = rightmost on the page):
 - graph of an inequality: in تمثيل.بياني{…} write the inequality in place of the function: ص > س + ٣ , ص ≤ س − ١ , س ≥ ٢ (shaded at 40%, dashed edge for < >), optional colour: ص > س & أحمر
 - arrow with writing above it (stretches with the text): سهم{...} (←) or سهم.يمين{...} (→)
 - limit: نها{س ← ٣}; sum with limits: مجموع{lower}{upper}; integral: تكامل{lower}{upper}; combinations ن ق ر: توافيق{ن}{ر} (or in parentheses, ن over ر: توافيق.أقواس{ن}{ر}); permutations: تباديل{ن}{ر}
-- several lines in the image: put each on its own line.
-If the image holds no math, reply exactly: NONE`;
+- ordinary Arabic words/phrases (not variables): wrap each run of words in نص{...}, e.g. نص{حجم المجسم} = نص{حجم نصف الكرة} + نص{حجم المخروط}; single letters used as variables (س ص ع م ل ...) and نق stay bare. Units after a number: ٤٢ π نص{سم}^٣
+- keep every line of the image as its own line, in the same order, including lines that start with =; stacked fractions are كسر{…}{…} even when small
+- colours: ignore the overall text colour; only a part coloured differently from the rest gets لون{أحمر}{...} (أحمر أزرق أخضر أسود برتقالي بنفسجي أرجواني وردي رمادي)
+- ignore watermarks, logos and background drawings
+If the image holds no math and no text, reply exactly: NONE`;
 async function readEquationImage(file){
   if (!sampleFn || ocrBusy) return;
-  ocrBusy=true; $('ocrStatus').textContent='يقرأ Claude المعادلة...';
+  ocrBusy=true; $('ocrStatus').textContent='يقرأ Claude الصورة...';
   try {
     const { text } = await sampleFn(OCR_PROMPT, { images: file });
     const t = text.replace(/^```[a-z]*\n?|```$/g,'').trim();
     if (!t || t==='NONE'){ flash('لم أجد معادلة في الصورة.', false); }
-    else { src.focus(); const s0=src.selectionStart, e0=src.selectionEnd; src.setRangeText(t, s0, e0, 'end'); snap(true); update(); flash('أُضيفت المعادلة من الصورة. راجعها قبل النسخ.'); }
+    else { src.focus(); const s0=src.selectionStart, e0=src.selectionEnd; src.setRangeText(t, s0, e0, 'end'); snap(true); update(); flash('أُضيف النص من الصورة. راجعه.'); }
   } catch(e){
     const msg = {not_granted:'لم يُسمح للأداة باستخدام Claude.', rate_limited:'طلبات كثيرة، حاول بعد قليل.', image_rejected:'الصورة غير مناسبة، جرّب صورة أخرى.', refused:'تعذّرت قراءة هذه الصورة.', session_expired:'سجّل الدخول من جديد.'}[e && e.code] || 'تعذّرت قراءة الصورة، حاول مرة أخرى.';
     if (e && (e.code==='not_granted' || e.code==='sampling_disabled' || e.code==='images_unavailable')) $('ocrBtn').hidden=true;
@@ -2559,6 +2562,7 @@ async function readEquationImage(file){
   } finally { ocrBusy=false; $('ocrStatus').textContent=''; }
 }
 $('ocrBtn').addEventListener('click', () => $('ocrFile').click());
+src.addEventListener('paste', e => { if (!sampleFn) return; const f=[...(e.clipboardData?.files||[])].find(x=>/^image\//.test(x.type)); if (f){ e.preventDefault(); readEquationImage(f); } });
 $('ocrFile').addEventListener('change', e => { const f=e.target.files[0]; if (f) readEquationImage(f); e.target.value=''; });
 (async () => {
   try {
