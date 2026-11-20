@@ -370,6 +370,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
           <tr><td>حرف بذيل</td><td>اكتب الحرف مرتين: <code>سس</code> ، <code>شش</code> ، <code>صص</code> ، <code>حح</code></td></tr>
           <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، يوازي // ، يعامد ⊥ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
+          <tr><td>محاذاة جزء</td><td>حدّد الأسطر ثم اختر المحاذاة، فتُطبَّق عليها وحدها. أو اكتب في أول السطر <code>محاذاة{يساوي}</code> (أو يمين، يسار، وسط) فتسري عليه وعلى ما بعده</td></tr>
           <tr><td>نوع خط الدالة</td><td>ضع المؤشر على سطر الدالة في <code>تمثيل.بياني{…}</code> واختر: متصل، متقطع، منقط. أو اكتب <code>ص = س^٢ &amp; متقطع</code> ، <code>ص = س &amp; منقط &amp; أحمر</code></td></tr>
           <tr><td>رسم المتباينات</td><td>في <code>تمثيل.بياني{…}</code> اكتب المتباينة مكان الدالة: <code>ص &gt; س + ٣</code> ، <code>ص ≤ س − ١</code> ، <code>س ≥ ٢</code>. تُظلَّل منطقة الحل بشفافية ٤٠٪، والخط متقطع مع &lt; و&gt; ومتصل مع ≤ و≥. اللون: <code>ص &gt; س &amp; أحمر</code></td></tr>
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
@@ -550,6 +551,7 @@ class P {
   atom(end){ const i0=this.i; const r=this.atom0(end); if (r && typeof r==='object' && this.map){ r.o0=this.at(i0); r.o1=this.at(this.i); } return r; }
   atom0(end){
     const s=this.s; const c=this.peek(); if(c===undefined) return null;
+    if (s.startsWith('محاذاة{', this.i)){ this.i+=6; const v=this.raw().trim(); return {t:'align', v:({'يمين':'right','يسار':'left','وسط':'center','يساوي':'eq','=':'eq'})[v]||'right'}; } // alignment of this line and the next ones
     if (s.startsWith('مخطط.سهمي', this.i) && /^مخطط\.سهمي(\.مستطيل)?\{/.test(s.slice(this.i, this.i+20))){ const isRect=s.startsWith('مخطط.سهمي.مستطيل', this.i); this.i+=isRect?16:9; const body=this.raw();
       // arrow diagram: one set (النقاط : …) or two sets (س : … / ص : …), then العلاقة : (أ، ب)، …
       const lab=t=>{ t=t.trim(); try { return new P(normalizeMap(t).s).seq(null); } catch(e){ return [{t:'txt',s:t,k:'word'}]; } };
@@ -1716,10 +1718,12 @@ function render(src, target){
   const sz = st.pt*96/72; // CSS px at 96 dpi, so 1 pt in PowerPoint = 1 pt here
   const boxes = lines.map(l => l.length ? rowBox(l, sz) : {w:0,a:sz*.5,d:sz*.2,draw(){}});
   const pad = sz*.3, lineGap = sz*.35;
-  const al = st.align==='eq' && boxes.filter(b=>b.eqx!=null).length>1;
-  const maxPre = al ? Math.max(...boxes.filter(b=>b.eqx!=null).map(b=>b.eqx)) : 0;
-  const maxPost = al ? Math.max(...boxes.filter(b=>b.eqx!=null).map(b=>b.w-b.eqx)) : 0;
-  const W = Math.max(...boxes.map(b=>b.w), al?maxPre+maxPost:0, sz) + 2*pad;
+  // each line's alignment: the global one, changed from a line holding محاذاة{…} onwards
+  let curA=st.align; const aligns=lines.map(l=>{ const m=l.find&&l.find(n=>n&&n.t==='align'); if (m) curA=m.v; return curA; });
+  const groups=[]; aligns.forEach((a,i)=>{ if (a==='eq'){ if (!groups.length || groups[groups.length-1].end!==i-1){ groups.push({start:i,end:i}); } else groups[groups.length-1].end=i; } });
+  for (const G of groups){ const bs=boxes.slice(G.start,G.end+1).filter(b=>b.eqx!=null); G.al=bs.length>1; G.pre=G.al?Math.max(...bs.map(b=>b.eqx)):0; G.post=G.al?Math.max(...bs.map(b=>b.w-b.eqx)):0; }
+  const grpOf=i=>groups.find(G=>i>=G.start&&i<=G.end);
+  const W = Math.max(...boxes.map(b=>b.w), ...groups.map(G=>G.al?G.pre+G.post:0), sz) + 2*pad;
   const H = boxes.reduce((s,b)=>s+b.a+b.d,0) + lineGap*(boxes.length-1) + 2*pad;
   let g;
   if (target){ g = target; }
@@ -1728,13 +1732,13 @@ function render(src, target){
   if (st.bg){ g.save(); g.fillStyle=st.bg; g.fillRect(0,0,W,H); g.restore(); } // background colour (none = transparent)
   g.fillStyle = st.color;
   let y = pad;
-  for (const b of boxes){ y += b.a;
-    let x0;
-    if (al && b.eqx!=null) x0 = (W-pad-maxPre)+b.eqx-b.w;
-    else if (st.align==='left') x0 = pad;
-    else if (st.align==='center') x0 = (W-b.w)/2;
+  boxes.forEach((b,i)=>{ y += b.a;
+    let x0; const A=aligns[i], G=grpOf(i);
+    if (G && G.al && b.eqx!=null) x0 = (W-pad-G.pre)+b.eqx-b.w;
+    else if (A==='left') x0 = pad;
+    else if (A==='center') x0 = (W-b.w)/2;
     else x0 = W-pad-b.w;
-    b.draw(g, x0, y); y += b.d + lineGap; }
+    b.draw(g, x0, y); y += b.d + lineGap; });
   return {W,H};
 }
 
@@ -2515,7 +2519,17 @@ $('weight').addEventListener('change', e => { const r=fmtSel.weight||selRange();
   if (r){ const v=e.target.value; e.target.value=String(st.weight); ensureFont(v).then(()=>wrapSel('سماكة', v, r)); return; }
   st.weight=e.target.value; save('aeq-weight',st.weight); ensureFont().then(update); });
 function setAlign(v){ st.align=v; save('aeq-align3', v); document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===v))); update(); }
-document.querySelectorAll('#align button').forEach(b=>b.addEventListener('click',()=>setAlign(b.dataset.v)));
+const ALNAME={right:'يمين',left:'يسار',center:'وسط',eq:'يساوي'};
+function alignLines(v){ const val=src.value; let a=src.selectionStart, e=src.selectionEnd; if (val.slice(a,e).endsWith('\n')) e--;
+  const ls=val.lastIndexOf('\n',a-1)+1, le=(val.indexOf('\n',e)+1||val.length+1)-1;
+  const before=val.slice(0,ls); let prevA=st.align; for (const m of before.matchAll(/محاذاة\{([^{}]*)\}/g)) prevA=({'يمين':'right','يسار':'left','وسط':'center','يساوي':'eq'})[m[1].trim()]||'right';
+  const strip=t=>t.replace(/محاذاة\{[^{}]*\}\s?/g,'');
+  let block=strip(val.slice(ls,le)); block='محاذاة{'+ALNAME[v]+'} '+block;
+  let rest=val.slice(le);
+  if (rest.length>1 && !/^\n\s*محاذاة\{/.test(rest)) rest='\nمحاذاة{'+ALNAME[prevA]+'} '+rest.slice(1);
+  src.focus(); src.setRangeText(block+rest, ls, val.length, 'preserve'); src.setSelectionRange(ls, ls+block.length); snap(true); schedule(); flash('طُبّقت المحاذاة على الأسطر المحددة.'); }
+document.querySelectorAll('#align button').forEach(b=>b.addEventListener('mousedown',e=>{ if (document.activeElement===src && src.selectionStart!==src.selectionEnd){ e.preventDefault(); b.dataset.sel='1'; alignLines(b.dataset.v); } }));
+document.querySelectorAll('#align button').forEach(b=>b.addEventListener('click',()=>{ if (b.dataset.sel){ delete b.dataset.sel; return; } setAlign(b.dataset.v); }));
 // dark preview: background rgb(16,18,23); the writing turns white while it is on, and back after
 let colorBeforeDark=null;
 // the preview box is resized from its corner, like the writing box; the equation grows with it
