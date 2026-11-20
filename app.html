@@ -553,6 +553,7 @@ class P {
   atom(end){ const i0=this.i; const r=this.atom0(end); if (r && typeof r==='object' && this.map){ r.o0=this.at(i0); r.o1=this.at(this.i); } return r; }
   atom0(end){
     const s=this.s; const c=this.peek(); if(c===undefined) return null;
+    if (s[this.i]==='Q' && !/[a-zA-Z]/.test(s[this.i+1]||'')){ this.i++; return {t:'qmark'}; } // red Q of the booklet questions
     if (s.startsWith('محاذاة{', this.i)){ this.i+=6; const v=this.raw().trim(); return {t:'align', v:({'يمين':'right','يسار':'left','وسط':'center','يساوي':'eq','=':'eq'})[v]||'right'}; } // alignment of this line and the next ones
     if (s.startsWith('مخطط.سهمي', this.i) && /^مخطط\.سهمي(\.مستطيل)?\{/.test(s.slice(this.i, this.i+20))){ const isRect=s.startsWith('مخطط.سهمي.مستطيل', this.i); this.i+=isRect?16:9; const body=this.raw();
       // arrow diagram: one set (النقاط : …) or two sets (س : … / ص : …), then العلاقة : (أ، ب)، …
@@ -2227,7 +2228,7 @@ const MAZALL={"m1": [33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
 const ALLSYM=[]; const seen=new Set();
 const addSym=(ch,name)=>{ if(seen.has(ch)) return; seen.add(ch); ALLSYM.push({ch,name}); };
 SYMS.forEach(c=>addSym(c,null));
-addSym('\uE3A0','Q سؤال');
+addSym('Q','Q سؤال');
 MAZQ.forEach(([w,c,n])=>addSym(String.fromCharCode((w===1?MAZ.m1:MAZ.m2)+c), n));
 const DEFAULT_VISIBLE = ALLSYM.map(x=>x.ch);
 MAZALL.m1.forEach(c=>addSym(String.fromCharCode(MAZ.m1+c), null));
@@ -2245,6 +2246,7 @@ function moveTo(ch, target, after){ // put ch next to target inside the visible 
 }
 function symButton(ch, inVisible){
   const b=document.createElement('button'); b.type='button'; b.className='sym'+(editSyms?' editing':''); b.textContent=ch; b.dataset.ch=ch;
+  if (ch==='Q') b.innerHTML='<span style="font:950 16px \'UULA Sans\',sans-serif;color:#ff0000">Q</span>'; // the booklet's red Q
   const name=symName[ch]; if (name){ b.title=name; b.setAttribute('aria-label',name); }
   b.addEventListener('click',()=>{
     if (!editSyms){ noteUse(ch); return insert(ch===','?'، ':ch.length>1?ch+' ':ch); }
@@ -2284,7 +2286,7 @@ function noteUse(ch){ if (!validSym.has(ch)) return; recent=[ch, ...recent.filte
 function renderRecent(){
   const rr=$('recentRow'); if (!rr) return; recentDirty=false; rr.innerHTML='';
   rr.hidden = editSyms || !recent.length; if (rr.hidden) return;
-  for (const ch of recent){ const b=document.createElement('button'); b.type='button'; b.className='sym'+(ch.length>1?' fn':''); b.textContent=ch; b.dataset.ch=ch;
+  for (const ch of recent){ const b=document.createElement('button'); b.type='button'; b.className='sym'+(ch.length>1?' fn':''); b.textContent=ch; b.dataset.ch=ch; if (ch==='Q') b.innerHTML='<span style="font:950 16px \'UULA Sans\',sans-serif;color:#ff0000">Q</span>';
     const name=symName[ch]; b.title = name ? name+' (الأكثر استخدامًا)' : 'الأكثر استخدامًا'; if (name) b.setAttribute('aria-label',name);
     b.addEventListener('click',()=>{ noteUse(ch); insert(ch===','?'، ':ch.length>1?ch+' ':ch); }); rr.appendChild(b); }
   requestAnimationFrame(()=>{ const k=[...rr.children]; if(!k.length) return; const y=k[0].offsetTop; k.forEach(b=>{ if (b.offsetTop>y+2) b.remove(); }); });
@@ -2347,7 +2349,7 @@ function itemButton(it){
     sp.textContent = MATHLETTER[it.ch] ? String.fromCharCode(0xE000+MATHLETTER[it.ch]) : it.ch; b.appendChild(sp);
     b.title=(it.fill?'في دائرة ملونة ':'في دائرة ')+(it.ch==='ه'?'هـ':it.ch); b.addEventListener('click',()=>insert((it.fill?'دائرة.ملونة{':'دائرة{')+it.ch+'}')); }
   else if (it.t==='text'){ b.className='fn'; b.textContent=it.s; b.title='الدالة '+it.s; b.addEventListener('click',()=>insert(it.s+' ')); }
-  else { b.className='sym'+(it.ch.length>1?' fn':''); b.textContent=it.ch; if (it.ch==='\uE3A0'){ b.innerHTML='<span style="font:950 16px \'UULA Sans\',sans-serif;color:#ff0000">Q</span>'; } if (it.name) b.title=it.name; b.addEventListener('click',()=>{ if(!favEdit) noteUse(it.ch); }); b.addEventListener('click',()=>insert(it.ch===','?'، ':it.ch.length>1?it.ch+' ':it.ch)); }
+  else { b.className='sym'+(it.ch.length>1?' fn':''); b.textContent=it.ch; if (it.ch==='Q'){ b.innerHTML='<span style="font:950 16px \'UULA Sans\',sans-serif;color:#ff0000">Q</span>'; } if (it.name) b.title=it.name; b.addEventListener('click',()=>{ if(!favEdit) noteUse(it.ch); }); b.addEventListener('click',()=>insert(it.ch===','?'، ':it.ch.length>1?it.ch+' ':it.ch)); }
   b.dataset.fav = isFav(it) ? '1' : '0';
   if (favEdit) b.classList.add('favedit');
   // in "edit favourites" mode a click adds/removes; a right-click always does
