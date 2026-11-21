@@ -129,7 +129,7 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 [hidden]{display:none!important}
 .sugg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.8rem;color:var(--muted)}
 .sugg button{font:inherit;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 8px;cursor:pointer}
-.sugg button:first-of-type{border-color:var(--accent)}
+.sugg button:first-of-type{border-color:var(--accent)}.sugg .sgl{font-family:var(--f-body);font-size:1.05em;color:var(--ink)}
 .lsty button{gap:4px;padding:0 7px}.lsty{flex-wrap:nowrap}.lsty button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}.sugg.lsty button:first-of-type:not(.on){background:var(--panel);border-color:var(--line);color:var(--ink)}
 .tgl{font-size:.72rem;font-weight:600;color:var(--muted);padding-inline:2px 4px}
 .toolbar button,.chip{font:inherit;font-size:.8rem;line-height:1.3;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:2px 7px;cursor:pointer;min-height:28px}
@@ -2284,12 +2284,16 @@ function updateSugg(){
   const c=src.selectionStart; if (c!==src.selectionEnd){ sugg.hidden=true; return; }
   const before=src.value.slice(0,c), m=/[\u0621-\u064A]{2,}$/.exec(before), after=src.value[c];
   if (!m || after==='{' || after==='['){ sugg.hidden=true; suggList=[]; return; }
-  const w=m[0]; suggList=CMDLIST.filter(x=>x[0].startsWith(w) && x[0]!==w || x[0]===w).slice(0,6); suggFrom=c-w.length;
+  const w=m[0], tools=CMDLIST.filter(x=>x[0].startsWith(w) && x[0]!==w || x[0]===w), syms=window.__symSugg ? window.__symSugg(w) : [];
+  suggList=[...tools.slice(0, syms.length ? 4 : 6), ...syms.slice(0, tools.length ? 4 : 6)]; suggFrom=c-w.length;
   if (!suggList.length){ sugg.hidden=true; return; }
-  sugg.innerHTML=''; suggList.forEach((x,i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=x[2]+(i===0?'  ⇥':''); b.addEventListener('mousedown',ev=>{ ev.preventDefault(); acceptSugg(i); }); sugg.appendChild(b); });
+  sugg.innerHTML=''; suggList.forEach((x,i)=>{ const b=document.createElement('button'); b.type='button';
+    if (x.sym){ const g=document.createElement('span'); g.className='sgl'; if (x.sym.ch==='Q') g.innerHTML='<span style="font:950 1em \'UULA Sans\',sans-serif;color:#ff0000">Q</span>'; else g.textContent=x.sym.ch; b.append(g, ' '+x.label+(i===0?'  ⇥':'')); }
+    else b.textContent=x[2]+(i===0?'  ⇥':'');
+    b.addEventListener('mousedown',ev=>{ ev.preventDefault(); acceptSugg(i); }); sugg.appendChild(b); });
   sugg.hidden=false;
 }
-function acceptSugg(i){ const x=suggList[i]; if(!x) return; src.setRangeText('', suggFrom, src.selectionStart, 'end'); sugg.hidden=true; suggList=[]; insert(x[1]); }
+function acceptSugg(i){ const x=suggList[i]; if(!x) return; src.setRangeText('', suggFrom, src.selectionStart, 'end'); sugg.hidden=true; suggList=[]; if (x.sym) itemButton(x.sym).click(); else insert(x[1]); }
 src.addEventListener('input', updateSugg);
 src.addEventListener('click', ()=>{ sugg.hidden=true; });
 src.addEventListener('blur', ()=>{ setTimeout(()=>{ sugg.hidden=true; }, 150); });
@@ -2482,6 +2486,13 @@ showTab(load('aeq-tab','fav'));
     for (const [id] of SYMCATS) tabItems(id,'sym').forEach(add); return out; };
   const nameOf=it=>it.t==='tool' ? ((TOOLEL[it.ins]||{}).title||'')+' '+it.ins : it.t==='circ' ? 'دائرة '+it.ch : (it.name||'')+' '+(it.ch||it.s||'')+' '+((typeof SYMWORD!=='undefined'&&SYMWORD[it.ch])||'');
   const norm=t=>String(t).replace(/[ً-ٰٟـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\./g,' ').toLowerCase();
+  // symbols for the typing suggestions: a word of the symbol's name starts with what was typed
+  let symIdx=null;
+  window.__symSugg = w => { const t=norm(w); if (t.length<2) return [];
+    symIdx = symIdx || allSyms().filter(it=>it.t==='sym' || it.t==='text').map(it=>{ const label=it.t==='text' ? 'الدالة' : (it.name || (typeof SYMWORD!=='undefined' && SYMWORD[it.ch]) || ''); return { sym: it, label: (it.ch && it.ch.length>1 && label.endsWith(' '+it.ch)) ? label.slice(0,-it.ch.length-1) : label, n: norm(it.t==='text' ? 'الدالة '+it.s : label) }; }).filter(x=>x.label);
+    const exact=[], pre=[];
+    for (const x of symIdx){ const ws=x.n.split(/\s+/); if (ws.some(v=>v===t)) exact.push(x); else if (ws.some(v=>v.startsWith(t))) pre.push(x); }
+    const seen=new Set(); return [...exact, ...pre].filter(x=>{ const k=x.sym.ch||x.sym.s; if (seen.has(k)) return false; seen.add(k); return true; }); };
   // recently used (tools and symbols)
   const RK='aeq-recent-all'; let rec=[]; try { rec=JSON.parse(load(RK,'[]'))||[]; } catch(e){ rec=[]; }
   const keyOf=it=>JSON.stringify(it.t==='tool'?{t:'tool',ins:it.ins}:it.t==='circ'?{t:'circ',ch:it.ch,fill:!!it.fill}:it.t==='text'?{t:'text',s:it.s}:{t:'sym',ch:it.ch,name:it.name||''});
