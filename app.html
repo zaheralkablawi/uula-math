@@ -3474,7 +3474,7 @@ function convert(eq){
       if (pos >= 0x21 && pos < 0x100 && !/[=+\-<>(),.\[\]]/.test(c)) return String.fromCharCode(0xE000 + pos);
       return c;
     }
-    if (/mazeri/.test(font) && /normal|letter/.test(font) && KB[c]) return KB[c];
+    if (/mazeri/.test(font) && /normal|letter/.test(font) && (KB[c] || KB[c.toLowerCase()])) return KB[c] || KB[c.toLowerCase()]; // capitals: same letter
     if (mt >= 0xE000 && mt <= 0xF8FF){ warn.push('رمز غير معروف'); return '⟦?⟧'; }
     return c;
   }
@@ -4008,15 +4008,21 @@ if (window.Office) Office.onReady(info => {
           const m = sl.items[0].shapes.getItem(r.mark); const lf = m.lineFormat; lf.load('weight'); await ctx.sync(); const w = lf.weight;
           lf.weight = Math.max(4, (w||1)*3); await ctx.sync(); await new Promise(z => setTimeout(z, 900)); lf.weight = w || 1; await ctx.sync(); }); } catch(e){} });
       list.appendChild(d); return d; });
-    const marksTxt = {}; // frame id → its own text, to put back
+    const labels = []; // small red numbers beside each frame while the list is open
     try { await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+      const shs = sl.items[0].shapes; shs.load('items/id,items/name,items/left,items/top,items/width,items/height'); await ctx.sync();
+      for (const x of shs.items) if (x.name === 'UULA رقم') x.delete(); // left over from before
       const by = {}; data.rows.forEach((r,i) => (by[r.mark] = by[r.mark] || []).push(arNum(i+1)));
-      const tfs = Object.keys(by).map(id => { const tr = sl.items[0].shapes.getItem(id).textFrame.textRange; tr.load('text'); return [id, tr]; }); await ctx.sync();
-      for (const [id, tr] of tfs){ marksTxt[id] = tr.text || ''; tr.text = by[id].join('، '); try { tr.font.color = '#E00000'; tr.font.size = 11; tr.font.bold = true; } catch(e){} }
-      await ctx.sync(); }); } catch(e){}
+      const made = [];
+      for (const m of shs.items){ if (!by[m.id]) continue; const t = by[m.id].join('،'), w = 9 + 7*t.length;
+        const tb = shs.addTextBox(t, { left: m.left + m.width - w + 2, top: Math.max(0, m.top - 15), width: w, height: 15 });
+        tb.name = 'UULA رقم'; try { tb.fill.setSolidColor('#E00000'); } catch(e){}
+        try { const f = tb.textFrame; f.leftMargin = 1; f.rightMargin = 1; f.topMargin = 0; f.bottomMargin = 0; f.wordWrap = false; f.verticalAlignment = 'Middle'; const tr = f.textRange; tr.font.color = '#FFFFFF'; tr.font.size = 10; tr.font.bold = true; tr.paragraphFormat.horizontalAlignment = 'Center'; } catch(e){}
+        made.push(tb); }
+      await ctx.sync(); made.forEach(tb => tb.load('id')); await ctx.sync(); made.forEach(tb => labels.push(tb.id)); }); } catch(e){}
     const unmark = async () => { try { await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
-      const shs = sl.items[0].shapes; shs.load('items/id'); await ctx.sync(); const have = new Set(shs.items.map(x => x.id));
-      for (const id of Object.keys(marksTxt)) if (have.has(id)) shs.getItem(id).textFrame.textRange.text = marksTxt[id]; await ctx.sync(); }); } catch(e){} };
+      const shs = sl.items[0].shapes; shs.load('items/id,items/name'); await ctx.sync();
+      for (const x of shs.items) if (x.name === 'UULA رقم' || labels.includes(x.id)) x.delete(); await ctx.sync(); }); } catch(e){} };
     const close = () => { bg.remove(); unmark(); };
     bg.querySelector('.howx').addEventListener('click', close);
     bg.querySelector('.mkfill').addEventListener('click', () => { let n = 0;
