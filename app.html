@@ -1315,13 +1315,13 @@ function arrows2Box(n, sz){ // arrows from the elements of the first set (right)
       stroke(g,t,()=>{ g.moveTo(qx-ux*ah+uy*ah*.6, qy-uy*ah-ux*ah*.6); g.lineTo(qx,qy); g.lineTo(qx-ux*ah-uy*ah*.6, qy-uy*ah+ux*ah*.6); }); } } };
 }
 function arrowsBox(n, sz){ // arrow diagram: points on a circle, a curved arrow for each pair, a loop for (أ، أ)
-  const t=lw(sz), N=n.pts.length, Rc=N<2?0:Math.max(sz*1.7, sz*1.7/(2*Math.sin(Math.PI/N))), ah=sz*.36;
+  const t=lw(sz), N=n.pts.length, Rc=N<2?0:Math.max(sz*2.1, sz*2.1/(2*Math.sin(Math.PI/N))), ah=sz*.36;
   const P_=n.pts.map((_,i)=>{ const th=-Math.PI/2+i*2*Math.PI/Math.max(1,N); return {x:Rc*Math.cos(th), y:Rc*Math.sin(th), th}; });
   const has=new Set(n.rel.map(([a,b])=>a+','+b)), loops=new Set(n.rel.filter(([a,b])=>a===b).map(([a])=>a));
   const L=sz*2.05, dir=a=>[Math.cos(a),Math.sin(a)];
   const loopOf=i=>{ const p=P_[i], th=N<2?-Math.PI/2:p.th, d1=dir(th-.78), d2=dir(th+.78); return {p, c1:[p.x+L*d1[0], p.y+L*d1[1]], c2:[p.x+L*d2[0], p.y+L*d2[1]], th}; };
   const bez=(p,c1,c2,q,u)=>{ const v=1-u; return [v*v*v*p[0]+3*v*v*u*c1[0]+3*v*u*u*c2[0]+u*u*u*q[0], v*v*v*p[1]+3*v*v*u*c1[1]+3*v*u*u*c2[1]+u*u*u*q[1]]; };
-  const edges=n.rel.filter(([a,b])=>a!==b).map(([a,b])=>{ const A=P_[a], B=P_[b], dx=B.x-A.x, dy=B.y-A.y, dd=Math.hypot(dx,dy)||1, d=[dx/dd,dy/dd], nn=[-d[1],d[0]], k=(has.has(b+','+a)?.24:.12)*dd;
+  const edges=n.rel.filter(([a,b])=>a!==b).map(([a,b])=>{ const A=P_[a], B=P_[b], dx=B.x-A.x, dy=B.y-A.y, dd=Math.hypot(dx,dy)||1, d=[dx/dd,dy/dd], nn=[-d[1],d[0]], k=(has.has(b+','+a)?.1:.06)*dd; /* gentle curves: two directions sit side by side, nothing runs over another */
     return {A,B,d,nn, C:[(A.x+B.x)/2+nn[0]*k*2, (A.y+B.y)/2+nn[1]*k*2], Q:[(A.x+B.x)/2+nn[0]*k, (A.y+B.y)/2+nn[1]*k]}; });
   const busy=n.pts.map(()=>[]); // directions already used at each point (edges leave towards their control point; loops point outwards)
   for (const e of edges){ const ia=P_.indexOf(e.A), ib=P_.indexOf(e.B); busy[ia].push([Math.atan2(e.C[1]-e.A.y, e.C[0]-e.A.x), .35]); busy[ib].push([Math.atan2(e.C[1]-e.B.y, e.C[0]-e.B.x), .35]); }
