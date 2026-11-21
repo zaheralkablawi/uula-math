@@ -1994,12 +1994,21 @@ $('ctxI').addEventListener('mousedown', e=>e.preventDefault()); // keep the care
 $('ctxI').addEventListener('click', ()=>{ hintPin=!hintPin; if (!hintPin) hintUntil=0; ctxHint(); });
 const caretSoon=()=>requestAnimationFrame(()=>{ placeCaret(); ctxHint(); });
 // a click on a grey placeholder word (عدد، بسط، اكتب.هنا…) selects the whole word, ready to type over
+let autoSel='';
+src.addEventListener('keydown', e=>{ if (e.key==='Escape' && src.selectionStart!==src.selectionEnd && (sugg.hidden || !suggList.length)){ e.preventDefault(); const k=src.selectionEnd; src.setSelectionRange(k,k); autoSel=''; placeCaret(); } else if (e.key!=='Escape') autoSel=''; });
 src.addEventListener('mouseup', ()=>setTimeout(()=>{
   const p=src.selectionStart; if (p!==src.selectionEnd) return;
   const v=src.value, W=/[ء-ي.]/; let a=p, b=p;
   while (a>0 && W.test(v[a-1])) a--; while (b<v.length && W.test(v[b])) b++;
   while (v[a]==='.') a++; while (b>a && v[b-1]==='.') b--;
   if (b>a && HINTW.has(v.slice(a,b))){ src.setSelectionRange(a,b); placeCaret(); return; }
+  { // a click inside a short {…} (a letter, a number…) selects what is in it; a second click there places the caret
+    let o=-1, d=0; for (let i=p-1; i>=0; i--){ const ch=v[i]; if (ch==='}') d++; else if (ch==='{'){ if (d) d--; else { o=i; break; } } else if (ch==='\n') break; }
+    if (o>=0){ const c=v.indexOf('}', o+1), inner=v.slice(o+1, c), cmd=(/([؀-ۿ.]+)$/.exec(v.slice(0,o))||[])[1]||'';
+      if (c>=p && inner.trim() && inner.length<=20 && !/[{}\n]/.test(inner) && !/^(نص|رمز)$/.test(cmd) && !(cmd==='' && v[o-1]==='{')){
+        const key=o+':'+c; if (autoSel===key){ autoSel=''; } else { autoSel=key; src.setSelectionRange(o+1, c); placeCaret(); return; } }
+      else autoSel=''; }
+    else autoSel=''; }
   const g=Math.max(v.lastIndexOf('تمثيل.بياني', p), v.lastIndexOf('شبكة{', p), v.lastIndexOf('شبكة.ربع.أول{', p), v.lastIndexOf('خط.أعداد{', p)), isPlot=v.startsWith('تمثيل', g), o=g<0?-1:v.indexOf('{', g); if (o<0 || o>=p) return; // a click on شبكة / أرقام / an axis name or limit in a graph selects it
   let d=0, k=o+1; for (; k<v.length; k++){ const ch=v[k]; if (ch==='{') d++; else if (ch==='}'){ if (!d) break; d--; } } if (p>k) return;
   const SEP=/[&\n≤≥<>⩽⩾]/; let s0=p, e0=p; while (s0>o+1 && !SEP.test(v[s0-1])) s0--; while (e0<k && !SEP.test(v[e0])) e0++;
