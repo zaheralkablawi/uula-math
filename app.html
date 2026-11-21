@@ -370,6 +370,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>مخطط بياني لعلاقة</td><td>في <code>شبكة{…}</code> أضف سطر <code>العلاقة : (١، ٠)، (٢، ٣)، (٣، ٦)</code>: نقطة لكل زوج (س، ص)، وإذا تركت الحدود «عدد» تُضبط الشبكة على النقاط وحدها</td></tr>
           <tr><td>حرف بذيل</td><td>اكتب الحرف مرتين: <code>سس</code> ، <code>شش</code> ، <code>صص</code> ، <code>حح</code></td></tr>
           <tr><td>كلمة تصير رمزًا</td><td>اكتب الكلمة ثم مسافة: باي π ، تقاطع ∩ ، اتحاد ∪ ، زائد + ، ناقص − ، ضرب × ، تقسيم ÷ ، أكبر &gt; ، أصغر &lt; ، ينتمي ∈ ، لا ينتمي ∉ ، يوازي // ، يعامد ⊥ ، درجة ° ، لا نهاية ∞ ، دلتا ∆ ، تربيع ² ، تكعيب ³. لإرجاعها كلمة: زر «أب ↔» أو ⌘Z</td></tr>
+          <tr><td>العدد الدوري</td><td><code>٠.خط{٣}</code> ، <code>٠٫١خط{٢٣}</code> : عدد واحد يُقرأ من اليسار، والخط فوق الأرقام المتكررة</td></tr>
           <tr><td>مسافة</td><td><code>مسافة{١}</code> صغيرة ، <code>مسافة{٢}</code> متوسطة ، <code>مسافة{٤}</code> كبيرة ، أو أي عدد مثل <code>مسافة{٦}</code> (كل ١ = ربع حرف)</td></tr>
           <tr><td>قوس حاصر بكتابة</td><td><code>حاصرة.فوق{أ × أ × … × أ}{ن مرة}</code> ، وكذلك <code>حاصرة.تحت</code> و<code>حاصرة.يمين</code> و<code>حاصرة.يسار</code>: القوس يطول مع العبارة والكتابة عند طرفه</td></tr>
           <tr><td>معادلة باوربوينت</td><td>في باوربوينت: حدّد مربع معادلة باوربوينت الأصلية (أو عدة مربعات بـ Shift) واضغط زر التعديل ✎ ، فتُكتب هنا بالترتيب العربي بلونها وحجمها. مع عدة مربعات تختار: صورة واحدة لها كلها، أو صورة لكل مربع في مكانه</td></tr>
@@ -735,6 +736,10 @@ class P {
     { const cp=s.codePointAt(this.i); if (cp>=0x1EE00 && cp<=0x1EEFF){ this.i+=2; return {t:'txt',s:String.fromCodePoint(cp),k:'word'}; } }
     if (isDigit(c)){
       let j=this.i; while(j<s.length && (isDigit(s[j]) || (/[.,،٫]/.test(s[j]) && isDigit(s[j+1]||'')))) j++;
+      // a repeating decimal: ٠.خط{٣} or ٠٫١خط{٢٣} — one number, read left to right, the bar over the repeating digits
+      { const m=/^([.,،٫]?)\s*خط\{\s*([0-9٠-٩]+)\s*\}/.exec(s.slice(j)); const head=s.slice(this.i,j)+(m?m[1]:'');
+        if (m && /[.,،٫]/.test(head)){ this.i=j+m[0].length; const D=x=>mathDigits(toAr(x).replace(/[.،٫]/g,','));
+          return {t:'repdec', a:D(head), b:D(m[2])}; } }
       let num=mathDigits(toAr(s.slice(this.i,j)).replace(/\./g,',')); this.i=j; return {t:'txt',s:num,k:'num'};
     }
     for (const h of HINTDOT) if (s.startsWith(h, this.i) && !isLetter(s[this.i+h.length]||'')){ this.i+=h.length; return {t:'txt',s:h,k:'word'}; }
@@ -1741,6 +1746,8 @@ function box0(n, sz){
     case 'xarr': return xarrBox(n, sz);
     case 'brace': return braceBox(n, sz);
     case 'space': return { w: n.n*sz*.25, a: 0, d: 0, draw(){} };
+    case 'repdec': { const A=txtBox({t:'txt',s:n.a,k:'num'}, sz), B=txtBox({t:'txt',s:n.b,k:'num'}, sz), t=lw(sz), gap=sz*.1;
+      return { w:A.w+B.w, a:Math.max(A.a, B.a+gap+t*1.5), d:Math.max(A.d,B.d), draw(g,x,y){ A.draw(g,x,y); B.draw(g,x+A.w,y); stroke(g,t,()=>{ const ly=y-B.a-gap; g.moveTo(x+A.w+sz*.03, ly); g.lineTo(x+A.w+B.w-sz*.03, ly); }); } }; }
     case 'circ': return circBox(n, sz);
     case 'prime': return primeBox(n, sz);
     case 'angle': return angleBox(n, sz);
