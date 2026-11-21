@@ -1935,7 +1935,21 @@ function placeCaret(){
   mirror.style.width=(src.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))+'px';
   // our own caret everywhere (the system caret jumps to the far left next to symbols, digits and line ends in WebKit)
   let kr=null; const L=c=>c!==undefined && STRONG.test(c);
-  if (L(v[p-1]) && L(v[p])){ // inside a word: measure on the unbroken text so the letters keep their joined shapes
+  { // measure on the unbroken text from the glyph next to the caret (a marker would be moved about by the mixed directions)
+    mirror.textContent=v+'\u200b'; const tn=mirror.firstChild, D=c=>c!==undefined && /[0-9٠-٩a-zA-Z]/.test(c);
+    const box=i=>{ if (i<0 || i>=v.length || v[i]==='\n') return null; const rg=document.createRange(); rg.setStart(tn,i); rg.setEnd(tn,i+1); const rs=[...rg.getClientRects()].filter(x=>x.width>0||x.height>0); return rs[0]||null; };
+    const at=(r,side)=>r ? {left: side==='r' ? r.right : r.left, top:r.top, height:r.height} : null;
+    let k=null;
+    if (L(v[p])) k=at(box(p),'r');                                   // before an Arabic letter: its right edge
+    else if (L(v[p-1])) k=at(box(p-1),'l');                          // after an Arabic letter: its left edge
+    else if (D(v[p-1]) && D(v[p])) k=at(box(p-1),'r');               // inside a number (left to right)
+    else if (D(v[p-1])){ let a=p-1; while (a>ls && D(v[a-1])) a--; k=at(box(a),'l'); }   // after a number: its left end
+    else if (D(v[p])){ let b=p; while (b+1<le && D(v[b+1])) b++; k=at(box(b),'r'); }     // before a number: its right end
+    else if (p>ls && v[p-1]!==' ') k=at(box(p-1),'l');
+    else if (p<le && v[p]!==' ') k=at(box(p),'r');
+    if (k && k.height) kr=k;
+  }
+  if (!kr && L(v[p-1]) && L(v[p])){ // inside a word: measure on the unbroken text so the letters keep their joined shapes
     mirror.textContent=v+'\u200b'; const rg=document.createRange(); rg.setStart(mirror.firstChild,p); rg.collapse(true); const rs=rg.getClientRects(); if (rs.length) kr=rs[0]; }
   if (!kr || !kr.height){ mirror.textContent=v.slice(0, p); var mk=document.createElement('span'); mk.textContent='\u200b'; mirror.appendChild(mk); mirror.appendChild(document.createTextNode(v.slice(p)+'\u200b')); kr=mk.getBoundingClientRect(); }
   const r=src.getBoundingClientRect(), mr=mirror.getBoundingClientRect();
