@@ -3005,7 +3005,10 @@ async function officeInsert0(data, type, place, fallback, meta, done){
 // after inserting: empty the writing box (the equation stays in «السابقة»; ⌘Z brings it back)
 function clearAfterInsert(){ if (!src.value) return; src.setRangeText('', 0, src.value.length, 'end'); snap(true); schedule(); }
 // delete the replaced object only once the new equation is in; if PowerPoint refuses, move it off the slide instead
-const isOldEq = x => !!x && (/ole|unsupported|embed/i.test(String(x.type||'')) || /^(MathType|Object|Equation|معادلة|كائن)/i.test(String(x.name||'')));
+// names compared without ⚠ (and other signs), extra spaces, or the word «علامة» before/after: «⚠ علامة MathType 149» ↔ «⚠ MathType 149»
+const nameKey = n => String(n||'').replace(/[\u2600-\u27BF\uFE0F\u200B-\u200F\u202A-\u202E]/g,' ').replace(/علامة/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+const isMarker = n => /علامة/.test(String(n||''));
+const isOldEq = x => !!x && (/ole|unsupported|embed/i.test(String(x.type||'')) || /^(MathType|Object|Equation|معادلة|كائن)/i.test(nameKey(x.name)));
 // where the writing itself lies inside the picture (the picture has a clear margin): fractions of its width/height
 function inkBox(){ try { if (st.bg) return {l:0,t:0,r:1,b:1}; const c = window.__aeq && window.__aeq.canvas; if (!c || !c.width) return {l:0,t:0,r:1,b:1};
   const w=c.width, h=c.height, d=c.getContext('2d').getImageData(0,0,w,h).data; let x0=w, y0=h, x1=-1, y1=-1;
@@ -3014,8 +3017,8 @@ function inkBox(){ try { if (st.bg) return {l:0,t:0,r:1,b:1}; const c = window._
 async function deleteMarkers(names){ // the red dashed frames «<name> علامة» that marked the replaced objects
   if (!names || !names.length) return 0;
   try { return await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync(); if (!sl.items.length) return 0;
-    const shs = sl.items[0].shapes; shs.load('items/id,items/name'); await ctx.sync(); const want = new Set(names.map(n => String(n).trim() + ' علامة'));
-    let n = 0; for (const x of shs.items) if (want.has(String(x.name).trim())){ x.delete(); n++; } await ctx.sync(); return n; }); } catch(e){ return 0; } }
+    const shs = sl.items[0].shapes; shs.load('items/id,items/name'); await ctx.sync(); const want = new Set(names.map(nameKey).filter(Boolean));
+    let n = 0; for (const x of shs.items) if (isMarker(x.name) && want.has(nameKey(x.name))){ x.delete(); n++; } await ctx.sync(); return n; }); } catch(e){ return 0; } }
 async function deleteOld(id){
   try { return await PowerPoint.run(async ctx => {
     const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
@@ -3474,8 +3477,8 @@ if (window.Office) Office.onReady(info => {
   async function markedPairs(){
     return PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync(); if (!sl.items.length) return { slide:null, rows:[] };
       const shs = sl.items[0].shapes; shs.load('items/id,items/name,items/type,items/left,items/top'); await ctx.sync();
-      const byName = new Map(shs.items.map(x => [String(x.name).trim(), x])), rows = [];
-      for (const m of shs.items){ const nm = String(m.name).trim(); if (!/\sعلامة$/.test(nm)) continue; const base = nm.replace(/\s*علامة$/,''); const t = byName.get(base); if (t) rows.push({ id: t.id, name: base, top: t.top, left: t.left }); }
+      const byKey = new Map(shs.items.filter(x => !isMarker(x.name)).map(x => [nameKey(x.name), x])), rows = [], seen = new Set();
+      for (const m of shs.items){ if (!isMarker(m.name)) continue; const k = nameKey(m.name); const t = k && byKey.get(k); if (t && !seen.has(t.id)){ seen.add(t.id); rows.push({ id: t.id, name: String(t.name).trim(), key: k, top: t.top, left: t.left }); } }
       rows.sort((a,b) => Math.abs(a.top-b.top) > 6 ? a.top-b.top : b.left-a.left);
       return { slide: sl.items[0].id, rows }; }); }
   async function markedDialog(){
@@ -3500,7 +3503,7 @@ if (window.Office) Office.onReady(info => {
     bg.querySelector('.howx').addEventListener('click', close);
     bg.querySelector('.mkfill').addEventListener('click', () => { let n = 0;
       for (const line of bg.querySelector('.mkpaste textarea').value.split('\n')){ const p = line.split('|').map(x => x.trim()); if (p.length < 2 || !p[0]) continue;
-        const i = data.rows.findIndex(r => r.name === p[0]); if (i < 0) continue; const d = rowEls[i];
+        const i = data.rows.findIndex(r => r.key === nameKey(p[0])); if (i < 0) continue; const d = rowEls[i];
         d.querySelector('.mkcode').value = p[1]; if (p[2]) d.querySelector('.mkcol').value = p[2]; if (p[3]) d.querySelector('.mkpt').value = toLatinDigits(p[3]); d.dataset.m = ''; n++; }
       msg.textContent = 'مُلئ ' + n + ' من ' + data.rows.length + '.'; });
     bg.querySelector('.mkgo').addEventListener('click', async () => {
