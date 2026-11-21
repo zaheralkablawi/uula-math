@@ -3982,7 +3982,7 @@ if (window.Office) Office.onReady(info => {
     let data; try { data = await markedPairs(); } catch(e){ return flash('تعذّرت قراءة الشريحة.', false); }
     if (!data.rows.length) return flash(data.skip.length ? 'لم أجد معادلات داخل العلامات: ' + data.skip.join('، ') : 'لا توجد في هذه الشريحة مستطيلات «… علامة».', false);
     const tags = await readTags(data.rows.map(r => r.id));
-    let mt = {}; try { const sp = await slidePptx(); const res = await MTC.scan(sp.u8, [sp.idx]); for (const x of ((res[0]||{}).shapes||[])) mt[x.id+'|'+x.name] = x, mt['n|'+x.name] = mt['n|'+x.name] || x; } catch(e){ mt = null; }
+    let mt = {}; try { const sp = await Promise.race([slidePptx(), new Promise((_,no) => setTimeout(() => no(new Error('time')), 12000))]); const res = await MTC.scan(sp.u8, [sp.idx]); for (const x of ((res[0]||{}).shapes||[])) mt[x.id+'|'+x.name] = x, mt['n|'+x.name] = mt['n|'+x.name] || x; } catch(e){ mt = null; }
     const bg = document.createElement('div'); bg.className = 'howbg';
     bg.innerHTML = '<div class="howbox mkbox" dir="rtl"><b>المعادلات المعلَّمة في الشريحة (' + data.rows.length + ')</b><button type="button" class="howx" aria-label="إغلاق">✕</button>'
       + '<div class="mklist"></div>' + (data.skip.length ? '<p class="mkskip">لم يُلمس: ' + data.skip.map(x => x.replace(/[<>&]/g,'')).join(' · ') + '</p>' : '')
