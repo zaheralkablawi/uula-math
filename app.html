@@ -580,6 +580,18 @@ class P {
         const big=/[>≥⩾]/.test(iq[2]), strict=/[<>]/.test(iq[2]); let f; try { f=compileFn('ص = '+rhs); } catch(er){ this.err('لم أفهم المتباينة: '+e.trim(), this.at(i0)); }
         fns.push({f, color: col || '#1f71de', ineq:{up:big, strict, vert:/^(س|x)$/i.test(iq[1])}}); return; }
       let style=null; { const pp=e.split('&'); if (pp.length>1){ e=pp[0]; for (const tk of pp.slice(1).map(x=>x.trim())){ if (/^متقطع/.test(tk)) style='dash'; else if (/^منقط/.test(tk)) style='dot'; else if (/^متصل/.test(tk)) style=null; else col=colorOf(tk)||col; } } }
+      // an equation in any form (س + ص = ٦ ، ٢س − ص = ٤ ، س = ٣ ، س^٢ + ص^٢ = ٢٥): solved for ص (linear or quadratic in ص), or a vertical line
+      const eq=/^([^=]+)=([^=]+)$/.exec(e);
+      if (eq && /[سصxy]/i.test(e) && !/^\s*(ص|y|د\s*\(\s*(س|x)\s*\)|f\s*\(\s*x\s*\))\s*$/i.test(eq[1]) && !HINTW.has(eq[2].trim())){
+        const bad=()=>this.err('لم أفهم المعادلة: '+e.trim(), this.at(i0)); let G=[];
+        try { const sub=v=>('('+eq[1]+')-('+eq[2]+')').replace(/ص|(?<![a-z])y(?![a-z])/gi,'('+v+')'); G=[0,1,2,3].map(v=>compileFn(sub(v))); } catch(er){ bad(); }
+        const xs=[-3,-1,0.5,2,4], co=x=>{ const [a,b,c,d]=G.map(g=>g(x)); return {c:a, b:(-3*a+4*b-c)/2, a:(a-2*b+c)/2, d3:d-3*c+3*b-a}; }; // g(ص) = aص² + bص + c
+        if (xs.some(x=>{ const q=co(x); return Math.abs(q.d3)>1e-6*(1+Math.abs(q.c)); })) this.err('المعادلة يجب أن تكون من الدرجة الأولى أو الثانية في ص: '+e.trim(), this.at(i0));
+        const quad=xs.some(x=>Math.abs(co(x).a)>1e-12), lin=xs.some(x=>Math.abs(co(x).b)>1e-12), color=col || PLOTCOL[k%PLOTCOL.length];
+        if (quad){ for (const sg of [1,-1]) fns.push({f:x=>{ const q=co(x), D=q.b*q.b-4*q.a*q.c; return D<0?NaN:(-q.b+sg*Math.sqrt(D))/(2*q.a); }, style, color}); return; }
+        if (lin){ fns.push({f:x=>{ const q=co(x); return -q.c/q.b; }, style, color}); return; }
+        const c1=G[0](1)-G[0](0); if (Math.abs(c1)<1e-12) bad(); // no ص: س = عدد
+        fns.push({f:()=>NaN, vline:-G[0](0)/c1, style, color}); return; }
       const ex=e.replace(/^\s*(ص|y)\s*=\s*/i,'').trim();
       if (!ex || HINTW.has(ex)) return; let f; try { f=compileFn(e); } catch(er){ this.err('لم أفهم الدالة: '+e.trim(), this.at(i0)); }
       fns.push({f, style, color: col || PLOTCOL[k%PLOTCOL.length]}); });
@@ -1523,7 +1535,8 @@ function plotBox(n, sz){
       g.restore(); }
     for (const fn of n.fns.filter(f=>!f.ineq)){ const N=900; let prev=null; g.save(); g.fillStyle=fn.color;
       const segs=[]; let seg=null; // visible pieces of the curve
-      for (let k=0;k<=N;k++){ const xv=x0+sx*k/N; let yv; try{ yv=fn.f(xv); }catch(e){ yv=NaN; }
+      if (fn.vline!=null){ if (fn.vline>=x0 && fn.vline<=x1) segs.push([[X(fn.vline),Y(y0)],[X(fn.vline),Y(y0+sy)]]); }
+      else for (let k=0;k<=N;k++){ const xv=x0+sx*k/N; let yv; try{ yv=fn.f(xv); }catch(e){ yv=NaN; }
         const ok=isFinite(yv) && Math.abs(yv)<1e7, cur=ok?[X(xv),Y(yv),yv]:null;
         if (prev && cur && !(Math.abs(cur[2]-prev[2])>sy*3 && Math.sign(cur[2])!==Math.sign(prev[2]))){
           const c=clip(prev[0],prev[1],cur[0],cur[1]);
@@ -1964,7 +1977,7 @@ function placeCaret(){
 // light grey help under the writing box while the caret is inside a tool: shown for 10 s, the i button shows it again until pressed off
 const HJ=['الخلايا: بينها &amp;','الصفوف: كل صف في سطر'];
 const CTXHINT=Object.fromEntries(Object.entries({
- 'تمثيل.بياني':['الدالة: في السطر الأول مثل ص = س^٢، وكل دالة إضافية في سطر','المتباينة: مكان الدالة مثل ص > س + ٣ أو ص − س − ٢ ≥ ٠ أو ٢س + ٣ص < ٦ (يُظلَّل الحل، والخط متقطع مع < و>)','نوع الخط: ضع المؤشر على الدالة واختر متصل أو متقطع أو منقط، أو اكتب ص = س^٢ & متقطع','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)','خط تقارب: تقارب س = ٢'],
+ 'تمثيل.بياني':['الدالة: في السطر الأول مثل ص = س^٢، وكل دالة إضافية في سطر','معادلة بأي ترتيب: س + ص = ٦ أو ٢س − ص = ٤ أو س = ٣ أو س^٢ + ص^٢ = ١٦','المتباينة: مكان الدالة مثل ص > س + ٣ أو ص − س − ٢ ≥ ٠ أو ٢س + ٣ص < ٦ (يُظلَّل الحل، والخط متقطع مع < و>)','نوع الخط: ضع المؤشر على الدالة واختر متصل أو متقطع أو منقط، أو اكتب ص = س^٢ & متقطع','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)','خط تقارب: تقارب س = ٢'],
  'شبكة':['العلاقة: العلاقة : (١، ٠)، (٢، ٣) نقطة لكل زوج، والحدود «عدد» تُضبط وحدها','شبكة: احذفها لمحاور فقط','الحدود: −٥ ≤ س ≤ ٥ لحدود س واسمه، ومثلها لـ ص','أرقام: احذفها لإخفاء الأرقام','نقطة: نقطة أ(٢، ٣)'],
  'خط.أعداد':['المدى: −٥ &lt; س &lt; ٥ مع اسم المحور','أرقام وعلامات: احذف ما لا تريده','الحل: الحل −٢ &lt; س ≤ ٣، و&lt; مفتوحة و≤ مغلقة','أكثر من جزء: الحل س &lt; −١ أو س ≥ ٢'],
  'فن':['ش: المجموعة الشاملة التي تحتوي كل العناصر','س، ص، ع: عناصر كل مجموعة كاملة، والتقاطعات تُحسب وحدها','التظليل: ظلل : س ∩ ص &amp; أحمر','الرموز: ∩ تقاطع، ∪ اتحاد، − فرق، \' متممة، () للتجميع'],
