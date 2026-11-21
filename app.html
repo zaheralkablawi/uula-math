@@ -196,6 +196,24 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
 /* ===== MathType-style ribbon: tabs on top, grouped palettes below ===== */
 .ribbon{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.pal2{display:grid;gap:8px}
+.p2search{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:0 9px;height:34px;color:var(--muted)}
+.p2search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.p2search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-family:var(--f-body);font-size:.92rem;color:var(--ink);height:100%}
+.p2search input::-webkit-search-cancel-button{display:none}
+.p2clear{border:0;background:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:2px 4px}
+.p2found,.p2recent,.p2sec{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px}
+.p2recent{display:flex;gap:8px;align-items:center}.p2recent .p2row{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0}
+.p2lab{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.p2none{font-size:.85rem;color:var(--muted)}
+.p2heads{display:flex;justify-content:space-between;gap:8px}
+.p2head{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:.92rem;font-weight:600;cursor:pointer}
+.p2head svg{transition:transform .15s}.p2head[aria-expanded="false"] svg{transform:rotate(90deg)}.p2head[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
+.p2chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.p2chip{height:26px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--code);color:var(--muted);font-family:var(--f-body);font-size:.8rem;cursor:pointer}
+.p2chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.p2items .grp,.p2found .grp,.p2row{display:flex;flex-wrap:wrap;gap:4px}
+
 .tabs{display:flex;flex-wrap:wrap;gap:2px;background:var(--code);padding:4px 4px 0;border-bottom:1px solid var(--line)}
 .tabs .tab{height:32px;min-width:42px;padding:0 9px;border:1px solid transparent;border-bottom:0;border-radius:7px 7px 0 0;background:transparent;color:var(--muted);font-family:var(--f-body);font-size:.95rem;cursor:pointer;display:inline-grid;place-items:center;margin-bottom:-1px}
 .tabs .tab:hover{color:var(--accent)}
@@ -2424,6 +2442,66 @@ toolCfg={vis:[...TOOLDEF], hid:[]}; renderTools();
 { const all=[...DEFAULT_VISIBLE]; const have=new Set(all); for (const t of TABS) for (const g of t.groups||[]) for (const it of g) if (it.t==='sym' && !have.has(it.ch) && it.ch.length===1 || (it.t==='sym' && it.ch.length>1 && !have.has(it.ch) && validSym.has(it.ch))){ have.add(it.ch); all.push(it.ch); }
   visOrder=all; renderSyms(); }
 showTab(load('aeq-tab','fav'));
+// ---- new palette: search · recently used · «الأدوات» and «الرموز», each folding, each with its own sub-tabs ----
+(() => {
+  const ribbon=document.querySelector('.ribbon'); if (!ribbon) return;
+  const TOOLCATS=[['tpl','كسور وجذور'],['geo','هندسة'],['sets','مجموعات'],['graph','تمثيل بياني'],['mat','مصفوفات وجداول'],['arr','أسهم وأقواس'],['calc','تفاضل وتكامل']];
+  const SYMCATS=[['ops','عمليات وعلاقات'],['sets','مجموعات'],['geo','هندسة'],['arr','أسهم'],['let','حروف'],['calc','دوال وتكامل'],['oth','أرقام وعلامات']];
+  const tabItems=(id, kind)=>{ const t=TABS.find(x=>x.id===id); const out=[], seen=new Set(); if (!t) return out;
+    for (const g of t.groups||[]) for (const it of g){ const isT=it.t==='tool'; if ((kind==='tool')!==isT) continue; if (isT && !TOOLEL[it.ins]) continue;
+      const k=isT?'t:'+it.ins:'s:'+(it.ch||it.s)+(it.fill?'*':''); if (seen.has(k)) continue; seen.add(k); out.push(it); } return out; };
+  const allTools=()=>{ const seen=new Set(), out=[]; for (const [id] of TOOLCATS) for (const it of tabItems(id,'tool')) if (!seen.has(it.ins)){ seen.add(it.ins); out.push(it); }
+    for (const k of Object.keys(TOOLEL)) if (!seen.has(k)){ seen.add(k); out.push({t:'tool',ins:k}); } return out; };
+  const allSyms=()=>{ const seen=new Set(), out=[]; const add=it=>{ const k=(it.ch||it.s)+(it.fill?'*':'')+it.t; if (seen.has(k)) return; seen.add(k); out.push(it); };
+    for (const ch of visOrder){ const x=ALLSYM.find(a=>a.ch===ch); add({t:'sym',ch,name:x&&x.name}); }
+    for (const [id] of SYMCATS) tabItems(id,'sym').forEach(add); return out; };
+  const nameOf=it=>it.t==='tool' ? ((TOOLEL[it.ins]||{}).title||'')+' '+it.ins : it.t==='circ' ? 'دائرة '+it.ch : (it.name||'')+' '+(it.ch||it.s||'')+' '+((typeof SYMWORD!=='undefined'&&SYMWORD[it.ch])||'');
+  const norm=t=>String(t).replace(/[ً-ٰٟـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\./g,' ').toLowerCase();
+  // recently used (tools and symbols)
+  const RK='aeq-recent-all'; let rec=[]; try { rec=JSON.parse(load(RK,'[]'))||[]; } catch(e){ rec=[]; }
+  const keyOf=it=>JSON.stringify(it.t==='tool'?{t:'tool',ins:it.ins}:it.t==='circ'?{t:'circ',ch:it.ch,fill:!!it.fill}:it.t==='text'?{t:'text',s:it.s}:{t:'sym',ch:it.ch,name:it.name||''});
+  const note=it=>{ const k=keyOf(it); rec=[k,...rec.filter(x=>x!==k)].slice(0,16); save(RK, JSON.stringify(rec)); drawRecent(); };
+  const btn=it=>{ const b=itemButton(it); b.addEventListener('click',()=>note(it)); return b; };
+  // the frame
+  const box=document.createElement('div'); box.className='pal2';
+  box.innerHTML='<div class="p2search"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg><input id="palSearch" type="search" placeholder="ابحث عن أداة أو رمز: جذر، ينتمي، زاوية…" autocomplete="off" spellcheck="false"><button type="button" class="p2clear" hidden aria-label="مسح البحث">✕</button></div>'
+    +'<div class="p2found" hidden></div>'
+    +'<div class="p2recent" hidden><span class="p2lab">الأخيرة</span><div class="p2row"></div></div>'
+    +'<div class="p2heads"><button type="button" class="p2head" data-sec="tools"><span>الأدوات</span><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
+    +'<button type="button" class="p2head" data-sec="syms"><span>الرموز</span><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>'
+    +'<div class="p2sec" data-sec="tools" hidden><div class="p2chips"></div><div class="p2items"></div></div>'
+    +'<div class="p2sec" data-sec="syms" hidden><div class="p2chips"></div><div class="p2items"></div></div>';
+  ribbon.parentNode.insertBefore(box, ribbon); ribbon.hidden=true; ribbon.style.display='none';
+  const q=box.querySelector('#palSearch'), found=box.querySelector('.p2found'), clr=box.querySelector('.p2clear');
+  const recBox=box.querySelector('.p2recent'), recRow=recBox.querySelector('.p2row');
+  function drawRecent(){ recRow.innerHTML=''; const its=rec.map(k=>{ try { return JSON.parse(k); } catch(e){ return null; } }).filter(it=>it && (it.t!=='tool' || TOOLEL[it.ins]));
+    its.forEach(it=>recRow.appendChild(btn(it))); recBox.hidden=!its.length; }
+  const SECS={ tools:{cats:TOOLCATS, all:allTools, kind:'tool'}, syms:{cats:SYMCATS, all:allSyms, kind:'sym'} };
+  function drawSec(sec){ const S=SECS[sec], el=box.querySelector('.p2sec[data-sec="'+sec+'"]'), chips=el.querySelector('.p2chips'), items=el.querySelector('.p2items');
+    const cur=load('aeq-p2-'+sec,'all'); chips.innerHTML='';
+    for (const [id,name] of [['all','الكل'], ...S.cats]){ if (id!=='all' && !tabItems(id,S.kind).length) continue;
+      const c=document.createElement('button'); c.type='button'; c.className='p2chip'; c.textContent=name; c.setAttribute('aria-pressed', String(id===cur));
+      c.addEventListener('click',()=>{ save('aeq-p2-'+sec,id); drawSec(sec); }); chips.appendChild(c); }
+    items.innerHTML=''; const list=cur==='all' ? S.all() : tabItems(cur,S.kind);
+    const g=document.createElement('div'); g.className='grp toolbar'; list.forEach(it=>g.appendChild(btn(it))); items.appendChild(g); }
+  function setOpen(sec, open){ save('aeq-p2open-'+sec, open?'1':'0'); box.querySelector('.p2sec[data-sec="'+sec+'"]').hidden=!open;
+    const h=box.querySelector('.p2head[data-sec="'+sec+'"]'); h.setAttribute('aria-expanded', String(open)); if (open) drawSec(sec); }
+  box.querySelectorAll('.p2head').forEach(h=>h.addEventListener('click',()=>setOpen(h.dataset.sec, h.getAttribute('aria-expanded')!=='true')));
+  // search
+  let everything=null;
+  function search(){ const t=norm(q.value.trim()); clr.hidden=!q.value; found.innerHTML='';
+    if (!t){ found.hidden=true; return; }
+    everything=everything||[...allTools(), ...allSyms()];
+    const words=t.split(/\s+/).filter(Boolean);
+    const hits=everything.filter(it=>{ const n=norm(nameOf(it)); return words.every(w=>n.includes(w)); });
+    if (!hits.length){ found.innerHTML='<span class="p2none">لا نتائج</span>'; found.hidden=false; return; }
+    const g=document.createElement('div'); g.className='grp toolbar'; hits.slice(0,60).forEach(it=>g.appendChild(btn(it))); found.appendChild(g); found.hidden=false; }
+  q.addEventListener('input', search);
+  q.addEventListener('keydown', e=>{ if (e.key==='Escape'){ q.value=''; search(); } else if (e.key==='Enter'){ const b=found.querySelector('button'); if (b){ e.preventDefault(); b.click(); } } });
+  clr.addEventListener('click',()=>{ q.value=''; search(); q.focus(); });
+  drawRecent();
+  setOpen('tools', load('aeq-p2open-tools','1')==='1'); setOpen('syms', load('aeq-p2open-syms','1')==='1');
+})();
 
 const HIST_KEY='aeq-history', HIST_MAX=20;
 function histThumb(){
