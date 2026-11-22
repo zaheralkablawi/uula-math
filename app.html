@@ -210,7 +210,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .p2head{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:600;cursor:pointer}
 .p2head svg{transition:transform .15s}.p2head[aria-expanded="false"] svg{transform:rotate(90deg)}.p2head[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
 .p2chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-.p2body{display:flex;flex-direction:column;gap:8px}.p2body>.p2sec{display:flex;flex-direction:column;height:var(--p2h,70vh);min-height:220px}.p2body.both>.p2sec{height:calc(var(--p2h,70vh)/2 - 4px);min-height:160px}.p2body>.p2sec[hidden]{display:none}.p2body .p2chips{flex:none}.p2body .p2items{flex:1;min-height:0;overflow:auto}
+.p2body{display:flex;flex-direction:column;gap:8px}.p2body>.p2sec{display:flex;flex-direction:column;height:var(--p2h,70vh);min-height:220px}.p2body.both{flex-direction:row}.p2body.both>.p2sec{flex:2 1 0;min-width:0;padding:6px}.p2body.both>.p2sec[data-sec=tools]{flex:1 1 0}.p2heads.both{display:grid;grid-template-columns:1fr 2fr;justify-items:center}.p2body>.p2sec[hidden]{display:none}.p2body .p2chips{flex:none}.p2body .p2items{flex:1;min-height:0;overflow:auto}
 .p2chip{display:inline-grid;place-items:center;min-width:30px;font-size:1rem!important;height:26px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:var(--code);color:var(--muted);font-family:var(--f-body);font-size:.8rem;cursor:pointer}
 .p2chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .p2items .grp,.p2found .grp,.p2row{display:flex;flex-wrap:wrap;gap:4px}
@@ -2569,7 +2569,7 @@ showTab(load('aeq-tab','fav'));
     items.innerHTML=''; const list=cur==='all' ? S.all() : tabItems(cur,S.kind);
     const g=document.createElement('div'); g.className='grp toolbar'; list.forEach(it=>g.appendChild(btn(it))); items.appendChild(g); }
   function setOpen(sec, open){ save('aeq-p2open-'+sec, open?'1':'0'); box.querySelector('.p2sec[data-sec="'+sec+'"]').hidden=!open;
-    box.querySelector('.p2body').classList.toggle('both', [...box.querySelectorAll('.p2sec')].every(x=>!x.hidden));
+    const both=[...box.querySelectorAll('.p2sec')].every(x=>!x.hidden); box.querySelector('.p2body').classList.toggle('both', both); box.querySelector('.p2heads').classList.toggle('both', both);
     const h=box.querySelector('.p2head[data-sec="'+sec+'"]'); h.setAttribute('aria-expanded', String(open)); if (open) drawSec(sec); }
   box.querySelectorAll('.p2head').forEach(h=>h.addEventListener('click',()=>{ const op=h.getAttribute('aria-expanded')!=='true'; setOpen(h.dataset.sec, op);
     if (op || [...box.querySelectorAll('.p2sec')].some(x=>!x.hidden)){ fitP2(); const hd=box.querySelector('.p2heads'), tf=document.querySelector('.topfix');
