@@ -842,9 +842,15 @@ function normalizeMap(line){
 // a line break inside { } starts a new row (like ;), so tables and matrices can be written one row per line.
 // Same length in, same length out, so positions in the writing box still match.
 function joinRows(src){
+  // a set's braces {…} running over several lines: the lines stay lines, and the braces are drawn (the opening one on the first line, the closing one on the last)
+  const st=[], set=new Set();
+  for (let i=0;i<src.length;i++){ const c=src[i]; if (src[i-1]==='\\') continue;
+    if (c==='{') st.push(i); else if (c==='}' && st.length){ const o=st.pop(), pv=src[o-1];
+      if (src.slice(o,i).includes('\n') && (o===0 || !/[\p{L}\p{N}}\]_^.]/u.test(pv))){ set.add(o); set.add(i); } } }
   let d=0, out='';
   for (let i=0;i<src.length;i++){ const c=src[i];
     if (src[i-1]==='\\'){ out+=c; continue; } // \{ \} are drawn braces, not groups
+    if (set.has(i)){ out+= c==='{' ? '\u0002' : '\u0001'; continue; }
     if (c==='{') d++; else if (c==='}') d=Math.max(0,d-1);
     if (c==='\n' && d>0){ const prev=out.replace(/[ \t]+$/,'').slice(-1), next=(src.slice(i+1).match(/^[ \t]*(.)/)||[])[1];
       out += (prev==='{' || prev===';' || prev==='' || next==='}' || next===';' || next===undefined || next==='\n') ? ' ' : ';'; }
