@@ -196,7 +196,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 
 /* ===== MathType-style ribbon: tabs on top, grouped palettes below ===== */
 .ribbon{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
-.pal2{display:grid;gap:8px}
+.pal2{display:grid;gap:4px}.pal2 .p2search,.pal2 .p2found{display:none!important}
 .p2search{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:0 9px;height:34px;color:var(--muted)}
 .p2search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .p2search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-family:var(--f-body);font-size:.92rem;color:var(--ink);height:100%}
@@ -207,7 +207,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .p2lab{font-size:.75rem;color:var(--muted);white-space:nowrap}
 .p2none{font-size:.85rem;color:var(--muted)}
 .p2heads{display:flex;justify-content:flex-start;gap:6px}
-.p2head{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:600;cursor:pointer}
+.p2head{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:600;cursor:pointer}
 .p2head svg{transition:transform .15s}.p2head[aria-expanded="false"] svg{transform:rotate(90deg)}.p2head[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
 .p2chips{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px;padding:3px;background:var(--code);border:1px solid var(--line);border-radius:9px}
 .p2body{display:flex;flex-direction:column;gap:8px}.p2body>.p2sec{display:flex;flex-direction:column;height:var(--p2h,70vh);min-height:220px}.p2body.both{flex-direction:row}.p2body.both>.p2sec{flex:1 1 0;min-width:0;padding:6px}.p2heads.both{display:grid;grid-template-columns:1fr 1fr;justify-items:center}.p2body>.p2sec[hidden]{display:none}.p2body .p2chips{flex:none}.p2body .p2items{flex:1;min-height:0;overflow:auto}
@@ -2550,7 +2550,7 @@ showTab(load('aeq-tab','fav'));
     +'<button type="button" class="p2head" data-sec="syms"><span>الرموز</span><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>'
     +'<div class="p2body"><div class="p2sec" data-sec="tools" hidden><div class="p2chips"></div><div class="p2items"></div></div>'
     +'<div class="p2sec" data-sec="syms" hidden><div class="p2chips"></div><div class="p2items"></div></div></div>';
-  ribbon.parentNode.insertBefore(box, ribbon); ribbon.hidden=true; ribbon.style.display='none';
+  ribbon.parentNode.insertBefore(box, ribbon); ribbon.hidden=true; ribbon.style.display='none'; box.parentNode.style.padding='6px 8px 8px';
   const q=box.querySelector('#palSearch'), found=box.querySelector('.p2found'), clr=box.querySelector('.p2clear');
   const recBox=box.querySelector('.p2recent'), recRow=recBox.querySelector('.p2row');
   function drawRecent(){ recRow.innerHTML=''; const its=rec.map(k=>{ try { return JSON.parse(k); } catch(e){ return null; } }).filter(it=>it && (it.t!=='tool' || TOOLEL[it.ins]));
