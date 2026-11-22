@@ -129,7 +129,7 @@ header p{margin:0;color:var(--muted);max-width:60ch}
 [hidden]{display:none!important}
 .sugg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.8rem;color:var(--muted)}
 .sugg button{font:inherit;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 8px;cursor:pointer}
-.sugg button:first-of-type{border-color:var(--accent)}.sugg .sgl{font-family:var(--f-body);font-size:1.05em;color:var(--ink)}
+.sugg button:first-of-type{border-color:var(--accent)}.sugg .sgl{font-family:var(--f-body);font-size:1.05em;color:var(--ink)}.sugg button.sglet{padding:0 7px;min-width:30px}.sugg .sglet .sgl{font-size:1.35em;line-height:1.3}
 .lsty button{gap:4px;padding:0 7px}.lsty{flex-wrap:nowrap}.lsty button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}.sugg.lsty button:first-of-type:not(.on){background:var(--panel);border-color:var(--line);color:var(--ink)}
 .tgl{font-size:.72rem;font-weight:600;color:var(--muted);padding-inline:2px 4px}
 .toolbar button,.chip{font:inherit;font-size:.8rem;line-height:1.3;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:2px 7px;cursor:pointer;min-height:28px}
@@ -2298,8 +2298,15 @@ const CMDLIST=[['جذر','جذر{|}','جذر'],['جذر','جذر[٣]{|}','جذر
 const sugg=$('sugg'); let suggList=[], suggFrom=0;
 function updateSugg(){
   const c=src.selectionStart; if (c!==src.selectionEnd){ sugg.hidden=true; return; }
-  const before=src.value.slice(0,c), m=/[\u0621-\u064A]{2,}$/.exec(before), after=src.value[c];
+  const before=src.value.slice(0,c), m=/[\u0621-\u064A]+$/.exec(before), after=src.value[c];
   if (!m || after==='{' || after==='['){ sugg.hidden=true; suggList=[]; return; }
+  if (m[0].length===1){ // one letter on its own: its drawn forms (glyphs only)
+    suggList=(window.__letSugg ? window.__letSugg(m[0]) : []).slice(0,12); suggFrom=c-1;
+    if (!suggList.length){ sugg.hidden=true; return; }
+    sugg.innerHTML=''; suggList.forEach((x,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='sglet'; if (x.sym.name) b.title=x.sym.name;
+      const g=document.createElement('span'); g.className='sgl'; g.textContent=x.sym.ch; b.append(g); if (i===0) b.append(' ⇥');
+      b.addEventListener('mousedown',ev=>{ ev.preventDefault(); acceptSugg(i); }); sugg.appendChild(b); });
+    sugg.hidden=false; return; }
   const w=m[0], tools=CMDLIST.filter(x=>x[0].startsWith(w) && x[0]!==w || x[0]===w), syms=window.__symSugg ? window.__symSugg(w) : [];
   suggList=[...tools.slice(0, syms.length ? 4 : 6), ...syms.slice(0, tools.length ? 4 : 6)]; suggFrom=c-w.length;
   if (!suggList.length){ sugg.hidden=true; return; }
@@ -2509,6 +2516,16 @@ showTab(load('aeq-tab','fav'));
     const exact=[], pre=[];
     for (const x of symIdx){ const ws=x.n.split(/\s+/); if (ws.some(v=>v===t)) exact.push(x); else if (ws.some(v=>v.startsWith(t))) pre.push(x); }
     const seen=new Set(); return [...exact, ...pre].filter(x=>{ const k=x.sym.ch||x.sym.s; if (seen.has(k)) return false; seen.add(k); return true; }); };
+  // a single letter typed: every drawn form of that letter (the booklet font's letters + the Arabic math letters)
+  const LETFORMS={'أ':'e041 e2db','ب':'e042','ت':'e043','ث':'e044','ج':'e046 e045 e2dc','ح':'e048 e070 e072','خ':'e047','د':'e049','ذ':'e04e','ر':'e04b e04c e2a2 e2cc','ز':'e04d',
+    'س':'e04f e073 e29e e2a0 e2a3 e2a4 e2cb e2dd','ش':'e050 e074 e29f e2a5 e2a6 e2c8 e2c9','ص':'e051 e075 e29d e2a1 e2a7 e2a8 e2ca e2de','ض':'e052','ط':'e053','ظ':'e054','ع':'e055 e2ac','غ':'e056',
+    'ف':'e057','ق':'e058 e299','ك':'e059 e071 e2af e2d8 e2ed','ل':'e05a e05b e2d0','م':'e2cf e05c','ن':'e05d','ه':'e060 e05e e05f e2b0 e2b1 e2da e2e0','و':'e061 e296','ي':'e062','ء':'e04a e2d9'};
+  const baseLet=c=>{ c=String(c).normalize('NFKC').replace(/[اإآٱ]/,'أ').replace('ة','ه').replace('ى','ي').replace('ٮ','ب').replace('ٯ','ق').replace('ں','ن'); return c; };
+  let letIdx=null;
+  window.__letSugg = w => { const L=baseLet(w); if (!letIdx){ letIdx={};
+      for (const [k,v] of Object.entries(LETFORMS)) letIdx[k]=v.split(' ').map(h=>({sym:{t:'sym',ch:String.fromCharCode(parseInt(h,16)), name:(ALLSYM.find(a=>a.ch===String.fromCharCode(parseInt(h,16)))||{}).name||''}, label:''}));
+      for (const [cp,n] of MLET){ const ch=String.fromCodePoint(cp), k=baseLet(ch); (letIdx[k]=letIdx[k]||[]).push({sym:{t:'sym',ch,name:n}, label:''}); } }
+    return letIdx[L] || []; };
   // recently used (tools and symbols)
   const RK='aeq-recent-all'; let rec=[]; try { rec=JSON.parse(load(RK,'[]'))||[]; } catch(e){ rec=[]; }
   const keyOf=it=>JSON.stringify(it.t==='tool'?{t:'tool',ins:it.ins}:it.t==='circ'?{t:'circ',ch:it.ch,fill:!!it.fill}:it.t==='text'?{t:'text',s:it.s}:{t:'sym',ch:it.ch,name:it.name||''});
