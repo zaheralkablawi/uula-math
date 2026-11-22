@@ -4123,11 +4123,18 @@ if (window.Office) Office.onReady(info => {
     list.sort((a,b) => (Math.abs(a.top-b.top) > 6 ? a.top-b.top : (b.left+b.width)-(a.left+a.width))); // top first; same row: the right one first
     const tags = await readTags(list.map(x => x.id));
     const need = list.filter((x,i) => !tags[i]); const nat = need.length ? (await nativeEqs(need)) || need.map(()=>null) : [];
-    const lines = [], used = []; let first = null;
+    const got = [], used = []; let first = null;
     list.forEach((x,i) => { let code = null, meta = null;
       if (tags[i]){ try { meta = JSON.parse(decodeURIComponent(tags[i])); code = meta.c; } catch(e){} }
       else { const r = nat[need.indexOf(x)]; if (r){ code = r.code; meta = r; } }
-      if (code){ lines.push(String(code)); used.push(x); if (!first) first = meta; } });
+      if (code){ got.push({ x, code: String(code).trim() }); used.push(x); if (!first) first = meta; } });
+    // boxes side by side (they overlap vertically) go on one line, right to left as on the slide; rows top to bottom
+    const rows = [];
+    for (const g of got.slice().sort((a,b) => (a.x.top + a.x.height/2) - (b.x.top + b.x.height/2))){
+      const t = g.x.top, b = g.x.top + g.x.height, row = rows.find(r => Math.min(b, r.b) - Math.max(t, r.t) >= .5*Math.min(g.x.height, r.b - r.t));
+      if (row){ row.items.push(g); row.t = Math.min(row.t, t); row.b = Math.max(row.b, b); } else rows.push({ t, b, items: [g] }); }
+    rows.sort((a,b) => a.t - b.t);
+    const lines = rows.map(r => r.items.sort((a,b) => (b.x.left + b.x.width) - (a.x.left + a.x.width)).map(g => g.code).join(' '));
     if (!lines.length) return flash('لم أجد معادلات في المربعات المحددة.', false);
     if (used.length > 1){ const how = await chooseHow(used.length); if (!how) return flash('أُلغي.', false);
       if (how === 'each') return eachOwn(list, tags, need, nat, slide); }
