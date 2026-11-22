@@ -3264,6 +3264,12 @@ const OMML = (() => {
     return out.join(' ');
   }
   const A = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+  // ق with ن above and ر below = combinations, ل = permutations: written ق{ن}{ر} / ل{ن}{ر} as in the tool
+  const G = '(?:\\{([^{}]*)\\}|([^\\s{}^_]))';
+  const CP_RE = new RegExp('(^|[^\\u0621-\\u064A])([قل])(?:\\^' + G + '_' + G + '|_' + G + '\\^' + G + ')(?![\\u0621-\\u064A])', 'g');
+  function combPerm(code){ return String(code).replace(CP_RE, (m0, pre, L, a1, a2, b1, b2, c1, c2, d1, d2) => {
+    const up = a1 != null || a2 != null ? (a1 != null ? a1 : a2) : (d1 != null ? d1 : d2), dn = a1 != null || a2 != null ? (b1 != null ? b1 : b2) : (c1 != null ? c1 : c2);
+    return pre + L + '{' + up.trim() + '}{' + dn.trim() + '}'; }); }
   function paraLine(p){ // one paragraph: text runs and equations in their (Arabic) order
     const segs = []; let txt = [];
     const flush = () => { if (txt.length){ const s = textLine(txt); if (s) segs.push(s); txt = []; } };
@@ -3292,7 +3298,7 @@ const OMML = (() => {
       const runs = [...sp.getElementsByTagName('*')].filter(e => e.localName==='r' && [...e.childNodes].some(c => c.localName==='t' && c.textContent.trim()));
       const clr = runs.map(r => { const rp = kid(r,'rPr'); const f = rp && kid(rp,'solidFill'); return f && kid(f,'srgbClr'); }).find(Boolean);
       const szs = runs.map(r => kid(r,'rPr')).filter(Boolean).filter(r => !r.getAttribute('baseline')).map(r=>+r.getAttribute('sz')).filter(Boolean);
-      let code = lines.join('\n');
+      let code = combPerm(lines.join('\n'));
       const lined = [...sp.getElementsByTagNameNS(M,'m'), ...sp.getElementsByTagNameNS(M,'eqArr')].length && code.split('\n').filter(l => /=/.test(l)).length > 1;
       if (lined) code = 'محاذاة{يساوي} ' + code; // the lines were lined up on = in PowerPoint
       out.push({id: nv ? nv.getAttribute('id') : '', name: nv ? nv.getAttribute('name') : '', code,
@@ -3302,7 +3308,7 @@ const OMML = (() => {
     return out;
   }
   function fromXml(xml){ return fromSlideXml(xml).map(x=>x.code); }
-  return { conv, fromXml, fromSlideXml, paraLine };
+  return { conv, fromXml, fromSlideXml, paraLine, combPerm };
 })();
 
 
@@ -3806,7 +3812,7 @@ async function slidePptx(){
 }
 // MathType reading drawn left to right: tidy what the reader gives into Arabic order
 function tidyMT(code){
-  return String(code||'')
+  return (typeof OMML !== 'undefined' && OMML.combPerm ? OMML.combPerm : x => x)(String(code||''))
     .replace(/([٠-٩]+)‚([٠-٩]+)/g, '$2,$1')                                   // ٥‚٥٧ → ٥٧,٥
     .replace(/(\S)(\s*)([=+−×÷⇐⇒≈≤≥<>])((?:[_^](?:\{[^{}]*\}|[^\s{}]))+)/g, '$1$4$2$3') // ر =_{١} → ر_{١} =
     .split('\n').map(l => { const m = l.match(/\\[{}]/g) || []; // \}١ ،٢\{ (drawn left to right) → {١ ،٢}
@@ -3856,7 +3862,7 @@ async function nativeEqs(pics){ // per shape: its equation, or false; null = cou
     return hit && (byId || hit.name === s.name || near(hit) < 40) ? { ...hit, m: true } : false; }); // m: the size is in slide points already
   } catch(e){ return null; }
 }
-window.__aeq.nativeEq = nativeEq;
+window.__aeq.nativeEq = nativeEq; window.__aeq.omml = OMML;
 
 async function readSelection(){
   if (!hasPPT()) return { unsupported:true };
