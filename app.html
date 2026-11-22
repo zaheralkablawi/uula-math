@@ -206,7 +206,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .p2recent{display:flex;gap:8px;align-items:center}.p2recent .p2row{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0}
 .p2lab{font-size:.75rem;color:var(--muted);white-space:nowrap}
 .p2none{font-size:.85rem;color:var(--muted)}
-.p2heads{display:flex;justify-content:flex-start;gap:6px}
+.p2heads{display:grid;grid-template-columns:1fr 1fr;justify-items:center;gap:8px} /* fixed places: الأدوات over the right half, الرموز over the left, open or closed */
 .p2head{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:600;cursor:pointer}
 .p2head svg{transition:transform .15s}.p2head[aria-expanded="false"] svg{transform:rotate(90deg)}.p2head[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
 .p2chips{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px;padding:3px;background:var(--code);border:1px solid var(--line);border-radius:9px}
