@@ -825,7 +825,7 @@ const colorOf=t=>COLORNAME[t.trim()]||COLORN[colKey(t)]||null;
 // digits drawn with the Mazeri math digits (and its comma)
 const mathDigits = t => t.replace(/[٠-٩]/g, d=>String.fromCharCode(0xE030+'٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[,،٫]/g, String.fromCharCode(0xE02C));
 const MATHWORD={'سس':0x73,'شش':0x74,'صص':0x75,'حح':0x72,'جا':0x65,'جتا':0x66,'ظا':0x67,'ظتا':0x68,'قا':0x69,'قتا':0x6A,'نق':0x6B,'المجاور':0xF3,'المقابل':0xF4,'الوتر':0xF9};
-const MATHLETTER={'ا':0x41,'أ':0x41,'إ':0x41,'آ':0x41,'ب':0x42,'ت':0x43,'ث':0x44,'ج':0x46,'\u0001':0x45,'ح':0x48,'خ':0x47,'د':0x49,'ذ':0x4E,'ر':0x4B,'ز':0x4D,'س':0x4F,'ش':0x50,'ص':0x51,'ض':0x52,'ط':0x53,'ظ':0x54,'ع':0x55,'غ':0x56,'ف':0x57,'ق':0x58,'ك':0x59,'ل':0x5A,'م':0x2CF,'ن':0x5D,'ه':0x60,'و':0x61,'ي':0x62,'ى':0x62,'ء':0x4A};
+const MATHLETTER={'ا':0x41,'أ':0x41,'إ':0x41,'آ':0x41,'ب':0x42,'ت':0x43,'ث':0x44,'ج':0x46,'\u0001':0x45,'ح':0x48,'خ':0x47,'د':0x49,'ذ':0x4E,'ر':0x4C,'ز':0x4D,'س':0x4F,'ش':0x50,'ص':0x51,'ض':0x52,'ط':0x53,'ظ':0x54,'ع':0x55,'غ':0x56,'ف':0x57,'ق':0x58,'ك':0x59,'ل':0x5A,'م':0x2CF,'ن':0x5D,'ه':0x60,'و':0x61,'ي':0x62,'ى':0x62,'ء':0x4A};
 // normalise one line and remember, for every character, where it came from in what was typed
 function normalizeMap(line){
   const MULTI=[['\\{','\u0001'],['\\}','\u0002'],['<=','≤'],['>=','≥'],['!=','≠'],['+-','±'],['...','…']];
@@ -2520,7 +2520,7 @@ showTab(load('aeq-tab','fav'));
     for (const x of symIdx){ const ws=x.n.split(/\s+/); if (ws.some(v=>v===t)) exact.push(x); else if (ws.some(v=>v.startsWith(t))) pre.push(x); }
     const seen=new Set(); return [...exact, ...pre].filter(x=>{ const k=x.sym.ch||x.sym.s; if (seen.has(k)) return false; seen.add(k); return true; }); };
   // a single letter typed: every drawn form of that letter (the booklet font's letters + the Arabic math letters)
-  const LETFORMS={'أ':'e041 e2db','ب':'e042','ت':'e043','ث':'e044','ج':'e046 e045 e2dc','ح':'e048 e070 e072','خ':'e047','د':'e049','ذ':'e04e','ر':'e04b e04c e2a2 e2cc','ز':'e04d',
+  const LETFORMS={'أ':'e041 e2db','ب':'e042','ت':'e043','ث':'e044','ج':'e046 e045 e2dc','ح':'e048 e070 e072','خ':'e047','د':'e049','ذ':'e04e','ر':'e04c e04b e2a2 e2cc','ز':'e04d',
     'س':'e04f e073 e29e e2a0 e2a3 e2a4 e2cb e2dd','ش':'e050 e074 e29f e2a5 e2a6 e2c8 e2c9','ص':'e051 e075 e29d e2a1 e2a7 e2a8 e2ca e2de','ض':'e052','ط':'e053','ظ':'e054','ع':'e055 e2ac','غ':'e056',
     'ف':'e057','ق':'e058 e299','ك':'e059 e071 e2af e2d8 e2ed','ل':'e05a e05b e2d0','م':'e2cf e05c','ن':'e05d','ه':'e060 e05e e05f e2b0 e2b1 e2da e2e0','و':'e061 e296','ي':'e062','ء':'e04a e2d9'};
   const baseLet=c=>{ c=String(c).normalize('NFKC').replace(/[اإآٱ]/,'أ').replace('ة','ه').replace('ى','ي').replace('ٮ','ب').replace('ٯ','ق').replace('ں','ن'); return c; };
@@ -3482,8 +3482,8 @@ function parseMTEF(d){
 const KB = {q:'ض',w:'ص',e:'ث',r:'ق',t:'ف',y:'غ',u:'ع',i:'ه',o:'خ',p:'ح','[':'ج',']':'د',a:'ش',s:'س',d:'ي',f:'ب',g:'ل',
   h:'أ',j:'ت',k:'ن',l:'م',';':'ك',"'":'ط',z:'ئ',x:'ء',c:'ؤ',v:'ر',n:'ى',m:'ة','`':'ذ',H:'أ',Y:'إ',N:'آ',b:'لا'};
 // Mazeri Arabic Math symbol: letter positions (same table as UULA Arabic Math)
-const MATHLETTER_POS = {0x41:'أ',0x42:'ب',0x43:'ت',0x44:'ث',0x45:'ج',0x48:'ح',0x47:'خ',0x49:'د',0x4E:'ذ',0x4B:'ر',0x4D:'ز',0x4F:'س',
-  0x50:'ش',0x51:'ص',0x52:'ض',0x53:'ط',0x54:'ظ',0x55:'ع',0x56:'غ',0x57:'ف',0x58:'ق',0x59:'ك',0x5A:'ل',0x5C:'م',0x5D:'ن',0x60:'ه',
+const MATHLETTER_POS = {0x41:'أ',0x42:'ب',0x43:'ت',0x44:'ث',0x45:'ج',0x48:'ح',0x47:'خ',0x49:'د',0x4E:'ذ',0x4B:'ر',0x4C:'ر',0x4D:'ز',0x4F:'س',
+  0x50:'ش',0x51:'ص',0x52:'ض',0x53:'ط',0x54:'ظ',0x55:'ع',0x56:'غ',0x57:'ف',0x58:'ق',0x59:'ك',0x5A:'ل',0x5C:'م',0x2CF:'م',0x5D:'ن',0x60:'ه',
   0x61:'و',0x62:'ي',0x4A:'ء'};
 // characters UULA Arabic Math draws mirrored: written the other way in logical text
 const MIRROR = {'<':'>','>':'<','≤':'≥','≥':'≤','∈':'∋','∋':'∈','∉':'∌','∌':'∉','⊂':'⊃','⊃':'⊂','⊆':'⊇','⊇':'⊆','⊄':'⊅','⊅':'⊄',
