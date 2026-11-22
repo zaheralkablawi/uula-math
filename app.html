@@ -953,6 +953,8 @@ function rowBox(list, sz){
       g.save(); g.globalAlpha=.55; if (g.setLineDash) g.setLineDash([sz*.07,sz*.05]); g.lineWidth=t; g.strokeStyle=g.fillStyle;
       if (g.strokeRect) g.strokeRect(x+sz*.05, y-ph, pw, ph+sz*.08); g.restore();
       if (HITS) HITS.push({x, y:y-ph, w:pw+sz*.1, h:ph+sz*.12, o0:list.pos, o1:list.pos, area:0}); } }; }
+  // a placeholder word (عدد، الحدث…) is grey only when it stands alone; inside a sentence it is ordinary writing
+  if (list.filter(n=>n && n.t!=='space').length>1) for (const n of list) if (n && n.t==='txt' && n.k==='word' && HINTW.has(n.s)) n.plain=true;
   const kids=[]; let prevOpLike=true, eqx=null, acc=0;
   // numbers read left to right: a number split by an over/underline (٣,خط{٥}) keeps its digit order
   // (the same for a digit that is struck out شطب{١}{٠}٢ or colored لون{أحمر}{١}٢)
