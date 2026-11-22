@@ -572,13 +572,13 @@ class P {
         if (xs.some(x=>Math.abs(g2(x)-2*g1(x)+g0(x))>1e-6*(1+Math.abs(g0(x))))) this.err('المتباينة يجب أن تكون خطية في ص: '+e.trim(), this.at(i0));
         if (xs.every(x=>Math.abs(A(x))<1e-12)){ // no ص: a vertical edge س = عدد
           const c=g0(1)-g0(0); if (Math.abs(c)<1e-12) this.err('لم أفهم المتباينة: '+e.trim(), this.at(i0));
-          const xs0=-g0(0)/c; fns.push({f:()=>xs0, color: col || '#1f71de', ineq:{up: big===(c>0), strict, vert:true}}); return; }
+          const xs0=-g0(0)/c; fns.push({f:()=>xs0, color: col || PLOTCOL[k%PLOTCOL.length], ineq:{up: big===(c>0), strict, vert:true}}); return; }
         const a0=A(xs.find(x=>Math.abs(A(x))>1e-12));
-        fns.push({f:x=>-g0(x)/A(x), color: col || '#1f71de', ineq:{up: big===(a0>0), strict, vert:false}}); return; }
+        fns.push({f:x=>-g0(x)/A(x), color: col || PLOTCOL[k%PLOTCOL.length], ineq:{up: big===(a0>0), strict, vert:false}}); return; }
       const iq=/^\s*(ص|y|س|x)\s*([<>≤≥⩽⩾])\s*(.+)$/i.exec(e); // inequality: shade above / below (or right / left), dashed edge for < >
       if (iq){ let rhs=iq[3]; const ai=rhs.lastIndexOf('&'); if (ai>=0){ col=colorOf(rhs.slice(ai+1))||col; rhs=rhs.slice(0,ai); } if (HINTW.has(rhs.trim())) return;
         const big=/[>≥⩾]/.test(iq[2]), strict=/[<>]/.test(iq[2]); let f; try { f=compileFn('ص = '+rhs); } catch(er){ this.err('لم أفهم المتباينة: '+e.trim(), this.at(i0)); }
-        fns.push({f, color: col || '#1f71de', ineq:{up:big, strict, vert:/^(س|x)$/i.test(iq[1])}}); return; }
+        fns.push({f, color: col || PLOTCOL[k%PLOTCOL.length], ineq:{up:big, strict, vert:/^(س|x)$/i.test(iq[1])}}); return; }
       let style=null; { const pp=e.split('&'); if (pp.length>1){ e=pp[0]; for (const tk of pp.slice(1).map(x=>x.trim())){ if (/^متقطع/.test(tk)) style='dash'; else if (/^منقط/.test(tk)) style='dot'; else if (/^متصل/.test(tk)) style=null; else col=colorOf(tk)||col; } } }
       // an equation in any form (س + ص = ٦ ، ٢س − ص = ٤ ، س = ٣ ، س^٢ + ص^٢ = ٢٥): solved for ص (linear or quadratic in ص), or a vertical line
       const eq=/^([^=]+)=([^=]+)$/.exec(e);
@@ -1518,15 +1518,15 @@ function plotBox(n, sz){
       if (x0<=0&&0<=x1&&y0<=0&&0<=y1){ const b=numB(0); b.draw(g, ox-b.w-sz*.1, oy+b.a+sz*.12); } }
     // curves, clipped to the grid
     const clip=(ax_,ay,bx,by)=>{ let t0=0,t1=1; const dx=bx-ax_, dy=by-ay; for (const [pp,q] of [[-dx,ax_-gx],[dx,gx+gw-ax_],[-dy,ay-gy],[dy,gy+gh-ay]]){ if (pp===0){ if (q<0) return null; } else { const r=q/pp; if (pp<0){ if (r>t1) return null; if (r>t0) t0=r; } else { if (r<t0) return null; if (r<t1) t1=r; } } } return [ax_+t0*dx, ay+t0*dy, ax_+t1*dx, ay+t1*dy]; };
-    for (const fn of n.fns.filter(f=>f.ineq)){ const q=fn.ineq, N=600; g.save(); // shaded half-plane, then its edge with arrows at both ends
+    for (const pass of [0,1]) for (const fn of n.fns.filter(f=>f.ineq)){ const q=fn.ineq, N=600; g.save(); // all shaded half-planes first, then every edge (arrows at both ends) on top
       let edge=[];
       if (q.vert){ let c; try { c=fn.f(0); } catch(e){ c=NaN; } if (!isFinite(c)){ g.restore(); continue; } const cx=X(Math.max(x0,Math.min(x1,c)));
-        g.globalAlpha=.4; g.fillStyle=fn.color; g.beginPath(); if (q.up){ g.rect(cx,gy,gx+gw-cx,gh); } else g.rect(gx,gy,cx-gx,gh); g.fill(); g.globalAlpha=1;
+        g.globalAlpha=pass?0:.4; g.fillStyle=fn.color; g.beginPath(); if (q.up){ g.rect(cx,gy,gx+gw-cx,gh); } else g.rect(gx,gy,cx-gx,gh); g.fill(); g.globalAlpha=1;
         if (c>=x0 && c<=x1) edge=[[cx,gy+gh],[cx,gy]]; }
       else { const P_=[]; for (let k=0;k<=N;k++){ const xv=x0+sx*k/N; let yv; try{ yv=fn.f(xv); }catch(e){ yv=NaN; } if (!isFinite(yv)) continue; P_.push([X(xv), Y(Math.max(y0,Math.min(y1,yv))), yv>=y0 && yv<=y1]); }
-        if (P_.length>1){ g.globalAlpha=.4; g.fillStyle=fn.color; g.beginPath(); g.moveTo(P_[0][0], q.up?gy:gy+gh); for (const p of P_) g.lineTo(p[0],p[1]); g.lineTo(P_[P_.length-1][0], q.up?gy:gy+gh); g.closePath(); g.fill(); g.globalAlpha=1;
+        if (P_.length>1){ g.globalAlpha=pass?0:.4; g.fillStyle=fn.color; g.beginPath(); g.moveTo(P_[0][0], q.up?gy:gy+gh); for (const p of P_) g.lineTo(p[0],p[1]); g.lineTo(P_[P_.length-1][0], q.up?gy:gy+gh); g.closePath(); g.fill(); g.globalAlpha=1;
           edge=P_.filter(p=>p[2]).map(p=>[p[0],p[1]]); } }
-      if (edge.length>1){ g.fillStyle=fn.color;
+      if (pass && edge.length>1){ g.fillStyle=fn.color;
         if (q.strict){ const dl=sz*.16; let acc=0, on=true; stroke(g,t*1.5,()=>{ g.moveTo(edge[0][0],edge[0][1]); for (let k=1;k<edge.length;k++){ const [ax_,ay]=edge[k-1], [bx,by]=edge[k]; let L=Math.hypot(bx-ax_,by-ay), s0=0;
             while (s0<L){ const step=Math.min(dl-acc, L-s0); const tx=ax_+(bx-ax_)*(s0+step)/L, ty=ay+(by-ay)*(s0+step)/L; if (on) g.lineTo(tx,ty); else g.moveTo(tx,ty); s0+=step; acc+=step; if (acc>=dl-1e-6){ acc=0; on=!on; } } } }); }
         else stroke(g,t*1.5,()=>{ g.moveTo(edge[0][0],edge[0][1]); for (const p of edge) g.lineTo(p[0],p[1]); });
