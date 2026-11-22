@@ -3973,6 +3973,7 @@ if (window.Office) Office.onReady(info => {
       if (!pic) return flash('حدد المعادلة أولًا.', false);
       const many = now.id ? await selectedAll() : [];
       if (many.length > 1) return editMany(many, now.slide);
+      if (many.length === 1 && many[0].id !== pic.id) Object.assign(pic, { id: many[0].id }); // a group holding one box
       const raw = (await readTags([pic.id]))[0];
       let m;
       if (!raw){ // a native PowerPoint equation: read it from the slide file and write it in Arabic order
@@ -3994,8 +3995,25 @@ if (window.Office) Office.onReady(info => {
     });
   }
   // several boxes selected: each one read (saved code, or a PowerPoint equation), top to bottom, into one writing; «تعديل» puts the result in their place
-  async function selectedAll(){ try { return await PowerPoint.run(async ctx => { const sel = ctx.presentation.getSelectedShapes(); sel.load('items/id,items/left,items/top,items/width,items/height'); await ctx.sync();
-    return sel.items.map(x => ({ id: x.id, left: x.left, top: x.top, width: x.width, height: x.height })); }); } catch(e){ return []; } }
+  // every selected box; a group is opened up into its boxes (and taken apart, so each box can be replaced in its place)
+  async function selectedAll(){ try { return await PowerPoint.run(async ctx => {
+    const F = 'items/id,items/name,items/type,items/left,items/top,items/width,items/height';
+    const sel = ctx.presentation.getSelectedShapes(); sel.load(F); await ctx.sync();
+    const out = [], groups = [];
+    const walk = async (items, grp) => { for (const x of items){
+      if (x.type === 'Group'){ let kids = null; try { kids = x.group.shapes; kids.load(F); await ctx.sync(); } catch(e){ kids = null; }
+        if (kids){ groups.push(x); await walk(kids.items, grp || x.id); continue; } }
+      out.push({ id: x.id, name: x.name, left: x.left, top: x.top, width: x.width, height: x.height, grp: grp || null }); } };
+    await walk(sel.items, null);
+    if (groups.length){ try { for (const g of groups){ g.group.ungroup(); await ctx.sync(); }
+        // the boxes now sit on the slide itself; find each again (by id, else by name and place)
+        const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
+        const all = sl.items[0].shapes; all.load('items/id,items/name,items/left,items/top'); await ctx.sync();
+        for (const o of out){ const same = all.items.find(z => z.id === o.id) || all.items.find(z => z.name === o.name && Math.abs(z.left - o.left) < 1 && Math.abs(z.top - o.top) < 1);
+          if (same){ o.id = same.id; o.grp = null; } }
+        if (ctx.presentation.setSelectedShapes){ ctx.presentation.setSelectedShapes(out.map(o => o.id)); await ctx.sync(); }
+      } catch(e){} }
+    return out; }); } catch(e){ return []; } }
   // two choices for several boxes: one picture for all, or one picture for each box in its own place
   function chooseHow(n){ return new Promise(res => {
     const bg = document.createElement('div'); bg.className = 'howbg';
@@ -4155,7 +4173,8 @@ if (window.Office) Office.onReady(info => {
     src.focus(); src.setRangeText(lines.join('\n'), 0, src.value.length, 'end'); snap(true);
     ensureFont().then(update);
     const R = Math.max(...used.map(x => x.left + x.width)), T = Math.min(...used.map(x => x.top)), L = Math.min(...used.map(x => x.left));
-    editTarget = { id: used[0].id, extra: used.slice(1).map(x => x.id), slide, box: { left: L, top: T, width: R - L } };
+    const tids = [...new Set(used.map(x => x.grp || x.id))];
+    editTarget = { id: tids[0], extra: tids.slice(1), slide, box: { left: L, top: T, width: R - L } };
     $('insertDoc').classList.add('replacing'); $('insertDoc').dataset.tip = 'تعديل';
     flash('قُرئت ' + used.length + ' من ' + list.length + '. راجعها ثم اضغط «تعديل».', used.length === list.length);
   }
