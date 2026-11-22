@@ -209,10 +209,10 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .p2heads{display:flex;justify-content:flex-start;gap:6px}
 .p2head{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:600;cursor:pointer}
 .p2head svg{transition:transform .15s}.p2head[aria-expanded="false"] svg{transform:rotate(90deg)}.p2head[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
-.p2chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-.p2body{display:flex;flex-direction:column;gap:8px}.p2body>.p2sec{display:flex;flex-direction:column;height:var(--p2h,70vh);min-height:220px}.p2body.both{flex-direction:row}.p2body.both>.p2sec{flex:2 1 0;min-width:0;padding:6px}.p2body.both>.p2sec[data-sec=tools]{flex:1 1 0}.p2heads.both{display:grid;grid-template-columns:1fr 2fr;justify-items:center}.p2body>.p2sec[hidden]{display:none}.p2body .p2chips{flex:none}.p2body .p2items{flex:1;min-height:0;overflow:auto}
-.p2chip{display:inline-grid;place-items:center;min-width:30px;font-size:1rem!important;height:26px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:var(--code);color:var(--muted);font-family:var(--f-body);font-size:.8rem;cursor:pointer}
-.p2chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.p2chips{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px;padding:3px;background:var(--code);border:1px solid var(--line);border-radius:9px}
+.p2body{display:flex;flex-direction:column;gap:8px}.p2body>.p2sec{display:flex;flex-direction:column;height:var(--p2h,70vh);min-height:220px}.p2body.both{flex-direction:row}.p2body.both>.p2sec{flex:1 1 0;min-width:0;padding:6px}.p2heads.both{display:grid;grid-template-columns:1fr 1fr;justify-items:center}.p2body>.p2sec[hidden]{display:none}.p2body .p2chips{flex:none}.p2body .p2items{flex:1;min-height:0;overflow:auto}
+.p2chip{display:inline-grid;place-items:center;min-width:28px;height:24px;padding:0 6px;border:0;border-radius:6px;background:transparent;color:var(--muted);font-family:var(--f-body);font-size:.95rem!important;cursor:pointer}.p2chip:hover{color:var(--accent)}
+.p2chip[aria-pressed="true"]{background:var(--accent);color:#fff}
 .p2items .grp,.p2found .grp,.p2row{display:flex;flex-wrap:wrap;gap:4px}
 
 .tabs{display:flex;flex-wrap:wrap;gap:2px;background:var(--code);padding:4px 4px 0;border-bottom:1px solid var(--line)}
