@@ -400,7 +400,7 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <tr><td>شرطة</td><td><code>أ'</code> ، <code>أ''</code></td></tr>
           <tr><td>زاوية</td><td><code>زاوية{أ ب جـ}</code></td></tr>
           <tr><td>نهاية، مجموع، تكامل</td><td><code>نها{س ← ٣}</code> ، <code>مجموع{ر = ١}{ن}</code> ، <code>تكامل{١}{٢}</code></td></tr>
-          <tr><td>توافيق وتباديل</td><td><code>توافيق{ن}{ر}</code> ، <code>تباديل{ن}{ر}</code> ، <code>توافيق.أقواس{ن}{ر}</code></td></tr>
+          <tr><td>توافيق وتباديل</td><td><code>توافيق{ن}{ر}</code> ، <code>تباديل{ن}{ر}</code> ، <code>توافيق.أقواس{ن}{ر}</code> ، وباختصار: <code>ق{ن}{ر}</code> ، <code>ل{ن}{ر}</code></td></tr>
           <tr><td>المحاذاة</td><td>يمين، يسار، وسط، أو «يساوي» لتأتي علامات = في الأسطر تحت بعضها</td></tr>
           <tr><td>خط سفلي</td><td><code>تسطير{٣}</code></td></tr>
           <tr><td>مربع حول الناتج</td><td><code>مربع{س = ٣}</code></td></tr>
@@ -462,6 +462,7 @@ const CMD_RENAME = [["شبكةموجبةخالية", "شبكة.موجبة.خال
 const renameCmds = s => typeof s==='string' ? CMD_RENAME.reduce((t,[a,b])=>t.split(a).join(b), s) : s;
 const CMDS = [['مسافة','space'],['حاصرة.فوق','brt'],['حاصرة.تحت','brb'],['حاصرة.يمين','brr'],['حاصرة.يسار','brl'],['حاصرة','brt'],['سهم.يمين','xarrr'],['سهم','xarr'],['ضرب.رأسي','vmul'],['محاور.موجبة.خالية','axespx'],['محاور.موجبة','axesp'],['محاور.خالية','axesx'],['محاور','axes'],['ترتيب','arr'],['فوق','over'],['تسطير','under'],['مربع','box'],['مصفوفة','mat'],['جدولداخلي','tbli'],['جدولعنوان','tblh'],['جدولقيم','tblv'],['جدول','tbl'],['دائرةملونة','circf'],['دائرة','circ'],['شبكةمرقمة','planen'],['شبكةموجبةخالية','planepx'],['شبكةخالية','planex'],['شبكةموجبةفارغة','planep0'],['شبكةموجبة','planep'],['خطأعدادفارغ','nline0'],['خطأعداد','nline'],['شبكة','plane'],['محدد','det'],['نظام','sys'],['قواعد','cases'],['قسمة','ldiv'],['عمودي','vert'],['شطب','strike'],['شطبتحت','strikeb'],['لون','color'],['رمز','mathify'],['نص','plain'],['حجم','size'],['سماكة','wt'],['زاوية','angle'],['نها','lim'],['مجموع','sum'],['تكامل','int'],['توافيقأقواس','binom'],['توافيق','comb'],['تباديل','perm'],['مثلث','triu'],['مستقيم','line'],['قوس','arc'],['متجه','vec'],['جذر','root'],['كسر','frac'],['مطلق','abs'],['خط','bar'],['\\sqrt','root'],['\\frac','frac'],['\\overline','bar'],['\\abs','abs']];
 for (const [a,b] of CMD_RENAME){ const t=CMDS.find(x=>x[0]===a)[1]; CMDS.unshift([b,t]); }
+CMDS.push(['ق','comb'],['ل','perm']); // short forms: ق{ن}{ر} = توافيق ، ل{ن}{ر} = تباديل (only when { follows right away)
 
 function normalize(s){
   return s.replace(/[\u200E\u200F]/g,' ').replace(/<=/g,'≤').replace(/>=/g,'≥').replace(/!=/g,'≠').replace(/\+-/g,'±')
