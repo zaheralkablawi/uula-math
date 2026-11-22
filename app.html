@@ -206,11 +206,12 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
 .p2recent{display:flex;gap:8px;align-items:center}.p2recent .p2row{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0}
 .p2lab{font-size:.75rem;color:var(--muted);white-space:nowrap}
 .p2none{font-size:.85rem;color:var(--muted)}
-.p2heads{display:flex;justify-content:space-between;gap:8px}
-.p2head{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:.92rem;font-weight:600;cursor:pointer}
+.p2heads{display:flex;justify-content:flex-start;gap:6px}
+.p2head{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:600;cursor:pointer}
 .p2head svg{transition:transform .15s}.p2head[aria-expanded="false"] svg{transform:rotate(90deg)}.p2head[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
 .p2chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-.p2chip{height:26px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--code);color:var(--muted);font-family:var(--f-body);font-size:.8rem;cursor:pointer}
+.p2body{display:flex;flex-direction:column;gap:8px}.p2body>.p2sec{display:flex;flex-direction:column;height:var(--p2h,70vh);min-height:220px}.p2body.both>.p2sec{height:calc(var(--p2h,70vh)/2 - 4px);min-height:160px}.p2body>.p2sec[hidden]{display:none}.p2body .p2chips{flex:none}.p2body .p2items{flex:1;min-height:0;overflow:auto}
+.p2chip{display:inline-grid;place-items:center;min-width:30px;font-size:1rem!important;height:26px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:var(--code);color:var(--muted);font-family:var(--f-body);font-size:.8rem;cursor:pointer}
 .p2chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .p2items .grp,.p2found .grp,.p2row{display:flex;flex-wrap:wrap;gap:4px}
 
@@ -2547,24 +2548,36 @@ showTab(load('aeq-tab','fav'));
     +'<div class="p2recent" hidden><span class="p2lab">الأخيرة</span><div class="p2row"></div></div>'
     +'<div class="p2heads"><button type="button" class="p2head" data-sec="tools"><span>الأدوات</span><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
     +'<button type="button" class="p2head" data-sec="syms"><span>الرموز</span><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>'
-    +'<div class="p2sec" data-sec="tools" hidden><div class="p2chips"></div><div class="p2items"></div></div>'
-    +'<div class="p2sec" data-sec="syms" hidden><div class="p2chips"></div><div class="p2items"></div></div>';
+    +'<div class="p2body"><div class="p2sec" data-sec="tools" hidden><div class="p2chips"></div><div class="p2items"></div></div>'
+    +'<div class="p2sec" data-sec="syms" hidden><div class="p2chips"></div><div class="p2items"></div></div></div>';
   ribbon.parentNode.insertBefore(box, ribbon); ribbon.hidden=true; ribbon.style.display='none';
   const q=box.querySelector('#palSearch'), found=box.querySelector('.p2found'), clr=box.querySelector('.p2clear');
   const recBox=box.querySelector('.p2recent'), recRow=recBox.querySelector('.p2row');
   function drawRecent(){ recRow.innerHTML=''; const its=rec.map(k=>{ try { return JSON.parse(k); } catch(e){ return null; } }).filter(it=>it && (it.t!=='tool' || TOOLEL[it.ins]));
     its.forEach(it=>recRow.appendChild(btn(it))); recBox.hidden=!its.length; }
+  // the category bars: an icon each, its name in the tooltip
+  const ALLIC='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>';
+  const CHIPICON={ tools:{ all:ALLIC, tpl:'√', geo:'△', sets:'∩', graph:'<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 14V2M2 14h12"/><path d="M3.5 12C6 4 9 4 13.5 3"/></svg>', mat:'⊞', arr:'↔', calc:'∫' },
+    syms:{ all:ALLIC, ops:'±', sets:'∈', geo:'∠', arr:'→', let:'ح', calc:'ƒ', oth:'٣' } };
   const SECS={ tools:{cats:TOOLCATS, all:allTools, kind:'tool'}, syms:{cats:SYMCATS, all:allSyms, kind:'sym'} };
   function drawSec(sec){ const S=SECS[sec], el=box.querySelector('.p2sec[data-sec="'+sec+'"]'), chips=el.querySelector('.p2chips'), items=el.querySelector('.p2items');
     const cur=load('aeq-p2-'+sec,'all'); chips.innerHTML='';
     for (const [id,name] of [['all','الكل'], ...S.cats]){ if (id!=='all' && !tabItems(id,S.kind).length) continue;
-      const c=document.createElement('button'); c.type='button'; c.className='p2chip'; c.textContent=name; c.setAttribute('aria-pressed', String(id===cur));
+      const c=document.createElement('button'); c.type='button'; c.className='p2chip'; const ic=(CHIPICON[sec]||{})[id];
+      if (ic && ic[0]==='<') c.innerHTML=ic; else c.textContent=ic||name; const tip=id==='all' ? (sec==='tools'?'كل الأدوات':'كل الرموز') : name; c.dataset.tip=tip; c.setAttribute('aria-label',tip); c.setAttribute('aria-pressed', String(id===cur));
       c.addEventListener('click',()=>{ save('aeq-p2-'+sec,id); drawSec(sec); }); chips.appendChild(c); }
     items.innerHTML=''; const list=cur==='all' ? S.all() : tabItems(cur,S.kind);
     const g=document.createElement('div'); g.className='grp toolbar'; list.forEach(it=>g.appendChild(btn(it))); items.appendChild(g); }
   function setOpen(sec, open){ save('aeq-p2open-'+sec, open?'1':'0'); box.querySelector('.p2sec[data-sec="'+sec+'"]').hidden=!open;
+    box.querySelector('.p2body').classList.toggle('both', [...box.querySelectorAll('.p2sec')].every(x=>!x.hidden));
     const h=box.querySelector('.p2head[data-sec="'+sec+'"]'); h.setAttribute('aria-expanded', String(open)); if (open) drawSec(sec); }
-  box.querySelectorAll('.p2head').forEach(h=>h.addEventListener('click',()=>setOpen(h.dataset.sec, h.getAttribute('aria-expanded')!=='true')));
+  box.querySelectorAll('.p2head').forEach(h=>h.addEventListener('click',()=>{ const op=h.getAttribute('aria-expanded')!=='true'; setOpen(h.dataset.sec, op);
+    if (op || [...box.querySelectorAll('.p2sec')].some(x=>!x.hidden)){ fitP2(); const hd=box.querySelector('.p2heads'), tf=document.querySelector('.topfix');
+      window.scrollTo({top: window.scrollY + hd.getBoundingClientRect().top - (tf ? tf.getBoundingClientRect().height : 0) - 8, behavior:'smooth'}); } }));
+  // open sections fill the space under the fixed top part (preview + writing box): one = all of it, both = half each
+  function fitP2(){ const tf=document.querySelector('.topfix'), hd=box.querySelector('.p2heads');
+    const h=window.innerHeight - (tf ? tf.getBoundingClientRect().height : 0) - (hd ? hd.offsetHeight : 0) - 28; box.style.setProperty('--p2h', Math.max(240, Math.round(h))+'px'); }
+  window.addEventListener('resize', fitP2); setTimeout(fitP2, 300);
   // search
   let everything=null;
   function search(){ const t=norm(q.value.trim()); clr.hidden=!q.value; found.innerHTML='';
