@@ -279,6 +279,9 @@ input[type=color]{ width:var(--ctl-h); padding:3px; cursor:pointer }
           <select id="weight" data-tip="سماكة الخط" aria-label="سماكة الخط"><option value="200">Thin</option><option value="300">Light</option><option value="400">Regular</option><option value="500">Medium</option><option value="700">Bold</option><option value="800">ExtraBold</option><option value="900">Heavy</option><option value="950">Black</option></select>
         </div>
         <div class="field">
+          <select id="lsp" data-tip="تباعد الأسطر" aria-label="تباعد الأسطر"><option value="0.8">↕ 0.8</option><option value="1" selected>↕ 1</option><option value="1.15">↕ 1.15</option><option value="1.5">↕ 1.5</option><option value="2">↕ 2</option><option value="2.5">↕ 2.5</option><option value="3">↕ 3</option></select>
+        </div>
+        <div class="field">
           <div class="seg" id="align" data-tip="المحاذاة" aria-label="المحاذاة" role="group" aria-label="المحاذاة"><button type="button" data-v="right" title="يمين" aria-label="يمين"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 7H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 12H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="center" title="وسط" aria-label="وسط"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 7H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.5 12H14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="left" title="يسار" aria-label="يسار"><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M2 2H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 7H11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 12H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button type="button" data-v="eq" title="على علامة =" aria-label="على علامة ="><svg viewBox="0 0 18 14" width="18" height="14" aria-hidden="true"><path d="M4 4.5H14M4 9.5H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
         </div>
       </div>
@@ -1804,7 +1807,7 @@ function render(src, target){
   const lines = parse(src);
   const sz = st.pt*96/72; // CSS px at 96 dpi, so 1 pt in PowerPoint = 1 pt here
   const boxes = lines.map(l => l.length ? rowBox(l, sz) : {w:0,a:sz*.5,d:sz*.2,draw(){}});
-  const pad = sz*.3, lineGap = sz*.35;
+  const pad = sz*.3, lineGap = Math.max(0, sz*.35 + ((+st.lsp||1)-1)*sz*1.2); // تباعد الأسطر: 1 = the usual gap
   // each line's alignment: the global one, changed from a line holding محاذاة{…} onwards
   let curA=st.align; const aligns=lines.map(l=>{ const m=l.find&&l.find(n=>n&&n.t==='align'); if (m) curA=m.v; return curA; });
   const groups=[]; aligns.forEach((a,i)=>{ if (a==='eq'){ if (!groups.length || groups[groups.length-1].end!==i-1){ groups.push({start:i,end:i}); } else groups[groups.length-1].end=i; } });
@@ -2767,6 +2770,7 @@ $('size').addEventListener('change', e => { const v=+e.target.value; const r=fmt
 $('weight').addEventListener('change', e => { const r=fmtSel.weight||selRange(); fmtSel.weight=null;
   if (r){ const v=e.target.value; e.target.value=String(st.weight); ensureFont(v).then(()=>wrapSel('سماكة', v, r)); return; }
   st.weight=e.target.value; save('aeq-weight',st.weight); ensureFont().then(update); });
+function setLsp(v){ v=String(+v||1); st.lsp=+v; save('aeq-lsp', v); const e=$('lsp'); if (e){ if (![...e.options].some(o=>o.value===v)){ const o=document.createElement('option'); o.value=v; o.textContent='↕ '+v; e.appendChild(o); } e.value=v; } update(); }
 function setAlign(v){ st.align=v; save('aeq-align3', v); document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===v))); update(); }
 const ALNAME={right:'يمين',left:'يسار',center:'وسط',eq:'يساوي'};
 function alignLines(v){ const val=src.value; let a=src.selectionStart, e=src.selectionEnd; if (val.slice(a,e).endsWith('\n')) e--;
@@ -2896,6 +2900,7 @@ document.addEventListener('paste', e => {
 // init
 // every time the tool opens: black, 12 pt, Regular, normal lines, right-aligned
 st.pt=12; st.weight='400'; st.scale=6;
+st.lsp=+(load('aeq-lsp','1'))||1; { const e=$('lsp'); if (e){ e.value=String(st.lsp); e.addEventListener('change',()=>setLsp(e.value)); } }
 st.align='right'; document.querySelectorAll('#align button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===st.align)));
 st.darkBg=0; $('darkBg').setAttribute('aria-pressed','false'); // opens in the normal preview, like the other defaults
 st.strokeMul=1;
@@ -3021,7 +3026,7 @@ window.__aeq = { render, parse, st, makeSVG, canvas };
 const ADDIN_VER='24';
 const TAG='UULA_AEQ'; // hidden tag on each inserted equation: its code and formatting, so it can be edited later
 let matchedVal = null, matchedPt = false; // the size was taken from a text box on the slide, so it is already in slide points (no scaling to the slide width)
-const eqMeta = code => encodeURIComponent(JSON.stringify({ v:1, c:code, color:st.color, align:st.align, pt:st.pt, weight:st.weight, m:matchedPt }));
+const eqMeta = code => encodeURIComponent(JSON.stringify({ v:1, c:code, color:st.color, align:st.align, ls:st.lsp||1, pt:st.pt, weight:st.weight, m:matchedPt }));
 const SLIDE_W=540; // UULA booklet slides are 540 pt wide; «outside on the right» starts just after that
 function officeInsert(data, type, place, fallback, meta){ return new Promise(done => officeInsert0(data, type, place, fallback ? () => fallback().then(done) : null, meta, done)); }
 async function slideIds(){ try { return await PowerPoint.run(async ctx => { const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id'); await ctx.sync();
@@ -3979,7 +3984,7 @@ if (window.Office) Office.onReady(info => {
       }
       else { try { m = JSON.parse(decodeURIComponent(raw)); } catch(e){ return flash('تعذّرت قراءة الكود.', false); } }
       if (m.color) setColor(m.color);
-      if (m.align) setAlign(m.align);
+      if (m.align) setAlign(m.align); if (m.ls) setLsp(m.ls);
       if (m.pt) setSize(+m.pt, !!m.m);
       if (m.weight){ st.weight = String(m.weight); $('weight').value = st.weight; }
       src.focus(); src.setRangeText(String(m.c || ''), 0, src.value.length, 'end'); snap(true);
@@ -4006,7 +4011,7 @@ if (window.Office) Office.onReady(info => {
       if (!code) continue; n++;
       flash('صورة ' + n + '…');
       setColor(meta.color || keep.color); if (meta.pt) setSize(+meta.pt, !!meta.m);
-      if (meta.align) setAlign(meta.align);
+      if (meta.align) setAlign(meta.align); if (meta.ls) setLsp(meta.ls);
       src.setRangeText(String(code), 0, src.value.length, 'end'); snap(true); update();
       editTarget = { id: x.id, slide };
       if (await doInsert()) ok++;
@@ -4145,6 +4150,7 @@ if (window.Office) Office.onReady(info => {
     if (used.length > 1){ const how = await chooseHow(used.length); if (!how) return flash('أُلغي.', false);
       if (how === 'each') return eachOwn(list, tags, need, nat, slide); }
     if (first && first.color) setColor(first.color);
+    if (first && first.ls) setLsp(first.ls);
     if (first && first.pt) setSize(+first.pt, !!first.m);
     src.focus(); src.setRangeText(lines.join('\n'), 0, src.value.length, 'end'); snap(true);
     ensureFont().then(update);
