@@ -2213,7 +2213,7 @@ $('redoBtn').addEventListener('click', () => { redo(); src.focus(); });
 src.addEventListener('input', e => { const typing = e.inputType==='insertText' || e.inputType==='deleteContentBackward' || e.inputType==='deleteContentForward'; snap(!typing); });
 src.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey; if (!mod) return;
-  const k = e.key.toLowerCase();
+  const k = e.code==='KeyZ' ? 'z' : e.code==='KeyY' ? 'y' : e.key.toLowerCase(); // by key position too, so it works with the Arabic keyboard
   if (k==='z' && !e.shiftKey){ e.preventDefault(); undo(); }
   else if ((k==='z' && e.shiftKey) || k==='y'){ e.preventDefault(); redo(); }
 });
